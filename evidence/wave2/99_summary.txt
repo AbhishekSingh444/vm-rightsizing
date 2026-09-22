@@ -1,0 +1,7 @@
+capture completed 2026-09-08T06:36:14Z
+pods:              8
+oomkilled:         5
+evicted:           0  <- exclude from confusion table, re-run separately
+node MemoryPressure at capture: False
+OOMKilled/Evicted overlap: 0  <- should be 0; investigate if not
+logfiles:          16

@@ -1,0 +1,10 @@
+vm_id,pred_mem_violation,obs_oomkilled,artifact_affected,margin_band,pred_cpu_violation,obs_cpu_violation,max_consec_throttled,samples_logged,samples_total,log_captured,need_mib,need_mib_corrected,margin_mib,limit_mib,peak_cgroup_mib,peak_pct_of_limit,headroom_mib
+185,True,True,False,False,False,True,3,30,5247,True,729.83,720.22,80.0,592.0,592.0,100.0,0.0
+194,True,True,False,False,False,True,3,30,5248,True,724.71,715.1,80.0,592.0,592.0,100.0,0.0
+269,True,True,False,False,False,True,109,427,2580,True,950.67,941.06,80.0,1104.0,1104.0,100.0,0.0
+296,True,True,False,False,False,False,0,0,2578,True,247.18,237.57,80.0,208.0,208.0,100.0,0.0
+349,True,True,False,False,True,True,29,137,2577,True,699.11,689.5,80.0,208.0,208.0,100.0,0.0
+626,False,False,False,False,False,False,0,7759,7759,True,-452.89,-462.5,80.0,592.0,23.6,4.0,568.4
+817,True,True,False,False,True,True,28,301,2579,True,684.77,675.16,80.0,208.0,208.0,100.0,0.0
+942,True,True,False,False,True,True,273,1705,2576,True,259.81,250.2,80.0,592.0,592.0,100.0,0.0
+954,False,False,False,False,True,True,11,2578,2578,True,-0.45,-10.06,80.0,208.0,118.8,57.1,89.2

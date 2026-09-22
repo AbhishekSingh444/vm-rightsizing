@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+# commit-msg -- strip AI attribution trailers from every commit message.
+#
+# Settings flags have historically been bypassed when a commit message is
+# crafted directly through the shell, and newer session trailers have ignored
+# the attribution config entirely. A hook runs on every commit regardless of
+# how it was created, so this is the layer that actually holds.
+#
+# Install:  git config core.hooksPath githooks
+
+MSG_FILE="$1"
+[ -f "$MSG_FILE" ] || exit 0
+
+TMP="${MSG_FILE}.stripped"
+
+grep -v -i -E \
+  -e '^[[:space:]]*Co-Authored-By:[[:space:]]*Claude' \
+  -e '^[[:space:]]*Co-Authored-By:.*@anthropic\.com' \
+  -e 'Generated with \[?Claude Code' \
+  -e '^[[:space:]]*Claude-Session:' \
+  -e '^[[:space:]]*🤖' \
+  "$MSG_FILE" > "$TMP"
+
+# Collapse the trailing blank lines the removals leave behind.
+awk 'BEGIN{blank=0} {if ($0 ~ /^[[:space:]]*$/) {blank++} else {while(blank>0){print ""; blank--}; print}}' \
+  "$TMP" > "${TMP}.2"
+
+mv "${TMP}.2" "$MSG_FILE"
+rm -f "$TMP"
+exit 0

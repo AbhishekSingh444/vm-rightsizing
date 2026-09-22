@@ -1,0 +1,5 @@
+$ kubectl get pods -l app=rightsizing-replay -o custom-columns="NAME:.metadata.name,CPU_LIMIT:.spec.containers[0].resources.limits.cpu,MEM_LIMIT:.spec.containers[0].resources.limits.memory,PHASE:.status.phase,REASON:.status.containerStatuses[0].state.terminated.reason,EXIT:.status.containerStatuses[0].state.terminated.exitCode"
+NAME         CPU_LIMIT   MEM_LIMIT   PHASE     REASON      EXIT
+rs-p95-143   63m         218103808   Failed    OOMKilled   137
+rs-p95-215   500m        620756992   Failed    OOMKilled   137
+rs-p95-697   63m         218103808   Running   <none>      <none>

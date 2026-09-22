@@ -1,0 +1,26 @@
+# Image build and load provenance
+# Captured 2026-09-08T19:10:18Z (post-run; collect_evidence.sh never captured this slot)
+
+$ docker images rightsizing/replay --no-trunc
+REPOSITORY           TAG       IMAGE ID                                                                  CREATED        SIZE
+rightsizing/replay   latest    sha256:fdbafcda45b5b884f491210212459d8d36a76f30a524d3a02fe299965e8e74c1   28 hours ago   188MB
+
+$ docker inspect -f '{{.Id}} {{.Created}} {{.Size}} {{.Config.Entrypoint}}' rightsizing/replay:latest
+sha256:fdbafcda45b5b884f491210212459d8d36a76f30a524d3a02fe299965e8e74c1 2026-09-07T15:06:19.899742571Z 46188607 [python3 /app/replay_agent.py]
+
+$ docker exec rightsizing-control-plane crictl images   # image loaded into the kind node's containerd
+IMAGE                                           TAG                  IMAGE ID            SIZE
+docker.io/rightsizing/replay                    latest               de36bb7f385bc       46.2MB
+
+$ docker run --rm --entrypoint /bin/cat rightsizing/replay:latest /app/replay_agent.py | sha256sum
+7fbadd1089b4ba2eb46b8e03a7a7640cfb2a565d0c560d71dcd8e1e0632b3e26 (agent as shipped inside the image)
+$ sha256sum testbed/replay_agent.py
+7fbadd1089b4ba2eb46b8e03a7a7640cfb2a565d0c560d71dcd8e1e0632b3e26 *testbed/replay_agent.py
+
+Notes:
+  - The Docker image ID (fdbafcda...) and the containerd image ID (de36bb7f...) differ because
+    'kind load docker-image' re-serialises the image through an OCI archive; the config digest is
+    recomputed. Sizes agree (46188607 B vs 46.2MB), and de36bb7f is the Image ID recorded in every
+    pod's describe output across all five waves -- see evidence/wave{1..5}/06_describe_oomkilled.txt.
+  - The agent inside the image hashes identically to testbed/replay_agent.py in this working tree,
+    so the code that ran in the cluster is the code in the repository.

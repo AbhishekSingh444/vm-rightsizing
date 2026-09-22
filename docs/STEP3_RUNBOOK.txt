@@ -1,0 +1,235 @@
+================================================================================
+STEP 3 RUNBOOK -- TESTBED / ENVIRONMENT EVIDENCE (3 MARKS)
+What to download, what to run, what to screenshot
+================================================================================
+
+The rubric wants: "Screenshot or log proving the environment runs -- a deployed
+instance, a CloudSim build, a working kubectl get nodes. Slides alone score 0."
+
+So you need three things in this order: the dataset, a running cluster, and
+captured evidence. Do them in that order. A cluster with no data in it proves
+nothing you can put in a report.
+
+================================================================================
+PART A -- THE DATASET
+================================================================================
+
+SOURCE (official, free, no registration)
+
+    http://gwa.ewi.tudelft.nl/datasets/gwa-t-12-bitbrains
+
+    Mirror if the TU Delft host is slow or down:
+    https://atlarge-research.com/gwa-t-12/
+
+    Download "GWA-T-12 fastStorage" -- 128 MB compressed.
+    (The "rnd" trace is 156 MB and you do not need it for the primary result.)
+
+WHAT YOU GET
+
+  1,250 VMs. Crucially, THE TRACE IS ALREADY ONE CSV PER VM -- files named
+  1.csv, 2.csv, ... 1250.csv. You do NOT need to write a splitter. This is the
+  single biggest time saver and most teams miss it.
+
+  Columns, semicolon-separated (with a tab after each semicolon -- see the
+  delimiter note below):
+    Timestamp, CPU cores, CPU capacity provisioned [MHZ], CPU usage [MHZ],
+    CPU usage [%], Memory capacity provisioned [KB], Memory usage [KB],
+    disk read/write, network rx/tx
+
+MANDATORY ACKNOWLEDGEMENT
+
+  The licence requires it. Put this in your paper, do not skip it:
+
+    "This trace was graciously provided by Bitbrains IT Services Inc."
+
+  Also cite the CCGrid 2015 analysis paper (Shen, van Beek, Iosup) and
+  acknowledge the Grid Workloads Archive. Trace analysis credit: Siqi Shen,
+  Vincent van Beek, Alexandru Iosup.
+
+DELIMITER TRAP -- READ THIS
+
+  The official format description says columns are separated by ";\t" --
+  semicolon followed by a TAB. Naive pd.read_csv(sep=";") leaves a tab glued to
+  every column name, so `df["CPU cores"]` raises KeyError and you lose an hour.
+
+  Both baselines.py and inspect_traces.py already handle it. If you write any
+  new parsing code, use:
+
+      df = pd.read_csv(path, sep=r";\s*", engine="python")
+      df.columns = [c.strip().strip('"').strip() for c in df.columns]
+
+TIMESTAMP TRAP
+
+  The column is named "Timestamp [ms]" but the values are in SECONDS. Dividing
+  by 1000 gives you a fleet that lived for 43 minutes. inspect_traces.py treats
+  them as seconds; verify this on the real files before trusting any date math.
+
+FIRST COMMANDS
+
+    unzip fastStorage.zip
+    ls fastStorage | head
+    ls fastStorage | wc -l          # expect ~1250
+
+    python3 inspect_traces.py --traces ./fastStorage --sample 100
+    python3 inspect_traces.py --traces ./fastStorage    # full run
+
+  ** SCREENSHOT THE FULL PREFLIGHT OUTPUT. ** It is evidence in its own right,
+  and its "HEADROOM" section is your Objective O1 number -- the measured gap
+  between allocated and used capacity across 1,250 real production VMs. That
+  single figure motivates the entire project.
+
+  Do NOT assume the 21/9 split. The preflight prints the actual median span and
+  tells you what a 70/30 split of it is. Use its answer, and update the
+  hypothesis document if the real span differs from 30 days.
+
+================================================================================
+PART B -- THE CLUSTER
+================================================================================
+
+    kind create cluster --config kind-config.yaml
+    kubectl get nodes -o wide
+
+    docker build -t rightsizing/replay:latest .
+    kind load docker-image rightsizing/replay:latest --name rightsizing
+
+    python3 baselines.py --traces ./fastStorage --out ./results_bitbrains
+    # convert results into recommendations.csv (vm_id,method,rec_cores,rec_mem_gb)
+
+    python3 gen_manifests.py recommendations.csv --method p95 \
+        --out manifests/p95 --limit 50
+    kubectl apply -f manifests/p95/
+    kubectl get pods -l app=rightsizing-replay -o wide
+
+    ./collect_evidence.sh evidence_p95
+
+WHY ONLY 50 PODS
+
+  A single-node kind cluster will not schedule 1,250 pods, and it does not need
+  to. The cluster run is a VALIDATION SUBSET proving your offline violation
+  counts correspond to real kernel-enforced ones. The full 1,250-VM frontier is
+  computed offline in pandas. Say this explicitly in the report so nobody thinks
+  you tried and failed to scale.
+
+  Choose the 50 deliberately, not by taking the first 50 files: include some
+  VMs your offline replay says will violate and some it says will not. If the
+  cluster agrees with the offline prediction on both groups, that is a much
+  stronger claim than 50 randomly chosen quiet machines.
+
+================================================================================
+PART C -- THE SCREENSHOTS
+================================================================================
+
+Capture these six. Terminal screenshots are fine; the rubric says screenshot OR
+log. Include the shell prompt and the command in frame -- a bare output block
+looks pasted.
+
+  1. kubectl get nodes -o wide
+     The literal artifact the rubric names. Non-negotiable.
+
+  2. inspect_traces.py full output
+     Proves you have the real 1,250-VM dataset and characterises it.
+
+  3. docker build + kind load, showing the image loaded
+     Proves the environment is yours and reproducible.
+
+  4. kubectl get pods -l app=rightsizing-replay -o wide
+     Pods Running, spread with real names.
+
+  5. kubectl describe pod <one that died> | grep -A5 "Last State"
+     Showing Reason: OOMKilled. THIS IS YOUR BEST SLIDE. It is a real memory
+     exhaustion caused by a right-sizing recommendation, enforced by the kernel,
+     not counted in a dataframe.
+
+  6. baselines.py summary table + test_baselines.py 16/16 passing
+     Covers rubric component 4 as well.
+
+Put 1, 5 and 6 in the slides. Put all six in the appendix.
+
+TIP: run `script -c "kubectl get nodes -o wide" evidence/nodes.log` if your
+reviewer prefers logs to images -- it captures the command and the output
+together with a timestamp.
+
+================================================================================
+PART D -- IF DOCKER OR KIND WILL NOT RUN
+================================================================================
+
+In order of preference:
+
+  1. k3s        -- single binary, lighter than kind, no Docker needed
+                   curl -sfL https://get.k3s.io | sh -
+                   sudo k3s kubectl get nodes
+  2. minikube   -- heavier but very forgiving
+  3. Any free-tier managed cluster, if your laptop cannot take it
+  4. CloudSim Plus build log -- the rubric's stated fallback
+
+The manifests are portable across 1-3 unchanged. Only the hostPath mount for
+/traces needs adjusting per runtime.
+
+Option 4 is genuinely weaker: a simulator build log proves a compiler ran, not
+that a scheduler enforced a limit. Exhaust 1-3 first.
+
+================================================================================
+PART E -- USING CLAUDE CODE FOR THIS
+================================================================================
+
+The work that suits an agentic loop is the plumbing, not the design. Point it at
+the tasks with a checkable definition of done, and keep the decisions yourself.
+
+GOOD TASKS TO DELEGATE, roughly in order:
+
+  1. "Read inspect_traces.py. Run it against ./fastStorage. If any file fails to
+      parse, fix the loader to handle that file's format and re-run until all
+      1250 parse or you can explain exactly why a file cannot be parsed. Do not
+      change the reported statistics."
+
+  2. "Write a script that converts results_bitbrains/per_vm_results.csv into
+      recommendations.csv with columns vm_id,method,rec_cores,rec_mem_gb. Then
+      pick 50 VMs for the cluster subset: 25 that the p95 replay says will
+      violate and 25 it says will not. Write them to subset_50.csv."
+
+  3. "Set up the kind cluster following README.md. Run every command, and if one
+      fails, fix it and record what you changed in a file called
+      ENVIRONMENT_NOTES.md."
+
+  4. "Run collect_evidence.sh and check every expected file exists and is
+      non-empty. Report anything missing."
+
+  5. "Cross-check: for the 50 VMs in the cluster run, compare the offline
+      violation prediction in per_vm_results.csv against the actual OOMKills in
+      evidence_p95/05_oomkills.tsv. Produce a confusion table."
+
+Task 5 is the one that could turn into a paper contribution. If the offline and
+kernel-enforced counts disagree, that discrepancy is a finding about how the
+literature mismeasures violations -- and nobody in your gap table checked it.
+
+DO NOT DELEGATE:
+
+  - The violation definitions. You defended the CPU/memory asymmetry in the
+    hypothesis document; an agent will "simplify" it and silently change every
+    number in your results.
+  - The hypothesis thresholds. Those are pre-registered. Fixing them after
+    seeing results destroys the falsifiability the rubric awards marks for.
+  - Anything that edits test_baselines.py to make a failing test pass.
+
+STANDING INSTRUCTION worth putting in your CLAUDE.md or project rules:
+
+    "Never modify test_baselines.py to make a test pass. If a test fails, the
+     code under test is wrong, or the test encodes a decision I made -- ask me.
+     Never change the violation definitions in baselines.py (memory: 1 sample,
+     CPU: 2 consecutive samples). Never change the hypothesis thresholds."
+
+================================================================================
+ORDER OF OPERATIONS
+================================================================================
+
+  Day 1   Download fastStorage. Run inspect_traces.py. Screenshot it.
+          Fix obs/eval day counts from what it reports.
+  Day 2   Run baselines.py on the real trace. Screenshot the summary table and
+          the passing tests. Components 2 and 4 are now evidenced.
+  Day 3   kind cluster up. Screenshot kubectl get nodes.
+  Day 4   Build image, apply 50 manifests, let the replay run (~45 min at
+          SLICE_SECONDS=1), collect evidence. Screenshot the OOMKill.
+  Day 5   Offline-versus-kernel confusion table. Assemble the report.
+
+If you are short on time, Days 1 and 3 alone secure most of the 3 marks. The
+OOMKill screenshot is what turns a passing submission into a strong one.

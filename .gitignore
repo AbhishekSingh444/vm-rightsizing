@@ -1,0 +1,15 @@
+# Datasets are large and licensed -- never commit them.
+data/fastStorage/
+data/traces/
+data/synthetic/
+*.zip
+
+# Regenerable outputs.
+results/
+testbed/manifests/
+__pycache__/
+*.pyc
+.venv/
+
+# evidence/ IS committed -- it is the graded deliverable.
+!evidence/

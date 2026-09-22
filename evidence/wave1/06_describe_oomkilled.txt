@@ -1,0 +1,66 @@
+Name:             rs-p95-126
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             rightsizing-control-plane/172.18.0.2
+Start Time:       Tue, 08 Sep 2026 00:18:53 +0530
+Labels:           app=rightsizing-replay
+                  method=p95
+                  vm=126
+Annotations:      <none>
+Status:           Failed
+IP:               10.244.0.50
+IPs:
+  IP:  10.244.0.50
+Containers:
+  replay:
+    Container ID:   containerd://d7944e9b813c7aec13f71b923172630d25ce110dee16b87d2304495ab015b92e
+    Image:          rightsizing/replay:latest
+    Image ID:       sha256:de36bb7f385bcda65b570a5960f786b1a3ae3e18e8d57a61af0d94b2dd1c4baa
+    Port:           <none>
+    Host Port:      <none>
+    State:          Terminated
+      Reason:       OOMKilled
+      Exit Code:    137
+      Started:      Tue, 08 Sep 2026 00:18:59 +0530
+      Finished:     Tue, 08 Sep 2026 00:32:23 +0530
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     63m
+      memory:  352321536
+    Requests:
+      cpu:     63m
+      memory:  352321536
+    Environment:
+      TRACE_FILE:     /trace/126.csv
+      VM_ID:          126
+      SLICE_SECONDS:  1.0
+      LIMIT_CORES:    0.0625
+      LOG_FILE:       /var/log/replay.jsonl
+    Mounts:
+      /trace from traces (ro)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-tzc4v (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   False 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  traces:
+    Type:          HostPath (bare host directory volume)
+    Path:          /traces
+    HostPathType:  Directory
+  kube-api-access-tzc4v:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Guaranteed
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:                      <none>

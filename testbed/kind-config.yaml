@@ -1,0 +1,10 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: rightsizing
+nodes:
+  - role: control-plane
+    extraMounts:
+      # Per-VM evaluation-window CSVs, mounted read-only into every pod.
+      - hostPath: ./data/traces
+        containerPath: /traces
+        readOnly: true

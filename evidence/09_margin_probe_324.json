@@ -1,0 +1,17 @@
+{
+  "vm_id": "324",
+  "trace_file": "/trace/324.csv",
+  "limit_cores": "0.0625",
+  "slice_seconds": "1.0",
+  "probe_hz": 20.0,
+  "n_probe_samples": 52813,
+  "wall_seconds": 2716.4,
+  "max_diff_mib": 88.189,
+  "at_t_rel": 1584.57,
+  "at_mem_current_mib": 116.52,
+  "at_demand_mib": 28.331,
+  "at_replay_sample": 1578,
+  "max_mem_current_mib": 185.066,
+  "max_demand_mib": 125.952,
+  "cgroup_memory_peak_mib": 185.141
+}

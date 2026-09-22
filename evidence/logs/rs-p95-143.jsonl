@@ -1,0 +1,2 @@
+{"event": "start", "vm_id": "143", "samples": 2576, "slice_seconds": 1.0, "cgroup_visible": true}
+{"vm_id": "143", "sample": 0, "trace_ts": 1378129422.0, "elapsed_s": 1.08, "demand_cores": 0.0268, "demand_mem_mb": 10.9, "throttled_periods": 11, "throttled_us": 1193095, "cpu_exhausted": true}

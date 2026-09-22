@@ -1,0 +1,3 @@
+$ kubectl get nodes
+NAME                        STATUS   ROLES           AGE   VERSION
+rightsizing-control-plane   Ready    control-plane   14d   v1.33.1

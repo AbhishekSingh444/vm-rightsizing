@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# Same stripping logic as commit-msg, but reads stdin and writes stdout,
+# for use with `git filter-branch --msg-filter` to clean existing history.
+grep -v -i -E \
+  -e '^[[:space:]]*Co-Authored-By:[[:space:]]*Claude' \
+  -e '^[[:space:]]*Co-Authored-By:.*@anthropic\.com' \
+  -e 'Generated with \[?Claude Code' \
+  -e '^[[:space:]]*Claude-Session:' \
+  -e '^[[:space:]]*🤖' \
+  | awk 'BEGIN{blank=0} {if ($0 ~ /^[[:space:]]*$/) {blank++} else {while(blank>0){print ""; blank--}; print}}'

@@ -1,0 +1,11 @@
+NAME          READY   STATUS      RESTARTS   AGE     IP            NODE                        NOMINATED NODE   READINESS GATES
+rs-p95-1228   0/1     Completed   0          4h27m   10.244.0.5    rightsizing-control-plane   <none>           <none>
+rs-p95-189    0/1     OOMKilled   0          4h27m   10.244.0.9    rightsizing-control-plane   <none>           <none>
+rs-p95-199    0/1     OOMKilled   0          4h27m   10.244.0.6    rightsizing-control-plane   <none>           <none>
+rs-p95-273    0/1     OOMKilled   0          4h27m   10.244.0.10   rightsizing-control-plane   <none>           <none>
+rs-p95-297    0/1     Completed   0          4h27m   10.244.0.7    rightsizing-control-plane   <none>           <none>
+rs-p95-348    0/1     OOMKilled   0          4h27m   10.244.0.8    rightsizing-control-plane   <none>           <none>
+rs-p95-387    0/1     OOMKilled   0          4h27m   10.244.0.11   rightsizing-control-plane   <none>           <none>
+rs-p95-641    0/1     Completed   0          4h27m   10.244.0.13   rightsizing-control-plane   <none>           <none>
+rs-p95-883    0/1     OOMKilled   0          4h27m   10.244.0.14   rightsizing-control-plane   <none>           <none>
+rs-p95-980    0/1     Completed   0          4h27m   10.244.0.12   rightsizing-control-plane   <none>           <none>

@@ -1,0 +1,215 @@
+================================================================================
+REVIEW 1 - SECTION 2: PROBLEM STATEMENT AND HYPOTHESIS (2 MARKS)
+Risk-Quantified Virtual Machine Right-Sizing for Private Cloud Capacity
+Reclamation
+================================================================================
+
+RUBRIC REQUIREMENT: restate the given problem in your own words, and convert it
+into a falsifiable claim of the form "Method X reduces metric M by at least N%
+compared to baseline B under condition C."
+
+================================================================================
+1. THE PROBLEM, RESTATED
+================================================================================
+
+A virtual machine in a private cloud is sized once, at request time, against a
+peak the requester guesses at rather than measures. That guess is defensive by
+construction: the cost of guessing low is a production incident, the cost of
+guessing high is a line item nobody audits. The predictable result is a fleet
+in which allocated capacity exceeds used capacity by a wide and persistent
+margin.
+
+Right-sizing shrinks allocations toward observed use. The operational objection
+to it is not that the arithmetic is wrong but that it is incomplete. Shrinking
+an allocation removes headroom, and headroom is what absorbs demand the
+observation period did not contain. Every reclamation therefore purchases
+capacity with an increase in the probability of future resource exhaustion.
+
+Current practice never prices that purchase. A right-sizing tool reports what
+it reclaims. It does not report what it risks, and the operator receiving the
+recommendation has no basis on which to accept or reject it beyond intuition
+about how spiky the workload feels. Two recommendations reclaiming identical
+capacity may carry wildly different exposure, and nothing in the output
+distinguishes them.
+
+THE PROBLEM THIS PROJECT ADDRESSES IS THAT RIGHT-SIZING RECOMMENDATIONS ARE
+UNPRICED. The savings side of the ledger is reported; the risk side is not
+computed, not validated, and not presented. Without both sides there is no
+principled operating point, only an aggressiveness dial with no units on it.
+
+================================================================================
+2. FORMAL SETTING
+================================================================================
+
+Let V be a set of virtual machines. For each VM i:
+
+  a_orig(i) = (c_i, m_i)     original allocation, in vCPU and GB
+  d_i(t)                     observed demand at sample time t, 5-minute
+                             resolution, for CPU and memory
+  W_obs                      observation window; recommenders see this and
+                             nothing else
+  W_eval                     evaluation window, strictly later; used only for
+                             replay
+
+A RECOMMENDER is a map R from the observation-window history to a flavour drawn
+from a fixed catalog F. Write the resulting allocation a_R(i).
+
+RECLAIMED CAPACITY over the evaluation window:
+
+  Recl_cpu(R) = SUM over i of ( c_i - c_R(i) ) * |W_eval|      [vCPU-hours]
+  Recl_mem(R) = SUM over i of ( m_i - m_R(i) ) * |W_eval|      [GB-hours]
+
+EXHAUSTION is defined separately per resource, because the two failure modes
+are not comparable:
+
+  MEMORY EXHAUSTION - demand exceeds the allocation at any single sample in
+  W_eval. Terminal: the workload is killed. One sample is enough.
+
+  CPU EXHAUSTION - demand exceeds the allocation across at least 2 consecutive
+  samples (10 minutes). Degrading rather than terminal, so a single-sample
+  excursion is not counted; the throttling has to persist to matter.
+
+A VIOLATION EVENT is a maximal contiguous run of exhausted samples. Recorded
+metrics: event count, total duration, and S(R), the fraction of VMs in V
+experiencing zero events under R.
+
+BASELINES
+
+  B0  As-provisioned. a_B0(i) = a_orig(i). Reference; reclaims nothing.
+  B1  Peak provisioning. Allocation = max demand over W_obs, snapped to F.
+      This is current practice.
+  B2  P95 heuristic. Allocation = 95th percentile of demand over W_obs,
+      snapped to F. This is the common heuristic recommendation.
+
+PROPOSED METHOD  M(eps)
+
+  For a target exhaustion probability eps: fit a Generalized Pareto tail to
+  exceedances over a high threshold within W_obs, correct for serial dependence
+  via the extremal index, and select the smallest flavour in F whose predicted
+  probability of exhaustion over a window of length |W_eval| does not exceed
+  eps. Sweeping eps traces the frontier.
+
+================================================================================
+3. HYPOTHESES
+================================================================================
+
+--------------------------------------------------------------------------------
+H1 - RISK-MATCHED DOMINANCE (PRIMARY)
+--------------------------------------------------------------------------------
+
+  "At equal measured violation rate, M(eps) reclaims at least 15% more
+   vCPU-hours and at least 10% more memory GB-hours than the P95 heuristic B2,
+   on the Bitbrains GWA-T-12 fastStorage trace under a 21-day / 9-day
+   observation-evaluation split."
+
+Comparison is at MATCHED RISK, not matched aggressiveness. The P95 rule
+produces one point (Recl(B2), Viol(B2)). H1 claims that the point on the
+M(eps) frontier whose violation rate equals Viol(B2) sits at least 15% further
+along the reclamation axis.
+
+This framing is deliberate. A method that reclaims more AND violates more has
+demonstrated nothing - it has only turned the dial harder, which anyone can do.
+Dominance at matched risk is the only comparison that isolates whether the tail
+model is doing real work.
+
+NULL: the reclamation gap at matched violation rate is below 15% (CPU) or below
+10% (memory), or is negative.
+
+--------------------------------------------------------------------------------
+H2 - CALIBRATION (THE DISTINGUISHING CLAIM)
+--------------------------------------------------------------------------------
+
+  "The predicted per-VM exhaustion probability is calibrated: across the sweep
+   eps in {0.001, 0.005, 0.01, 0.05, 0.10}, the observed fraction of VMs
+   experiencing at least one violation in W_eval falls within the 95% binomial
+   confidence interval of eps, and expected calibration error over the sweep is
+   below 0.05."
+
+H2 is what separates this work from the risk-aware autoscaling literature in
+the gap table. MagicScaler (C1) and comparable systems embed risk in a loss
+function; none demonstrate that the risk number corresponds to anything
+observable. An uncalibrated probability is a decoration - it looks like a
+decision variable and cannot be used as one.
+
+NULL: observed violation frequency falls outside the interval at two or more
+sweep points, or ECE >= 0.05.
+
+--------------------------------------------------------------------------------
+H3 - ZERO-RISK RECLAMATION QUANTUM (HEADLINE)
+--------------------------------------------------------------------------------
+
+  "At least 25% of allocated vCPU-hours and 20% of allocated memory GB-hours
+   can be reclaimed relative to B0 with zero violation events observed in
+   W_eval."
+
+The plainest statement of the practical contribution and the one an operator
+actually cares about: how much is free. Reported both fleet-wide and restricted
+to non-idle VMs.
+
+NULL: the largest reclamation achieving zero observed violations falls below
+either threshold.
+
+--------------------------------------------------------------------------------
+CONDITION C (APPLIES TO ALL THREE)
+--------------------------------------------------------------------------------
+
+  DATASET      Bitbrains GWA-T-12 fastStorage, 1250 VMs, 5-minute sampling.
+               Azure public VM trace as the replication dataset.
+  SPLIT        First 21 days observation, final 9 days evaluation. Single
+               split; no rolling origin in the primary result.
+  INCLUSION    VMs with complete telemetry across both windows. Results
+               reported twice: full fleet, and excluding VMs whose P99
+               utilisation is below 5% of allocation.
+  FLAVOURS     OpenStack-style catalog. vCPU in {1,2,4,8,16}, memory in
+               {2,4,8,16,32,64} GB. Recommendations must snap to it.
+  INFORMATION  Recommenders see W_obs only. No parameter, threshold or
+               hyperparameter is tuned against W_eval.
+
+================================================================================
+4. WHAT WOULD FALSIFY THESE CLAIMS
+================================================================================
+
+Stated in advance, so that a negative result is a result rather than an
+embarrassment.
+
+  H1 IS FALSIFIED IF the M(eps) frontier does not lie above B2's point at
+  matched risk.
+  MOST LIKELY CAUSE: Bitbrains tails are light enough that the P95 quantile is
+  already near-optimal, and GPD extrapolation buys nothing.
+
+  H2 IS FALSIFIED IF observed violation rates diverge systematically from eps.
+  MOST LIKELY CAUSE: serial correlation in 5-minute telemetry not fully
+  absorbed by the extremal index correction, inflating the effective number of
+  independent trials.
+
+  H3 IS FALSIFIED IF no reclamation level achieves zero violations at the
+  stated magnitude.
+  MOST LIKELY CAUSE: a minority of highly bursty VMs violates at any reduction,
+  dragging the fleet-wide zero-risk point toward zero.
+
+The H2 failure mode is the one to watch. Utilisation samples five minutes apart
+are strongly autocorrelated; treating a 9-day window as roughly 2600
+independent draws will badly overstate exposure and push predicted
+probabilities well above what is observed. If calibration fails, check this
+before questioning the tail fit itself.
+
+A FAILURE OF H3 IS NOT A FAILURE OF THE PROJECT. "Only 4% of capacity is
+reclaimable at zero risk, and the operator should know that before believing a
+vendor's 40% savings claim" is a publishable finding under the same thesis. It
+is precisely the reporting deficiency this work exists to correct.
+
+================================================================================
+5. NUMERIC THRESHOLDS - A NOTE ON PROCEDURE
+================================================================================
+
+The specific figures (15%, 10%, 25%, 20%, ECE 0.05) are provisional.
+
+  Step 1. Run a pilot on a random 50-VM subsample.
+  Step 2. Fix the thresholds from the pilot and record them, with a timestamp,
+          in the project log.
+  Step 3. Run the full fleet.
+  Step 4. DO NOT MOVE THE THRESHOLDS AFTERWARDS.
+
+Step 4 is the whole point. A hypothesis adjusted after seeing the result is not
+falsifiable, and a rubric awarding marks for a falsifiable claim is awarding
+them for the discipline, not for the sentence.
