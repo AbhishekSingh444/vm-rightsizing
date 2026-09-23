@@ -11,6 +11,12 @@ __pycache__/
 *.pyc
 .venv/
 
+# Personal workspace and AI configs
+.claude/
+CLAUDE.md
+TASKS.md
+ENVIRONMENT_NOTES.md
+
 # evidence/ IS committed -- it is the graded deliverable.
 !evidence/
 cols.txt
