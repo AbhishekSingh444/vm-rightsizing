@@ -595,3 +595,53 @@ hand-computed frontier (two sweep points at risk 0.02/0.06 and reclamation
 and a gap of -5), that a baseline outside the swept range returns NaN rather
 than an extrapolation, that the comparator is selectable, and that
 `threshold_q` reaches the fit.
+
+## Threats to validity
+
+What this setup cannot prove, kept here rather than only in the report so the
+claims and their limits live in one file. Testbed scale is a separate,
+earlier section above; dataset exclusions are in `docs/DATA_QUALITY.md`.
+
+### A flag that is accepted but ignored manufactures a confident null result
+
+`sweep_eps.load_fleet` hardcoded `EVT_THRESHOLD_Q` and `EVT_MIN_EXCEEDANCES`
+while `main()` exposed `--threshold-q` and `--min-exceedances` as CLI
+arguments and wrote their values into `sweep_config.json`. The flags were
+accepted, recorded and ignored.
+
+Nothing published was wrong, because every run up to that point used the
+default q0.95 and that is what the fit applied. The danger was entirely in
+front of it. The T12 ablation sweeps the threshold as one of its arms; had the
+bug survived, the `u_q90`, `reference` and `u_q98` arms would have been three
+executions of the identical configuration, and the ablation table would have
+shown three identical rows. The honest-looking conclusion available from that
+table -- "threshold choice does not affect the frontier" -- would have been
+false, would have been supported by a run config that named three different
+thresholds, and would have been **more** confident than the truth, because a
+null result reported across three arms reads as robust. The real answer is
+that the threshold is the second-largest lever in the ablation (u = q0.98
+shifts matched-risk memory reclamation by +5.26 pp on all VMs and -1.09 pp on
+CPU).
+
+Found while wiring the T12 threshold arm, fixed, and pinned by a test in
+`tests/test_evt.py` that asserts `threshold_q` reaches the fit and changes both
+`u` and the exceedance count.
+
+**The general risk, which this is one instance of:** a parameter that is
+plumbed through the interface but not through to the computation converts a
+sweep into repeated identical runs, and the resulting flat curve is
+indistinguishable from a genuine insensitivity result. It is worse than a
+crash, which announces itself, and worse than a wrong number, which a reader
+may question -- it produces the *shape* a careful experiment is supposed to
+produce. Every sweep in this project is exposed to it: eps, theta, run length,
+threshold, snapping and the cap are all flags. The mitigation adopted here is
+that any parameter an ablation arm varies must have a test showing it changes
+the computed output, not merely that it is accepted. `eps`, `theta`,
+`run_length`, `threshold_q` and the cap each now have one; the ablation
+additionally cross-checks that its `reference` and `theta_off` arms reproduce
+the standalone T11 and T10 frontiers byte-identically, which would fail loudly
+if an arm's settings stopped reaching the computation.
+
+A residual exposure remains and is not closed: a test proves a flag reaches
+the computation, not that it reaches it *correctly*. A parameter wired to the
+wrong stage of the pipeline would still pass these tests.
