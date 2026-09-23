@@ -13,3 +13,4 @@ __pycache__/
 
 # evidence/ IS committed -- it is the graded deliverable.
 !evidence/
+cols.txt

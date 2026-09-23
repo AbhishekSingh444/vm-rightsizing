@@ -1,2 +1,0 @@
-POD CPU MEMORY PHASE REASON EXIT
-.metadata.name .spec.containers[0].resources.limits.cpu .spec.containers[0].resources.limits.memory .status.phase .status.containerStatuses[0].state.terminated.reason .status.containerStatuses[0].state.terminated.exitCode
