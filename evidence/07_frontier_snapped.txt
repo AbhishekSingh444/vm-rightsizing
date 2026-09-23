@@ -1,0 +1,570 @@
+  skip 10.csv: bad CPU capacity
+  skip 1003.csv: bad CPU capacity
+  skip 1004.csv: bad CPU capacity
+  skip 1008.csv: below flavour catalog floor
+  skip 1009.csv: below flavour catalog floor
+  skip 1010.csv: below flavour catalog floor
+  skip 1011.csv: below flavour catalog floor
+  skip 1012.csv: below flavour catalog floor
+  skip 1013.csv: below flavour catalog floor
+  skip 1014.csv: below flavour catalog floor
+  skip 1015.csv: below flavour catalog floor
+  skip 1016.csv: below flavour catalog floor
+  skip 1017.csv: below flavour catalog floor
+  skip 1018.csv: below flavour catalog floor
+  skip 1019.csv: below flavour catalog floor
+  skip 1020.csv: below flavour catalog floor
+  skip 1021.csv: below flavour catalog floor
+  skip 1022.csv: below flavour catalog floor
+  skip 1023.csv: below flavour catalog floor
+  skip 1024.csv: below flavour catalog floor
+  skip 1025.csv: below flavour catalog floor
+  skip 1026.csv: below flavour catalog floor
+  skip 1027.csv: below flavour catalog floor
+  skip 1028.csv: below flavour catalog floor
+  skip 1029.csv: below flavour catalog floor
+  skip 1030.csv: below flavour catalog floor
+  skip 1031.csv: below flavour catalog floor
+  skip 1032.csv: below flavour catalog floor
+  skip 1033.csv: below flavour catalog floor
+  skip 1034.csv: below flavour catalog floor
+  skip 1035.csv: below flavour catalog floor
+  skip 1036.csv: below flavour catalog floor
+  skip 1037.csv: below flavour catalog floor
+  skip 1038.csv: below flavour catalog floor
+  skip 1039.csv: below flavour catalog floor
+  skip 1040.csv: below flavour catalog floor
+  skip 1041.csv: below flavour catalog floor
+  skip 1042.csv: below flavour catalog floor
+  skip 1043.csv: below flavour catalog floor
+  skip 1044.csv: below flavour catalog floor
+  skip 1045.csv: below flavour catalog floor
+  skip 1046.csv: below flavour catalog floor
+  skip 1047.csv: below flavour catalog floor
+  skip 1048.csv: below flavour catalog floor
+  skip 1049.csv: below flavour catalog floor
+  skip 105.csv: bad CPU capacity
+  skip 1050.csv: below flavour catalog floor
+  skip 1051.csv: below flavour catalog floor
+  skip 1052.csv: below flavour catalog floor
+  skip 1053.csv: below flavour catalog floor
+  skip 1054.csv: below flavour catalog floor
+  skip 1055.csv: below flavour catalog floor
+  skip 1056.csv: below flavour catalog floor
+  skip 1057.csv: below flavour catalog floor
+  skip 1058.csv: below flavour catalog floor
+  skip 1059.csv: below flavour catalog floor
+  skip 1060.csv: below flavour catalog floor
+  skip 1061.csv: below flavour catalog floor
+  skip 1062.csv: below flavour catalog floor
+  skip 1063.csv: below flavour catalog floor
+  skip 1064.csv: below flavour catalog floor
+  skip 1065.csv: below flavour catalog floor
+  skip 1066.csv: below flavour catalog floor
+  skip 1067.csv: below flavour catalog floor
+  skip 1068.csv: below flavour catalog floor
+  skip 1069.csv: below flavour catalog floor
+  skip 1070.csv: below flavour catalog floor
+  skip 1071.csv: below flavour catalog floor
+  skip 1072.csv: below flavour catalog floor
+  skip 1073.csv: below flavour catalog floor
+  skip 1074.csv: below flavour catalog floor
+  skip 1075.csv: below flavour catalog floor
+  skip 1076.csv: below flavour catalog floor
+  skip 1077.csv: below flavour catalog floor
+  skip 1078.csv: below flavour catalog floor
+  skip 1079.csv: below flavour catalog floor
+  skip 1080.csv: below flavour catalog floor
+  skip 1081.csv: below flavour catalog floor
+  skip 1082.csv: below flavour catalog floor
+  skip 1083.csv: below flavour catalog floor
+  skip 1084.csv: below flavour catalog floor
+  skip 1085.csv: below flavour catalog floor
+  skip 1086.csv: below flavour catalog floor
+  skip 1087.csv: below flavour catalog floor
+  skip 1088.csv: below flavour catalog floor
+  skip 1089.csv: below flavour catalog floor
+  skip 1090.csv: below flavour catalog floor
+  skip 1091.csv: below flavour catalog floor
+  skip 1092.csv: below flavour catalog floor
+  skip 1093.csv: below flavour catalog floor
+  skip 1094.csv: below flavour catalog floor
+  skip 1095.csv: below flavour catalog floor
+  skip 1096.csv: below flavour catalog floor
+  skip 1097.csv: below flavour catalog floor
+  skip 1098.csv: below flavour catalog floor
+  skip 1099.csv: below flavour catalog floor
+  skip 1100.csv: below flavour catalog floor
+  skip 1101.csv: below flavour catalog floor
+  skip 1102.csv: below flavour catalog floor
+  skip 1103.csv: below flavour catalog floor
+  skip 1104.csv: below flavour catalog floor
+  skip 1105.csv: below flavour catalog floor
+  skip 1106.csv: below flavour catalog floor
+  skip 1107.csv: below flavour catalog floor
+  skip 1108.csv: below flavour catalog floor
+  skip 1109.csv: below flavour catalog floor
+  skip 1110.csv: below flavour catalog floor
+  skip 1111.csv: below flavour catalog floor
+  skip 1112.csv: below flavour catalog floor
+  skip 1113.csv: below flavour catalog floor
+  skip 1114.csv: below flavour catalog floor
+  skip 1115.csv: below flavour catalog floor
+  skip 1116.csv: below flavour catalog floor
+  skip 1117.csv: below flavour catalog floor
+  skip 1118.csv: below flavour catalog floor
+  skip 1119.csv: below flavour catalog floor
+  skip 1120.csv: below flavour catalog floor
+  skip 1121.csv: below flavour catalog floor
+  skip 1122.csv: below flavour catalog floor
+  skip 1123.csv: below flavour catalog floor
+  skip 1124.csv: below flavour catalog floor
+  skip 1125.csv: below flavour catalog floor
+  skip 1126.csv: below flavour catalog floor
+  skip 1127.csv: below flavour catalog floor
+  skip 1128.csv: below flavour catalog floor
+  skip 1129.csv: below flavour catalog floor
+  skip 113.csv: bad CPU capacity
+  skip 1130.csv: below flavour catalog floor
+  skip 1131.csv: below flavour catalog floor
+  skip 1132.csv: below flavour catalog floor
+  skip 1133.csv: below flavour catalog floor
+  skip 1134.csv: below flavour catalog floor
+  skip 1135.csv: below flavour catalog floor
+  skip 1136.csv: below flavour catalog floor
+  skip 1137.csv: below flavour catalog floor
+  skip 1138.csv: below flavour catalog floor
+  skip 1139.csv: below flavour catalog floor
+  skip 1140.csv: below flavour catalog floor
+  skip 1141.csv: below flavour catalog floor
+  skip 1142.csv: below flavour catalog floor
+  skip 1143.csv: below flavour catalog floor
+  skip 1144.csv: below flavour catalog floor
+  skip 1145.csv: below flavour catalog floor
+  skip 1146.csv: below flavour catalog floor
+  skip 1147.csv: below flavour catalog floor
+  skip 1148.csv: below flavour catalog floor
+  skip 1149.csv: below flavour catalog floor
+  skip 1150.csv: below flavour catalog floor
+  skip 1151.csv: below flavour catalog floor
+  skip 1152.csv: below flavour catalog floor
+  skip 1153.csv: below flavour catalog floor
+  skip 1154.csv: below flavour catalog floor
+  skip 1155.csv: below flavour catalog floor
+  skip 1156.csv: below flavour catalog floor
+  skip 1157.csv: below flavour catalog floor
+  skip 1158.csv: below flavour catalog floor
+  skip 1159.csv: below flavour catalog floor
+  skip 1160.csv: below flavour catalog floor
+  skip 1161.csv: below flavour catalog floor
+  skip 1162.csv: below flavour catalog floor
+  skip 1163.csv: below flavour catalog floor
+  skip 1164.csv: below flavour catalog floor
+  skip 1165.csv: below flavour catalog floor
+  skip 1166.csv: below flavour catalog floor
+  skip 1167.csv: below flavour catalog floor
+  skip 1168.csv: below flavour catalog floor
+  skip 1169.csv: below flavour catalog floor
+  skip 1170.csv: below flavour catalog floor
+  skip 1171.csv: below flavour catalog floor
+  skip 1172.csv: below flavour catalog floor
+  skip 1173.csv: below flavour catalog floor
+  skip 1174.csv: below flavour catalog floor
+  skip 1175.csv: below flavour catalog floor
+  skip 1176.csv: below flavour catalog floor
+  skip 1177.csv: below flavour catalog floor
+  skip 1178.csv: below flavour catalog floor
+  skip 1179.csv: below flavour catalog floor
+  skip 1180.csv: below flavour catalog floor
+  skip 1181.csv: below flavour catalog floor
+  skip 1182.csv: below flavour catalog floor
+  skip 1183.csv: below flavour catalog floor
+  skip 1184.csv: below flavour catalog floor
+  skip 1185.csv: below flavour catalog floor
+  skip 1186.csv: below flavour catalog floor
+  skip 1187.csv: below flavour catalog floor
+  skip 1188.csv: below flavour catalog floor
+  skip 1189.csv: below flavour catalog floor
+  skip 1190.csv: below flavour catalog floor
+  skip 1191.csv: below flavour catalog floor
+  skip 1192.csv: below flavour catalog floor
+  skip 1193.csv: below flavour catalog floor
+  skip 1194.csv: below flavour catalog floor
+  skip 1195.csv: below flavour catalog floor
+  skip 1196.csv: below flavour catalog floor
+  skip 1197.csv: below flavour catalog floor
+  skip 1198.csv: below flavour catalog floor
+  skip 1199.csv: below flavour catalog floor
+  skip 1200.csv: below flavour catalog floor
+  skip 1201.csv: below flavour catalog floor
+  skip 1202.csv: below flavour catalog floor
+  skip 1203.csv: below flavour catalog floor
+  skip 1204.csv: below flavour catalog floor
+  skip 1205.csv: below flavour catalog floor
+  skip 1206.csv: below flavour catalog floor
+  skip 1207.csv: below flavour catalog floor
+  skip 1208.csv: below flavour catalog floor
+  skip 1209.csv: below flavour catalog floor
+  skip 1210.csv: below flavour catalog floor
+  skip 1211.csv: below flavour catalog floor
+  skip 1212.csv: below flavour catalog floor
+  skip 1214.csv: below flavour catalog floor
+  skip 1215.csv: below flavour catalog floor
+  skip 1216.csv: below flavour catalog floor
+  skip 1219.csv: below flavour catalog floor
+  skip 1223.csv: bad CPU capacity
+  skip 1224.csv: bad CPU capacity
+  skip 1234.csv: bad CPU capacity
+  skip 1235.csv: bad CPU capacity
+  skip 1236.csv: below flavour catalog floor
+  skip 1239.csv: bad CPU capacity
+  skip 1240.csv: bad CPU capacity
+  skip 1241.csv: bad CPU capacity
+  skip 1242.csv: bad CPU capacity
+  skip 1243.csv: bad CPU capacity
+  skip 1244.csv: bad CPU capacity
+  skip 1245.csv: bad CPU capacity
+  skip 1246.csv: bad CPU capacity
+  skip 1247.csv: bad CPU capacity
+  skip 1248.csv: bad CPU capacity
+  skip 1249.csv: bad CPU capacity
+  skip 1250.csv: bad CPU capacity
+  skip 130.csv: bad CPU capacity
+  skip 133.csv: mid-trace capacity shift
+  skip 14.csv: bad CPU capacity
+  skip 153.csv: below flavour catalog floor
+  skip 154.csv: below flavour catalog floor
+  skip 155.csv: below flavour catalog floor
+  skip 157.csv: bad CPU capacity
+  skip 158.csv: below flavour catalog floor
+  skip 159.csv: below flavour catalog floor
+  skip 16.csv: bad CPU capacity
+  skip 160.csv: below flavour catalog floor
+  skip 161.csv: bad CPU capacity
+  skip 162.csv: below flavour catalog floor
+  skip 170.csv: below flavour catalog floor
+  skip 174.csv: below flavour catalog floor
+  skip 176.csv: below flavour catalog floor
+  skip 177.csv: below flavour catalog floor
+  skip 18.csv: bad CPU capacity
+  skip 19.csv: bad CPU capacity
+  skip 2.csv: bad CPU capacity
+  skip 20.csv: bad CPU capacity
+  skip 209.csv: bad CPU capacity
+  skip 211.csv: bad CPU capacity
+  skip 213.csv: bad CPU capacity
+  skip 219.csv: bad CPU capacity
+  skip 220.csv: bad CPU capacity
+  skip 221.csv: bad CPU capacity
+  skip 222.csv: bad CPU capacity
+  skip 223.csv: bad CPU capacity
+  skip 224.csv: bad CPU capacity
+  skip 225.csv: bad CPU capacity
+  skip 226.csv: bad CPU capacity
+  skip 227.csv: bad CPU capacity
+  skip 228.csv: bad CPU capacity
+  skip 229.csv: bad CPU capacity
+  skip 230.csv: bad CPU capacity
+  skip 231.csv: bad CPU capacity
+  skip 232.csv: bad CPU capacity
+  skip 233.csv: bad CPU capacity
+  skip 234.csv: bad CPU capacity
+  skip 235.csv: bad CPU capacity
+  skip 236.csv: bad CPU capacity
+  skip 237.csv: bad CPU capacity
+  skip 238.csv: bad CPU capacity
+  skip 295.csv: mid-trace capacity shift
+  skip 303.csv: bad CPU capacity
+  skip 304.csv: bad CPU capacity
+  skip 305.csv: below flavour catalog floor
+  skip 308.csv: bad CPU capacity
+  skip 309.csv: bad CPU capacity
+  skip 310.csv: bad CPU capacity
+  skip 312.csv: bad CPU capacity
+  skip 313.csv: bad CPU capacity
+  skip 314.csv: below flavour catalog floor
+  skip 316.csv: bad CPU capacity
+  skip 318.csv: bad CPU capacity
+  skip 331.csv: bad CPU capacity
+  skip 333.csv: below flavour catalog floor
+  skip 336.csv: bad CPU capacity
+  skip 338.csv: bad CPU capacity
+  skip 342.csv: bad CPU capacity
+  skip 35.csv: below flavour catalog floor
+  skip 353.csv: below flavour catalog floor
+  skip 36.csv: below flavour catalog floor
+  skip 362.csv: below flavour catalog floor
+  skip 363.csv: below flavour catalog floor
+  skip 365.csv: bad CPU capacity
+  skip 381.csv: below flavour catalog floor
+  skip 389.csv: below flavour catalog floor
+  skip 390.csv: below flavour catalog floor
+  skip 399.csv: below flavour catalog floor
+  skip 4.csv: bad CPU capacity
+  skip 400.csv: below flavour catalog floor
+  skip 41.csv: below flavour catalog floor
+  skip 423.csv: below flavour catalog floor
+  skip 424.csv: below flavour catalog floor
+  skip 425.csv: below flavour catalog floor
+  skip 426.csv: below flavour catalog floor
+  skip 427.csv: below flavour catalog floor
+  skip 428.csv: below flavour catalog floor
+  skip 429.csv: below flavour catalog floor
+  skip 430.csv: below flavour catalog floor
+  skip 431.csv: below flavour catalog floor
+  skip 437.csv: below flavour catalog floor
+  skip 47.csv: below flavour catalog floor
+  skip 48.csv: below flavour catalog floor
+  skip 49.csv: below flavour catalog floor
+  skip 5.csv: bad CPU capacity
+  skip 50.csv: below flavour catalog floor
+  skip 51.csv: below flavour catalog floor
+  skip 52.csv: below flavour catalog floor
+  skip 53.csv: bad CPU capacity
+  skip 536.csv: bad CPU capacity
+  skip 544.csv: below flavour catalog floor
+  skip 548.csv: below flavour catalog floor
+  skip 549.csv: below flavour catalog floor
+  skip 550.csv: below flavour catalog floor
+  skip 552.csv: bad CPU capacity
+  skip 553.csv: below flavour catalog floor
+  skip 555.csv: below flavour catalog floor
+  skip 557.csv: bad CPU capacity
+  skip 558.csv: below flavour catalog floor
+  skip 559.csv: below flavour catalog floor
+  skip 560.csv: below flavour catalog floor
+  skip 575.csv: below flavour catalog floor
+  skip 576.csv: bad CPU capacity
+  skip 577.csv: below flavour catalog floor
+  skip 578.csv: below flavour catalog floor
+  skip 581.csv: below flavour catalog floor
+  skip 586.csv: below flavour catalog floor
+  skip 59.csv: bad CPU capacity
+  skip 590.csv: below flavour catalog floor
+  skip 591.csv: below flavour catalog floor
+  skip 6.csv: bad CPU capacity
+  skip 605.csv: below flavour catalog floor
+  skip 606.csv: below flavour catalog floor
+  skip 668.csv: bad CPU capacity
+  skip 669.csv: below flavour catalog floor
+  skip 671.csv: below flavour catalog floor
+  skip 672.csv: below flavour catalog floor
+  skip 673.csv: below flavour catalog floor
+  skip 674.csv: below flavour catalog floor
+  skip 683.csv: below flavour catalog floor
+  skip 684.csv: below flavour catalog floor
+  skip 691.csv: below flavour catalog floor
+  skip 696.csv: bad CPU capacity
+  skip 699.csv: bad CPU capacity
+  skip 7.csv: bad CPU capacity
+  skip 700.csv: bad CPU capacity
+  skip 702.csv: bad CPU capacity
+  skip 703.csv: below flavour catalog floor
+  skip 704.csv: below flavour catalog floor
+  skip 705.csv: bad CPU capacity
+  skip 729.csv: below flavour catalog floor
+  skip 730.csv: below flavour catalog floor
+  skip 752.csv: below flavour catalog floor
+  skip 753.csv: bad CPU capacity
+  skip 755.csv: below flavour catalog floor
+  skip 756.csv: bad CPU capacity
+  skip 770.csv: below flavour catalog floor
+  skip 771.csv: bad CPU capacity
+  skip 781.csv: below flavour catalog floor
+  skip 784.csv: bad CPU capacity
+  skip 785.csv: bad CPU capacity
+  skip 786.csv: bad CPU capacity
+  skip 787.csv: bad CPU capacity
+  skip 788.csv: bad CPU capacity
+  skip 79.csv: bad CPU capacity
+  skip 790.csv: below flavour catalog floor
+  skip 797.csv: below flavour catalog floor
+  skip 798.csv: below flavour catalog floor
+  skip 8.csv: bad CPU capacity
+  skip 804.csv: bad CPU capacity
+  skip 806.csv: bad CPU capacity
+  skip 811.csv: bad CPU capacity
+  skip 83.csv: bad CPU capacity
+  skip 837.csv: below flavour catalog floor
+  skip 840.csv: below flavour catalog floor
+  skip 841.csv: below flavour catalog floor
+  skip 843.csv: below flavour catalog floor
+  skip 847.csv: below flavour catalog floor
+  skip 852.csv: below flavour catalog floor
+  skip 853.csv: below flavour catalog floor
+  skip 856.csv: below flavour catalog floor
+  skip 859.csv: below flavour catalog floor
+  skip 861.csv: below flavour catalog floor
+  skip 862.csv: below flavour catalog floor
+  skip 863.csv: below flavour catalog floor
+  skip 866.csv: below flavour catalog floor
+  skip 868.csv: below flavour catalog floor
+  skip 87.csv: bad CPU capacity
+  skip 870.csv: below flavour catalog floor
+  skip 896.csv: below flavour catalog floor
+  skip 9.csv: bad CPU capacity
+  skip 902.csv: below flavour catalog floor
+  skip 904.csv: below flavour catalog floor
+  skip 906.csv: below flavour catalog floor
+  skip 907.csv: below flavour catalog floor
+  skip 908.csv: below flavour catalog floor
+  skip 909.csv: below flavour catalog floor
+  skip 910.csv: below flavour catalog floor
+  skip 911.csv: below flavour catalog floor
+  skip 912.csv: below flavour catalog floor
+  skip 913.csv: below flavour catalog floor
+  skip 914.csv: below flavour catalog floor
+  skip 915.csv: below flavour catalog floor
+  skip 916.csv: below flavour catalog floor
+  skip 917.csv: below flavour catalog floor
+  skip 918.csv: below flavour catalog floor
+  skip 919.csv: below flavour catalog floor
+  skip 920.csv: below flavour catalog floor
+  skip 921.csv: below flavour catalog floor
+  skip 922.csv: below flavour catalog floor
+  skip 923.csv: below flavour catalog floor
+  skip 924.csv: below flavour catalog floor
+  skip 925.csv: below flavour catalog floor
+  skip 926.csv: below flavour catalog floor
+  skip 927.csv: below flavour catalog floor
+  skip 928.csv: below flavour catalog floor
+  skip 929.csv: below flavour catalog floor
+  skip 930.csv: below flavour catalog floor
+  skip 931.csv: below flavour catalog floor
+  skip 932.csv: below flavour catalog floor
+  skip 933.csv: below flavour catalog floor
+  skip 934.csv: below flavour catalog floor
+  skip 935.csv: below flavour catalog floor
+  skip 936.csv: bad CPU capacity
+  skip 937.csv: bad CPU capacity
+  skip 938.csv: bad CPU capacity
+  skip 94.csv: below flavour catalog floor
+  skip 948.csv: below flavour catalog floor
+  skip 950.csv: below flavour catalog floor
+  skip 96.csv: bad CPU capacity
+  skip 964.csv: below flavour catalog floor
+  skip 968.csv: below flavour catalog floor
+  skip 973.csv: below flavour catalog floor
+  skip 978.csv: below flavour catalog floor
+  skip 985.csv: below flavour catalog floor
+  skip 986.csv: below flavour catalog floor
+  skip 998.csv: below flavour catalog floor
+  skip 999.csv: below flavour catalog floor
+loading traces from data/fastStorage (21 obs / 9 eval days)
+usable VMs: 792  (idle 425 / non-idle 367, skipped short: 6)
+snapped: True   theta: 1   u: q0.95   eps: [0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.4, 0.6]
+  baseline as_provisioned: done
+  baseline peak: done
+  baseline p95: done
+  baseline peak_capped: done
+  baseline p95_capped: done
+  M(eps=0.001): done
+  M(eps=0.005): done
+  M(eps=0.01): done
+  M(eps=0.05): done
+  M(eps=0.1): done
+  M(eps=0.2): done
+  M(eps=0.4): done
+  M(eps=0.6): done
+
+GPD shape xi (cpu): n=652 min=-6.689 q25=0.087 median=0.549 q75=0.958 max=16.583
+    xi<0 (bounded tail): 139   xi>=0.5 (infinite variance): 345   xi>=1 (infinite mean): 152
+
+GPD shape xi (mem): n=792 min=-1.821 q25=-0.112 median=0.105 q75=0.526 max=1.772
+    xi<0 (bounded tail): 309   xi>=0.5 (infinite variance): 211   xi>=1 (infinite mean): 41
+
+================================================================================================
+FRONTIER  -- reclamation beside OBSERVED violation fraction
+================================================================================================
+   scope resource         method   eps  vms  recl_hours  recl_pct  vms_with_violation  viol_frac  events  exhausted_minutes  n_fallback  n_capped
+ all_vms      cpu as_provisioned   NaN  792         0.0     0.000                   0    0.00000       0                  0           0         0
+ all_vms      mem as_provisioned   NaN  792         0.0     0.000                   0    0.00000       0                  0           0         0
+non_idle      cpu as_provisioned   NaN  367         0.0     0.000                   0    0.00000       0                  0           0         0
+non_idle      mem as_provisioned   NaN  367         0.0     0.000                   0    0.00000       0                  0           0         0
+ all_vms      cpu           peak   NaN  792    259416.0    37.637                  13    0.01641      25               6350           0         0
+ all_vms      mem           peak   NaN  792    795941.4    33.034                  51    0.06439     139               2450           0         0
+non_idle      cpu           peak   NaN  367     80568.0    20.383                  10    0.02725      16               5600           0         0
+non_idle      mem           peak   NaN  367    296596.6    18.267                  26    0.07084      88               1030           0         0
+ all_vms      cpu            p95   NaN  792    322272.0    46.757                  71    0.08965     609              25265           0         0
+ all_vms      mem            p95   NaN  792   1726901.4    71.672                 281    0.35480    5748              74125           0         0
+non_idle      cpu            p95   NaN  367    120096.0    30.383                  64    0.17439     582              23610           0         0
+non_idle      mem            p95   NaN  367   1125604.6    69.323                 221    0.60218    5300              68965           0         0
+ all_vms      cpu    peak_capped   NaN  792    259848.0    37.700                  13    0.01641      25               6350           0         1
+ all_vms      mem    peak_capped   NaN  792   1007487.8    41.814                  51    0.06439     139               2450           0       210
+non_idle      cpu    peak_capped   NaN  367     81000.0    20.492                  10    0.02725      16               5600           0         1
+non_idle      mem    peak_capped   NaN  367    502824.4    30.968                  26    0.07084      88               1030           0       179
+ all_vms      cpu     p95_capped   NaN  792    322272.0    46.757                  71    0.08965     609              25265           0         0
+ all_vms      mem     p95_capped   NaN  792   1727205.3    71.684                 281    0.35480    5748              74125           0         7
+non_idle      cpu     p95_capped   NaN  367    120096.0    30.383                  64    0.17439     582              23610           0         0
+non_idle      mem     p95_capped   NaN  367   1125908.5    69.342                 221    0.60218    5300              68965           0         7
+ all_vms      cpu            evt 0.001  792    115992.0    16.829                   4    0.00505       6                445         140       385
+ all_vms      mem            evt 0.001  792    690051.9    28.639                  21    0.02652      57               1720           0       495
+non_idle      cpu            evt 0.001  367     49032.0    12.404                   4    0.01090       6                445         135       120
+non_idle      mem            evt 0.001  367    388528.7    23.929                  11    0.02997      28                455           0       271
+ all_vms      cpu            evt 0.005  792    131112.0    19.022                   4    0.00505       6                445         140       334
+ all_vms      mem            evt 0.005  792    722534.8    29.987                  24    0.03030      64               1760           0       479
+non_idle      cpu            evt 0.005  367     49248.0    12.459                   4    0.01090       6                445         135       113
+non_idle      mem            evt 0.005  367    399553.3    24.608                  13    0.03542      34                490           0       267
+ all_vms      cpu            evt 0.010  792    140184.0    20.338                   5    0.00631       7                455         140       310
+ all_vms      mem            evt 0.010  792    734776.9    30.495                  25    0.03157      65               1765           0       468
+non_idle      cpu            evt 0.010  367     50976.0    12.896                   4    0.01090       6                445         135       108
+non_idle      mem            evt 0.010  367    404715.8    24.926                  13    0.03542      34                490           0       262
+ all_vms      cpu            evt 0.050  792    177984.0    25.823                   6    0.00758       8                465         140       239
+ all_vms      mem            evt 0.050  792    786731.2    32.652                  33    0.04167      89               1960           0       418
+non_idle      cpu            evt 0.050  367     56592.0    14.317                   4    0.01090       6                445         135        93
+non_idle      mem            evt 0.050  367    425510.8    26.206                  17    0.04632      47                625           0       238
+ all_vms      cpu            evt 0.100  792    189864.0    27.546                   8    0.01010      34               1575         140       211
+ all_vms      mem            evt 0.100  792    815500.9    33.846                  37    0.04672     110               2170           0       391
+non_idle      cpu            evt 0.100  367     58104.0    14.699                   5    0.01362       7                455         135        82
+non_idle      mem            evt 0.100  367    437523.2    26.946                  21    0.05722      67                810           0       225
+ all_vms      cpu            evt 0.200  792    203904.0    29.583                   8    0.01010      29               1650         140       186
+ all_vms      mem            evt 0.200  792    859681.1    35.679                  49    0.06187     142               2455           0       360
+non_idle      cpu            evt 0.200  367     60912.0    15.410                   5    0.01362       7                455         135        76
+non_idle      mem            evt 0.200  367    457868.8    28.199                  32    0.08719      98               1070           0       208
+ all_vms      cpu            evt 0.400  792    216864.0    31.463                  11    0.01389      33               6925         140       154
+ all_vms      mem            evt 0.400  792    924651.6    38.376                  56    0.07071     177               2750           0       317
+non_idle      cpu            evt 0.400  367     65016.0    16.448                   6    0.01635       8               5490         135        63
+non_idle      mem            evt 0.400  367    490321.7    30.198                  36    0.09809     117               1245           0       191
+ all_vms      cpu            evt 0.600  792    226368.0    32.842                  13    0.01641      37               6995         140       131
+ all_vms      mem            evt 0.600  792   1022312.7    42.429                  65    0.08207     220               3195           0       253
+non_idle      cpu            evt 0.600  367     69768.0    17.650                   8    0.02180      12               5560         135        55
+non_idle      mem            evt 0.600  367    531763.1    32.750                  42    0.11444     140               1465           0       173
+
+================================================================================================
+DOMINANCE  -- a baseline dominates if it has <= risk AND >= reclamation
+================================================================================================
+   scope resource   eps  recl_pct  viol_frac dominated_by dominated_by_capped
+ all_vms      cpu 0.001    16.829    0.00505         none                none
+ all_vms      cpu 0.005    19.022    0.00505         none                none
+ all_vms      cpu 0.010    20.338    0.00631         none                none
+ all_vms      cpu 0.050    25.823    0.00758         none                none
+ all_vms      cpu 0.100    27.546    0.01010         none                none
+ all_vms      cpu 0.200    29.583    0.01010         none                none
+ all_vms      cpu 0.400    31.463    0.01389         none                none
+ all_vms      cpu 0.600    32.842    0.01641         peak         peak_capped
+ all_vms      mem 0.001    28.639    0.02652         none                none
+ all_vms      mem 0.005    29.987    0.03030         none                none
+ all_vms      mem 0.010    30.495    0.03157         none                none
+ all_vms      mem 0.050    32.652    0.04167         none                none
+ all_vms      mem 0.100    33.846    0.04672         none                none
+ all_vms      mem 0.200    35.679    0.06187         none                none
+ all_vms      mem 0.400    38.376    0.07071         none         peak_capped
+ all_vms      mem 0.600    42.429    0.08207         none                none
+non_idle      cpu 0.001    12.404    0.01090         none                none
+non_idle      cpu 0.005    12.459    0.01090         none                none
+non_idle      cpu 0.010    12.896    0.01090         none                none
+non_idle      cpu 0.050    14.317    0.01090         none                none
+non_idle      cpu 0.100    14.699    0.01362         none                none
+non_idle      cpu 0.200    15.410    0.01362         none                none
+non_idle      cpu 0.400    16.448    0.01635         none                none
+non_idle      cpu 0.600    17.650    0.02180         none                none
+non_idle      mem 0.001    23.929    0.02997         none                none
+non_idle      mem 0.005    24.608    0.03542         none                none
+non_idle      mem 0.010    24.926    0.03542         none                none
+non_idle      mem 0.050    26.206    0.04632         none                none
+non_idle      mem 0.100    26.946    0.05722         none                none
+non_idle      mem 0.200    28.199    0.08719         none         peak_capped
+non_idle      mem 0.400    30.198    0.09809         none         peak_capped
+non_idle      mem 0.600    32.750    0.11444         none                none
+
+wrote results/frontier.csv, dominance.csv, gpd_shapes.csv, sweep_config.json

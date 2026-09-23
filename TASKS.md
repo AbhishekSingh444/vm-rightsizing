@@ -181,11 +181,146 @@ separately for CPU and memory, plus a list of every disagreeing VM.
 
 ---
 
+# Phase 2 — the proposed method M(eps)
+
+T9 and T10 were executed before this file recorded them; their full write-ups
+are in `ENVIRONMENT_NOTES.md` under the matching headings. They are restated
+here in one line each so the queue reads in order.
+
+## T9 — Implement M(eps)  (done 2026-09-22)
+
+Peaks-over-threshold recommender in `src/baselines.py`, opt-in behind `--evt`,
+capped at the original allocation. Tests in `tests/test_evt.py`.
+
+## T10 — eps sweep and comparative frontier  (done 2026-09-22, theta = 1)
+
+`src/sweep_eps.py`, `src/plot_frontier.py`, `make sweep`. Reclamation reported
+beside **measured** violation fraction, with the baselines as rows on the same
+axes and a dominance test against both the uncapped and the capped baselines.
+
+**Result to carry forward:** H1 is **not evaluable at matched risk** under
+theta = 1. The M(eps) curve never reaches p95's measured violation rate on any
+scope x resource combination, on either the snapped or the unsnapped arm.
+
+---
+
+## T11 — Estimate the extremal index per VM
+
+**Why:** T10's horizon formula treats a 9-day window as `n_eval` independent
+chances to exceed. Five-minute utilisation samples are strongly
+autocorrelated, so that overstates exposure. theta is the correction.
+
+**Method — decided before any T11 result existed.**
+
+- **Primary: the intervals estimator (Ferro and Segers, 2003.)** Chosen
+  because it has **no free parameter** — it is a function of the
+  interexceedance times alone, so there is nothing in it that could be tuned,
+  accidentally or otherwise, against the evaluation window (invariant 4).
+- **Sensitivity check: runs declustering**, with the run length **fixed at 12
+  samples (one hour)**. Runs declustering does have a free parameter, which is
+  precisely why it is secondary. **The run length was fixed at 12 before any
+  T11 result existed** — recorded in `EVT_DEFAULT_RUN_LENGTH` in
+  `src/baselines.py` with the same statement, and asserted in
+  `tests/test_evt.py`. Choosing it after seeing a frontier would make it a
+  fitted parameter.
+- theta is estimated **per VM and per resource, on the observation window
+  only**, at the same threshold u the GPD was fitted over. A VM whose
+  estimator cannot return a value takes theta = 1, which is the conservative
+  direction (more effective trials, larger allocation), and is counted.
+
+```
+make theta                 # intervals, snapped + unsnapped, + figures
+make theta-sensitivity     # runs declustering at run length 12
+```
+
+**Acceptance:**
+- `results/theta_intervals/{frontier,dominance,theta_per_vm,eps_calibration,
+  exploratory_matched_risk,gpd_shapes,sweep_config}.csv|json` exist and are
+  non-empty, and the same under `results/theta_intervals_unsnapped/` and
+  `results/theta_runs/`.
+- Console output captured to `evidence/10_frontier_theta_intervals.txt`,
+  `11_frontier_theta_intervals_unsnapped.txt`,
+  `12_frontier_theta_runs.txt`.
+- The per-VM theta distribution is reported per resource, including how many
+  VMs could not be estimated.
+- eps target against measured risk is reported across the whole sweep.
+- `--theta-method fixed` still reproduces the T10 frontier exactly, so the
+  T12 ablation compares two arms of one code path.
+- `make test` passes in full and the suite has not shrunk.
+
+**Result:** per-VM theta lowers the median effective trial count from 2,592 to
+1,456 on memory (1.8x) and 660 on CPU (3.9x), moves the frontier up and to the
+right,
+and **does not make H1 evaluable** — the curve still never reaches p95's
+measured risk. See `ENVIRONMENT_NOTES.md`, "T11".
+
+---
+
+## T12 — Ablation
+
+Isolate what each component of M(eps) contributes. Each arm is one switch
+flipped against the same pipeline, reported on the same two axes.
+
+**The measured quantity is the shift in reclamation at matched measured risk
+against `peak_capped`** — not reclamation alone. An arm that reclaims more
+because it takes more risk has gained nothing, and reporting reclamation on
+its own is the exact failure this project exists to correct.
+
+```
+make ablation
+```
+
+Ablation list:
+
+- **dependence correction on/off** — per-VM theta (T11) against theta = 1
+  (T10).
+- **estimator** — intervals against runs declustering at the fixed run
+  length.
+- **snapping on/off** — catalog flavours against continuous allocations
+  (diagnostic only; never a reported policy).
+- **cap on/off** — allocation `min(requirement, a_orig)` against the uncapped
+  requirement. The cap is doing a great deal of work (at eps = 0.01 it moved
+  fleet reclamation from -100.3% to +30.5% on memory), so the ablation has to
+  say how much of M(eps)'s reported position is the cap rather than the tail
+  model. The baselines must be capped too in that arm, or the comparison is
+  not like-for-like.
+- **threshold quantile** — u at q0.95 against neighbouring choices.
+
+**Acceptance:**
+- `results/ablation/ablation_matched_risk.csv` exists, with one row per
+  arm x scope x resource and a `shift_vs_reference_pp` column.
+- `results/ablation/frontier_<arm>.csv` for every arm, plus
+  `ablation_theta.csv` and `ablation_config.json`.
+- `figures/ablation_cpu.png` and `figures/ablation_mem.png`, arms overlaid.
+- Console output captured to `evidence/13_ablation.txt`.
+- The `reference` arm reproduces `results/theta_intervals/frontier.csv` and
+  the `theta_off` arm reproduces `results/frontier.csv`, exactly — otherwise
+  the arms are not the same code path as the headline runs.
+- Arms whose comparator moves (`snap_off`, `cap_off`) are flagged in the
+  table, not silently compared.
+- `make test` passes in full and the suite has not shrunk.
+
+**Result:** the **cap is the whole gain**. Removing it costs 47 to 68
+percentage points of matched-risk reclamation; no other switch moves the
+answer by more than 1.9 pp. The dependence correction (T11) has a *negative*
+shift of 0.16 to 0.93 pp — it bought its extra reclamation entirely with
+risk. Threshold choice is the only other switch with real sign: u at q0.98
+gains 5.3 pp on memory (all VMs) but loses 1.1 pp on CPU. See
+`ENVIRONMENT_NOTES.md`, "T12".
+
+**Carried forward from the T11 diagnostic, and not fixable by any arm:** all
+21 memory violators at eps = 0.001 have evaluation-window peaks above their
+observation-window peaks, and 18 of them violate above the finite upper
+endpoint of their own fitted GPD. The low end fails because demand drifted
+between the windows, not because the tail was modelled loosely. No switch in
+this ablation addresses non-stationarity.
+
+---
+
 ## Not in scope yet
 
 Do not start these without asking:
 
-- Implementing the EVT recommender `M(eps)`. That is the next phase, and
-  `ARCHITECTURE.md` describes where it slots in.
-- The Azure replication dataset.
+- The Azure replication dataset (Review 3).
 - Any change to the pre-registered hypothesis thresholds.
+- Re-running the cluster testbed. Section 3 is closed.

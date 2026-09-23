@@ -4,19 +4,17 @@ Project rules for agentic work in this repo. Read this before touching anything.
 
 ## What this project is
 
-Academic capstone: **Risk-Quantified VM Right-Sizing for Private Cloud Capacity Reclamation.**
+Deliverables are graded against a rubric. Current phase is **Review 2 —
+Implementation and Preliminary Results**:
 
-Right-sizing tools report what capacity they reclaim and stay silent about the
-violations that reclamation causes. This project reports both on the same axes,
-and validates the risk estimate against observed violations rather than
-asserting it.
+- **O1 and O2 evidenced (4 marks)** — working code in a version-controlled
+  repository.
+- **Comparative results (3 marks)** — the proposed method and the baselines
+  on the same axes.
+- **Ablation or parameter sweep (2 marks)** — which component causes the gain.
+- **Threats to validity (1 mark)** — what the setup cannot prove.
 
-Deliverables are graded against a rubric. Two components are in scope right now:
-
-- **Testbed evidence (3 marks)** — a running Kubernetes cluster where resource
-  exhaustion is enforced by the kernel, with captured proof.
-- **Baseline reproduced (2 marks)** — peak provisioning and the P95 heuristic
-  run on the real trace and produce numbers.
+Review 1 (testbed, baselines) is complete. Do not modify its evidence.
 
 See `ARCHITECTURE.md` for how the pieces fit and `TASKS.md` for the work queue.
 

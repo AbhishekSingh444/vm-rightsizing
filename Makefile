@@ -16,7 +16,9 @@ SCALE     ?= 0.0625
 MARGIN    ?= 80
 WAVE      ?=
 
-.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures clean
+EPS_OUT   ?= $(RESULTS)/theta_intervals
+
+.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures sweep theta theta-sensitivity ablation diagnose clean
 
 help:
 	@echo "install    install python dependencies"
@@ -31,6 +33,10 @@ help:
 	@echo "apply      generate and apply pod manifests"
 	@echo "evidence   capture rubric artifacts into $(EVIDENCE)/"
 	@echo "figures    generate report figures into $(FIGURES)/"
+	@echo "diagnose   low-eps violator diagnostic + theta feasibility arithmetic"
+	@echo "sweep      T10 eps sweep + frontier at theta = 1 (correction off)"
+	@echo "theta      T11 eps sweep + frontier at per-VM estimated theta"
+	@echo "ablation   T12 one-switch-per-arm ablation + figures"
 	@echo "hooks      install the git hooks (run once per clone)"
 	@echo "check-attribution  scan history for AI attribution trailers"
 
@@ -53,6 +59,7 @@ check-attribution:
 test:
 	cd tests && $(PY) test_baselines.py
 	cd tests && $(PY) test_replay_agent.py
+	cd tests && $(PY) test_evt.py
 
 synthetic:
 	$(PY) src/make_synthetic_traces.py --vms 60 --days 30 --out data/synthetic
@@ -116,6 +123,74 @@ evidence:
 figures:
 	$(PY) src/make_figures.py --results $(RESULTS) --traces $(TRACES) \
 	    --out $(FIGURES)
+
+# --- the proposed method M(eps) ------------------------------------------
+# Every frontier is produced both snapped (the reported policy) and unsnapped
+# (the diagnostic counterfactual), per ARCHITECTURE.md; the unsnapped arm
+# always goes to its own directory so its numbers can never be mistaken for a
+# result.
+
+diagnose:
+	@mkdir -p $(RESULTS) $(EVIDENCE)
+	$(PY) src/diagnose_low_eps.py --traces $(TRACES) --out $(RESULTS) \
+	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) \
+	    | tee $(EVIDENCE)/09_low_eps_diagnostic.txt
+
+# T10: theta = 1, the "correction off" arm of the T12 ablation.
+sweep:
+	@mkdir -p $(RESULTS)/unsnapped $(EVIDENCE) $(FIGURES)
+	$(PY) src/sweep_eps.py --traces $(TRACES) --out $(RESULTS) \
+	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) \
+	    | tee $(EVIDENCE)/07_frontier_snapped.txt
+	$(PY) src/sweep_eps.py --traces $(TRACES) --out $(RESULTS)/unsnapped \
+	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) --unsnapped \
+	    | tee $(EVIDENCE)/08_frontier_unsnapped.txt
+	$(PY) src/plot_frontier.py --frontier $(RESULTS)/frontier.csv \
+	    --out $(FIGURES) --name frontier_snapped
+
+# T11: per-VM theta on the observation window. The intervals estimator is the
+# primary method because it has no free parameter. RUN_LENGTH belongs to the
+# runs estimator only, is fixed at 12 samples (one hour), and is not a tuning
+# knob -- see EVT_DEFAULT_RUN_LENGTH in src/baselines.py.
+THETA_METHOD ?= intervals
+RUN_LENGTH   ?= 12
+theta:
+	@mkdir -p $(EPS_OUT) $(EPS_OUT)_unsnapped $(EVIDENCE) $(FIGURES)
+	$(PY) src/sweep_eps.py --traces $(TRACES) --out $(EPS_OUT) \
+	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) \
+	    --theta-method $(THETA_METHOD) --run-length $(RUN_LENGTH) \
+	    | tee $(EVIDENCE)/10_frontier_theta_intervals.txt
+	$(PY) src/sweep_eps.py --traces $(TRACES) --out $(EPS_OUT)_unsnapped \
+	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) --unsnapped \
+	    --theta-method $(THETA_METHOD) --run-length $(RUN_LENGTH) \
+	    | tee $(EVIDENCE)/11_frontier_theta_intervals_unsnapped.txt
+	$(PY) src/plot_frontier.py --frontier $(EPS_OUT)/frontier.csv \
+	    --out $(FIGURES) --name frontier_theta_intervals \
+	    --series-label "M(eps), per-VM theta ($(THETA_METHOD))" \
+	    --title "Risk-quantified right-sizing frontier (T11: per-VM theta, $(THETA_METHOD) estimator; capped at original allocation)"
+	$(PY) src/plot_frontier.py --frontier $(EPS_OUT)_unsnapped/frontier.csv \
+	    --out $(FIGURES) --name frontier_theta_intervals_unsnapped \
+	    --series-label "M(eps), per-VM theta ($(THETA_METHOD))" \
+	    --title "Frontier, per-VM theta ($(THETA_METHOD)) -- UNSNAPPED diagnostic counterfactual"
+
+# T11 sensitivity check: runs declustering at the pre-fixed run length. Not an
+# H1 result, so it is reported snapped only; its job is to show whether the
+# frontier moves when theta comes from a different estimator.
+theta-sensitivity:
+	@mkdir -p $(RESULTS)/theta_runs $(EVIDENCE)
+	$(PY) src/sweep_eps.py --traces $(TRACES) --out $(RESULTS)/theta_runs \
+	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) \
+	    --theta-method runs --run-length $(RUN_LENGTH) \
+	    | tee $(EVIDENCE)/12_frontier_theta_runs.txt
+
+# T12: one switch flipped per arm, all measured on the same quantity --
+# reclamation at matched measured risk against peak_capped. The table is the
+# deliverable; the figures support it.
+ablation:
+	@mkdir -p $(RESULTS)/ablation $(EVIDENCE) $(FIGURES)
+	$(PY) src/ablation.py --traces $(TRACES) --out $(RESULTS)/ablation \
+	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) \
+	    --figures $(FIGURES) | tee $(EVIDENCE)/13_ablation.txt
 
 clean:
 	rm -rf $(RESULTS)/* testbed/manifests __pycache__ */__pycache__

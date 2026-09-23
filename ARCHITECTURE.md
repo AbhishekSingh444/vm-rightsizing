@@ -298,27 +298,71 @@ sample is faithful. It does mean memory pressure duration is compressed 300x, so
 a slow leak that would OOM after hours of real accumulation may not fire here.
 That is a stated limitation, not a bug to fix.
 
-## Where the proposed method will slot in
+## The proposed method M(eps)
 
-`M(eps)` becomes a fourth policy inside `recommend()` in `src/baselines.py`: fit
-a Generalized Pareto tail to observation-window exceedances, correct for serial
-dependence via the extremal index, and pick the smallest flavour whose predicted
-exhaustion probability over the evaluation window stays under `eps`.
+A fourth policy inside `recommend()`. For each VM and resource, using the
+observation window only:
 
-Everything downstream — replay, violation counting, aggregation, output format —
-is already written and tested against three simpler policies. That ordering is
-deliberate: debugging a GPD fit and a violation counter simultaneously is how
-projects lose a fortnight.
+1. Threshold u at a high quantile of observed demand (default 95th).
+2. Generalized Pareto fit to exceedances above u.
+3. Per-sample exceedance probability for capacity c:
+   p(c) = (n_exceed / n_obs) * GPD_survival(c - u).
+4. Probability of at least one exceedance over the evaluation horizon:
+   P(c) = 1 - (1 - p(c)) ** (theta * n_eval).
+5. The smallest flavour with P(c) <= eps.
 
-Two constraints carry over from work already done. **H1 must be reported both
-snapped and unsnapped** — `docs/DATA_QUALITY.md` shows that 17.0% of the
-all-VMs and 25.3% of the non-idle peak-vs-p95 memory gap is catalog
-quantisation rather than method behaviour, and the same is plausibly true of
-any advantage `M(eps)` claims. `src/baselines.py --unsnapped` produces the
-counterfactual, so this is a flag rather than a fresh analysis. And the information constraint is unchanged:
-`eps` is a stated operating point, not a parameter fitted against the
-evaluation window.
+theta is the extremal index. theta = 1 treats every 5-minute sample as an
+independent chance to exceed; runs declustering sets theta = clusters /
+exceedances, because one 40-minute spike is one event, not eight. Getting
+theta wrong is the most likely reason H2's calibration would fail.
 
-The known risk is the extremal index. Utilisation samples five minutes apart are
-strongly autocorrelated; treating a 9-day window as ~2,600 independent draws
-overstates exposure badly. If calibration fails, check that before the tail fit.
+Known approximation: p(c) counts single-sample exceedances. That matches the
+memory violation rule exactly, and is conservative for CPU, whose rule needs
+two consecutive samples.
+
+Everything downstream — replay, violation counting, aggregation — is the
+existing tested harness, unchanged.
+
+### The cap at the original allocation
+
+The allocation is `min(snapped requirement, original allocation)`, per
+resource.
+
+**This follows from the data model, not from tuning.** `load_vm` clips demand
+to the original allocation, because telemetry reporting above 100% utilisation
+is an artefact rather than a right-sizing opportunity. Demand therefore has
+bounded support at `a_orig`, and `P(demand > c) = 0` for every `c >= a_orig`.
+A GPD extrapolated past `a_orig` predicts exceedance mass where the data model
+permits none, so the uncapped answer contradicts the same clipping rule the
+rest of the pipeline is built on. The cap is that support, expressed in the
+recommender.
+
+Two consequences worth stating in the report:
+
+- Reclamation per resource can never go negative. At worst M(eps) recommends
+  leaving the VM exactly as provisioned.
+- The cap is **not** a floor on risk. It cannot manufacture a violation-free
+  result, because a VM held at `a_orig` is a VM that was never shrunk — and a
+  VM that was never shrunk cannot violate, since demand was clipped to
+  `a_orig` on load.
+
+**The count of capped VMs is a diagnostic, and is reported per resource per
+run.** A VM hits the cap exactly when the fitted tail asks for more capacity
+than the VM was ever provisioned — that is, when the extrapolation has left the
+support of the distribution it was fitted to. A high capped count means the
+tail model is mis-specified for that population, which is a finding about the
+method, not a number to suppress.
+
+**The GPD shape parameter is deliberately left unconstrained.** Clamping `xi`
+would hide exactly the mis-specification the capped count exists to expose. Its
+distribution is reported instead, including the counts above `xi = 0.5`
+(infinite variance) and `xi = 1` (infinite mean).
+
+One asymmetry to disclose: `peak` and `p95` are **not** capped, because they
+are Review 1 results and are frozen. Both can exceed `a_orig` through upward
+snapping (a VM provisioned at 15.93 GB whose p95 snaps to 16). Any comparison
+must account for this; the counts are reported alongside the frontier.
+
+Decided **2026-09-22, before any frontier was computed.** The eps sweep (T10)
+was first run only after this rule was in place and its tests passed, so no
+version of the frontier influenced the choice.

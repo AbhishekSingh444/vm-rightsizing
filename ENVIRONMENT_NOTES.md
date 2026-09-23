@@ -93,3 +93,505 @@ Fill from `make inspect` — these override the assumptions in the docs.
 - Median span (days): 30.0 (min 30.0, max 30.0 among usable VMs)
 - Observation / evaluation split used: 21 obs days / 9 eval days, by wall-clock time via `split_obs_eval()` (not row count — see deviations above)
 - Memory-column cleaning rule applied: not yet applied as a transform for patterns 1/2 (open decision, see `docs/DATA_QUALITY.md`). Patterns 3 (mid-trace capacity shift) and 4 (below flavour catalog floor) are both decided and applied: excluded. Data-quality flag counts among the 792 usable VMs: 0 pinned at provisioned, 5 effectively-zero memory, 164 show CPU usage exceeding provisioned MHz. Idle split: 425 idle / 367 non-idle (was 698/404 before pattern 4 — most of the 347 excluded VMs were idle). **Findings worth a line in the paper**, all in `docs/DATA_QUALITY.md`: (1) one now-excluded VM (`314.csv`, span 0.69 days) had a corrupted first-sample "Memory capacity provisioned" reading (6,144 KB vs. ~8.39M KB in every other row of that file) that alone inflated the original 1250-VM fleet-wide mean memory utilisation from ~9.6% to a previously-reported 24.2%, and p95 from ~18.0% to 65.3%; (2) two VMs (`133.csv`, `295.csv`) had provisioned memory capacity that genuinely changed mid-trace (12.7x and 27.7x), contributing a combined 3.6-12.6% of T2's reclamation totals before being excluded; (3) 347 VMs (27.8% of the fleet) were originally provisioned below the flavour catalog's 2GB/1vCPU floor, making per-VM reclamation percentages meaningless for them (one VM: -419,749% of its own 58MB allocation) — now excluded, pooled/GB-hour-weighted figures used everywhere instead of unweighted per-VM means; (4) **17.0%/25.3%** (all_vms/non_idle) of the peak-vs-p95 memory reclamation gap is flavour-catalog quantisation, not workload behaviour — recomputed on the 792-VM population 2026-09-09 via `src/baselines.py --unsnapped` (was 15.8%/25.1% on the old 1102-VM population); a stated limitation for any future method comparison, including the planned EVT method `M(eps)`. (5) On the same 792 VMs, pooled and unweighted reclamation averages disagree in **sign** for the idle-vs-non-idle comparison — see "Pooled versus unweighted reclamation" in `docs/DATA_QUALITY.md`; this project reports pooled (GB-hour-weighted) everywhere. Full per-VM breakdowns: `results/bad_capacity_characterisation.csv`, `results/below_catalog_floor_scan.csv`, `results/memory_snap_comparison.csv`.
+
+## T9 — M(eps) implemented (2026-09-22)
+
+**What changed.** `src/baselines.py` gains the proposed recommender M(eps) as a
+fourth policy alongside `as_provisioned`, `peak` and `p95`: `fit_gpd_tail`,
+`tail_exceedance_prob`, `horizon_violation_prob`, `evt_required_capacity`,
+`evt_allocation`, `recommend_evt`, and a `policy="evt"` branch in `recommend()`.
+`scipy.stats.genpareto` is now imported by `baselines.py` (already an approved
+dependency; `requirements.txt` unchanged). New tests in `tests/test_evt.py`,
+added to the `make test` target. `tests/test_baselines.py` is untouched.
+
+**Why it is opt-in.** M(eps) runs only under `--evt`. Without the flag the
+three-baseline run is byte-identical to the Review 1 result — verified by
+diffing `per_vm_results.csv` and `baseline_summary.csv` against the committed
+`results/` (both identical). Review 1 evidence is therefore not disturbed by
+this change.
+
+**Why `evt_required_capacity` inverts the horizon formula instead of scanning
+the catalog.** One computation serves both the snapped and the unsnapped (T12)
+paths, so the two can never drift apart. `snap_up` of the continuous answer is
+provably the smallest catalog entry satisfying eps, because p(c) is
+non-increasing in c — the empirical branch below the threshold and the GPD
+branch above it are constructed to agree exactly at c = u (`rate * sf(0) =
+rate`), which `tests/test_evt.py` checks over a 400-point grid.
+
+**n_eval is derived per VM from the OBSERVATION window's median sampling gap**,
+not from the evaluation window and not from the nominal 2,592. Sampling
+intervals vary across this trace, so a fleet constant would be wrong for some
+VMs; taking the count from the evaluation window would break invariant 6.
+Observed range: 2,592 (median, the uniform-5-minute case) up to 10,099.
+
+**Preliminary behaviour at theta = 1 — flagged, not worked around.** At
+eps = 0.01 M(eps) reclaims **negative** capacity fleet-wide (-78.9% vCPU,
+-100.3% memory): it upsizes 468 of 792 VMs on memory and 310 on CPU. Cause is
+twofold and is the pre-registered H2 failure mode in `docs/HYPOTHESES.txt`
+("treating a 9-day window as roughly 2600 independent draws will badly
+overstate exposure"): with theta = 1 the per-sample target is
+p = 1-(1-0.01)^(1/2592) = 3.88e-06, a 1-in-257,902-sample event, and
+extrapolating a fitted GPD that far into the tail is violent where the shape is
+large (fitted memory shape ranges to 1.77, mean 0.20; required capacity reaches
+392,883x the observed peak). Loosening to eps = 0.4 moves reclamation in the
+right direction (-18.5% vCPU, +6.4% memory) and raises violations, so the sweep
+is monotone as designed, but M(eps) at theta = 1 is dominated by both baselines
+across the whole range. This is a result about the uncorrected method, not a
+defect to tune away, and it is the specific thing T11's dependence correction
+exists to address.
+
+**Open design question, deliberately not decided here.** Nothing caps an M(eps)
+allocation at the VM's original allocation, so the recommender can return more
+capacity than the VM already has. Demand is clipped to the original allocation
+on load (`load_vm`), so such a VM cannot violate in the evaluation window
+either — it just books negative reclamation. Capping at `a_orig` is arguable
+(right-sizing should not up-size) but is not in the T9 specification and would
+change the reported frontier, so it is left alone pending a decision.
+
+## Cap at the original allocation (2026-09-22, before any frontier was run)
+
+M(eps) allocations are now `min(snapped requirement, original allocation)`, per
+resource. Rationale and the record that it was decided before T10 was ever
+executed are in `ARCHITECTURE.md`, "The cap at the original allocation". In
+short: `load_vm` clips demand to `a_orig`, so demand has bounded support there
+and `P(demand > c) = 0` for any `c >= a_orig`; an uncapped GPD extrapolation
+predicts mass the data model forbids. The GPD shape is left unconstrained and
+its distribution is reported instead.
+
+Effect at eps = 0.01: fleet reclamation goes from **-78.9% vCPU / -100.3%
+memory** (uncapped, T9) to **+20.3% / +30.5%** (capped). The cap is doing a
+great deal of work, which is itself the finding -- it says the uncorrected tail
+model is badly mis-specified, not that the cap is a clever trick.
+
+## T10 -- eps sweep and comparative frontier (2026-09-22, theta = 1)
+
+`src/sweep_eps.py` (new) sweeps eps over {0.001, 0.005, 0.01, 0.05, 0.1, 0.2,
+0.4, 0.6} and writes `results/frontier.csv`, `dominance.csv`, `gpd_shapes.csv`
+and `sweep_config.json`; `src/plot_frontier.py` (new) draws
+`figures/frontier_snapped.png` and `figures/frontier_unsnapped.png`. Console
+output captured to `evidence/07_frontier_snapped.txt` and
+`evidence/08_frontier_unsnapped.txt`. This is the **correction-off arm** of the
+T12 ablation.
+
+The GPD fit is eps-independent, so the sweep fits once per VM per resource and
+only re-inverts per eps. Violation counting goes through the existing tested
+`count_violations` with each resource's own `min_run`, so invariant 1 is not
+re-implemented.
+
+**Capped baselines added as a diagnostic.** M(eps) is capped; `peak` and `p95`
+as published are not. Upward snapping pushes `peak` above the original
+allocation on **210 of 792 VMs** on memory, booking negative reclamation that
+the cap would remove. Capping `peak` lifts its memory reclamation from
+**33.03% to 41.81%** with violations completely unchanged (a VM allocated at or
+above its original cannot violate, since demand was clipped there). Comparing
+capped M(eps) against uncapped `peak` therefore flatters M(eps) by ~8.8
+percentage points on the memory axis. `peak_capped` / `p95_capped` rows are
+emitted alongside, the dominance test is run against both, and the Review 1
+baselines themselves are untouched. On CPU the correction is negligible
+(+0.06 pp) and unsnapped it is exactly zero, confirming it is purely a
+snapping artefact.
+
+**H1 is NOT EVALUABLE at matched risk under theta = 1.** On all four
+scope x resource combinations, and on both the snapped and unsnapped arms, the
+M(eps) curve never reaches P95's measured violation rate -- so there is no
+matched-risk point at which to compare, and invariant 7 forbids comparing at
+matched eps instead. Snapped, all VMs: P95 sits at 0.0896 CPU / 0.3548 memory
+measured risk, while M(eps) tops out at 0.0164 / 0.0821 at eps = 0.6.
+
+The cause is structural, not a sweep-range oversight. With theta = 1 the
+horizon formula maps eps to a per-sample target
+`p = 1 - (1-eps)^(1/n_eval)`. At eps = 0.6 and n_eval = 2592 that is
+p = 3.53e-04, a 1-in-2,829-sample quantile. P95 is p = 0.05, a 1-in-20
+quantile. Reaching it would require
+`eps = 1 - 0.95^2592 = 1 - 1.8e-58` -- indistinguishable from 1 in double
+precision. **Under theta = 1 the entire usable eps range maps into quantiles
+far more extreme than P95**, so no eps sweep, however wide, makes the
+comparison possible. Extending the sweep past 0.6 would not help and was not
+done.
+
+What M(eps) does do at theta = 1: it extends the frontier **leftward into a
+low-risk region no baseline occupies**. Between 0 and 0.064 measured memory
+risk the only non-trivial operating points available are M(eps)'s. Where the
+baselines actually sit, it does not beat them -- against like-for-like capped
+baselines, `peak_capped` dominates M(eps) at eps = 0.4 (all VMs, memory) and at
+eps = 0.2/0.4 (non-idle, memory), and `peak_capped` dominates on CPU at
+eps = 0.6. No M(eps) point dominates any baseline on either arm.
+
+**GPD shape, unconstrained, as fitted:**
+
+| resource | n | median xi | max xi | xi < 0 | xi >= 0.5 | xi >= 1 |
+|---|---|---|---|---|---|---|
+| CPU | 652 | 0.549 | 16.583 | 139 | 345 | 152 |
+| memory | 792 | 0.105 | 1.772 | 309 | 211 | 41 |
+
+152 CPU fits have an infinite mean (xi >= 1) and one reaches 16.6. That is the
+quantitative statement of tail mis-specification the cap was introduced to
+contain, and it is the strongest available evidence that theta = 1 is the wrong
+model rather than that EVT is the wrong tool.
+
+Fallbacks are unchanged from T9: CPU 140/792 (17.7%, all `few_exceedances`),
+memory 0/792. Cap hits fall as eps rises, from 495 to 253 of 792 on memory.
+
+Suite: **38 -> 57 -> 63** (`test_baselines.py` 35, `test_replay_agent.py` 3,
+`test_evt.py` 25). `test_baselines.py` remains untouched.
+
+## Low-eps diagnostic (2026-09-23, before T11 was implemented)
+
+`src/diagnose_low_eps.py` (new, `make diagnose`) re-derives the eps = 0.001 arm
+and characterises the VMs that violated on memory anyway. Nothing in it changes
+an allocation rule. Output: `evidence/09_low_eps_diagnostic.txt`,
+`results/diag_low_eps_mem_violators.csv`, `results/diag_cpu_shapes_idle.csv`,
+`results/theta_feasibility.csv`.
+
+**21 of 792 VMs (2.65%) violate on memory at a 0.1% target -- 26x
+anti-conservative. All 21 are explained by the observation window, not by the
+tail fit being too loose:**
+
+- **21 of 21 drift.** Every one has an evaluation-window peak above its
+  observation-window peak, median ratio 3.43x and up to 18.6x. The recommender
+  was never shown the level it was later asked to survive. Zero violators had
+  `eval peak <= obs peak`.
+- **19 of 21 have a negative fitted shape**, giving the GPD a *finite* upper
+  endpoint `u - scale/xi`; **18 of those 19 violate above that endpoint**. The
+  fitted model assigns those demands probability exactly zero, so no eps,
+  however small, would have provisioned for them. The failure is not
+  under-provisioning within the model -- it is the model being confidently
+  wrong outside its support.
+- **Idle split is essentially flat**: 10 idle (2.35% of 425) and 11 non-idle
+  (3.00% of 367). This is not an artefact of idle VMs.
+- 0 of 21 were capped at the original allocation and 0 fell back to peak, so
+  neither of those mechanisms is implicated.
+
+**CPU shape xi >= 1 against idle/non-idle.** The 152 infinite-mean CPU fits are
+concentrated in the idle half: 117 of 420 fitted idle VMs (27.9%, median
+xi 0.641) against 35 of 232 fitted non-idle VMs (15.1%, median xi 0.147). The
+explosive CPU shapes are largely a property of near-flat idle series, where the
+few samples above q0.95 carry no usable shape information.
+
+**This is the finding that matters for the method:** at the low end, M(eps)
+fails for a reason `theta` cannot fix. theta rescales the trial count; it does
+nothing about non-stationarity or a mis-specified bounded tail. Lowering theta
+makes the low end worse, as predicted -- see T11 below.
+
+## Feasibility check before T11 (2026-09-23)
+
+The horizon formula maps eps to a per-sample target
+`p = 1 - (1-eps)^(1/(theta * n_eval))`. At the fleet median n_eval = 2,592
+(range 2,592 to 10,099):
+
+| theta | effective trials | p at eps = 0.6 | quantile | x more extreme than P95 | eps needed to reach p = 0.05 |
+|---|---|---|---|---|---|
+| 1.00 | 2592 | 3.53e-04 | 1-in-2,829 | 141.5x | 1 - 1.8e-58 |
+| 0.50 | 1296 | 7.07e-04 | 1-in-1,415 | 70.7x | 1 - 1.3e-29 |
+| 0.20 | 518 | 1.77e-03 | 1-in-566 | 28.3x | 1 - 2.8e-12 |
+| 0.10 | 259 | 3.53e-03 | 1-in-283 | 14.2x | 0.9999983 |
+| 0.05 | 130 | 7.05e-03 | 1-in-142 | 7.1x | 0.99870 |
+
+P95 operates at a per-sample target of exactly 0.05, a 1-in-20 quantile.
+
+**No sensible theta brings M(eps) within reach of P95's per-sample level.**
+Even at theta = 0.05 -- an extremal index implying clusters of 20 samples, well
+below anything the estimators actually return -- the loosest eps in the sweep
+still targets a quantile 7.1x more extreme than P95's, and matching P95 would
+need eps = 0.9987, i.e. an operating point that declares a 99.87% chance of at
+least one violation. Holding eps = 0.6 and solving for theta instead gives
+theta = 17.86/2592 = **0.0069**, which would mean each independent extreme
+episode spans ~145 samples (12 hours) of a 9-day window.
+
+**Consequence, stated before T11 was run:** H1 as pre-registered is not
+evaluable for this method, and stays that way. H1 is not reformulated, the
+comparator is not changed from p95, and the sweep is not extended past
+eps = 0.6. That the method cannot be driven to the baseline's risk level is
+itself the reportable result.
+
+## 2026-09-23 -- TASKS.md gained its T9-T12 sections partway through T11
+
+Stated plainly because it bears on how the pre-registration claims should be
+read. `TASKS.md` ran T1-T8 and then "Not in scope yet"; it gained its Phase 2
+block (T9, T10, T11, T12) **during T11, after T9 and T10 had already been run**.
+Until then the work queue still listed implementing M(eps) as future work while
+M(eps), the cap and the eps sweep all existed. The T9 and T10 entries in that
+block are retrospective one-liners pointing at the write-ups below; the T11 and
+T12 entries were written as the work was done.
+
+**The decisions those sections describe were nonetheless fixed before the
+results they govern**, and the evidence for that ordering is documentary, not
+in the commit graph:
+
+- **The cap at the original allocation.** `ARCHITECTURE.md`, "The cap at the
+  original allocation", closes with: *"Decided 2026-09-22, before any frontier
+  was computed. The eps sweep (T10) was first run only after this rule was in
+  place and its tests passed."* The dated sections of this file corroborate the
+  sequence independently: the T9 entry records the cap as an **open question,
+  deliberately not decided** ("Nothing caps an M(eps) allocation at the VM's
+  original allocation... left alone pending a decision"); the next entry,
+  "Cap at the original allocation (2026-09-22, before any frontier was run)",
+  decides it; the T10 entry, which contains the first frontier, comes after
+  both.
+- **The runs-declustering run length of 12.** Fixed before any T11 result
+  existed, and recorded in three independent places written before the sweep
+  was run: the comment on `EVT_DEFAULT_RUN_LENGTH` in `src/baselines.py`,
+  `TASKS.md` T11, and an assertion in `tests/test_evt.py` that fails if the
+  constant moves.
+
+**What the commit history can and cannot show.** There is exactly one commit,
+`202550e` (2026-09-22 08:29 +0530, "Offline right-sizing pipeline, baselines,
+cluster testbed and Review 1 evidence"). Its tree contains no `sweep_eps.py`,
+no cap and no theta estimation, so it bounds the whole M(eps) phase as
+**after** Review 1 — but every subsequent step is still uncommitted working
+tree, so **commit history does not order T9, T10 and T11 against each other**.
+Anyone checking the pre-registration claims should read the dated entries in
+this file and the `ARCHITECTURE.md` note above, not `git log`. Committing this
+phase in the order the work was done would have made the ordering
+independently verifiable; it was not, and that is a real weakness in the
+provenance record rather than something the documentation fully repairs.
+
+## T11 -- per-VM extremal index (2026-09-23)
+
+**What changed.** `src/baselines.py` gains `exceedance_indices`,
+`estimate_theta_intervals`, `estimate_theta_runs`, `estimate_theta` and the
+constant `EVT_DEFAULT_RUN_LENGTH = 12`. `src/sweep_eps.py` gains
+`--theta-method {fixed,intervals,runs}`, `--run-length`, an `attach_theta`
+pass, and three new outputs (`theta_per_vm.csv`, `eps_calibration.csv`,
+`exploratory_matched_risk.csv`). `src/plot_frontier.py` gains
+`--series-label`, because a frontier drawn at an estimated theta is not the
+same curve as one at theta = 1 and the two are routinely shown together.
+`Makefile` gains `diagnose`, `sweep`, `theta`, `theta-sensitivity`.
+`tests/test_baselines.py` untouched. As on every previous run, `make` is not on
+PATH on this machine, so each target's commands were invoked directly (see the
+2026-09-07 row of the deviations table); the targets exist so the numbers are
+reproducible from the documented entry points.
+
+**The intervals estimator is primary because it has no free parameter.** Runs
+declustering does, so it is the sensitivity check only, and **its run length
+was fixed at 12 samples (one hour) before any T11 result existed** -- recorded
+in the constant's own comment, in `TASKS.md` T11, and asserted by a test.
+
+theta is estimated per VM per resource on the **observation window only**, at
+the same threshold u the GPD was fitted over. 140 CPU VMs have no usable tail
+fit, so no u to decluster against; they fall back to peak regardless and take
+theta = 1. No other VM failed to produce an estimate.
+
+**Regression check:** `--theta-method fixed` reproduces `results/frontier.csv`,
+`dominance.csv` and `gpd_shapes.csv` exactly, so T10 and T11 are two arms of
+one code path rather than two implementations.
+
+**Per-VM theta distribution (intervals, 792 VMs):**
+
+| resource | n | min | q25 | median | q75 | max | median effective trials (theta * n_eval) |
+|---|---|---|---|---|---|---|---|
+| CPU | 652 | 0.0085 | 0.1431 | 0.2509 | 0.4273 | 1.0000 | 660 (from 2,592) |
+| memory | 792 | 0.0098 | 0.1961 | 0.5617 | 0.7819 | 1.0000 | 1,456 (from 2,592) |
+
+Runs declustering at r = 12 gives systematically lower medians (CPU 0.1880,
+memory 0.3717) but the same picture; the frontier it produces sits within
+1.6 percentage points of reclamation and 0.006 of measured risk of the
+intervals frontier at every eps, so the choice of estimator is not what drives
+the result.
+
+**Frontier (snapped, all VMs, memory) -- T10 theta = 1 against T11 per-VM
+theta:**
+
+| eps | recl % (theta=1) | risk (theta=1) | recl % (T11) | risk (T11) |
+|---|---|---|---|---|
+| 0.001 | 28.64 | 0.0265 | 28.85 | 0.0290 |
+| 0.010 | 30.50 | 0.0316 | 31.35 | 0.0391 |
+| 0.100 | 33.85 | 0.0467 | 36.41 | 0.0694 |
+| 0.600 | 42.43 | 0.0821 | 46.67 | 0.1187 |
+
+The correction does what it was built to do -- it buys real reclamation
+(+4.2 pp on memory at eps = 0.6, +7.2 pp on CPU) -- and it moves risk up with
+it. **It does not rescue the low end.** At eps = 0.001 measured memory risk
+rises from 2.65% to 2.90%, exactly as the diagnostic predicted: the low-end
+failures are drift and bounded mis-specified tails, and theta only reduces the
+trial count.
+
+**Calibration (eps target against measured risk), all VMs, intervals:** the
+method is anti-conservative below eps ~ 0.01 on CPU and below eps ~ 0.1 on
+memory, and conservative above. Worst ratios: memory 29x at eps = 0.001
+(measured 0.029 against target 0.001), CPU 5.05x. On non-idle VMs memory is
+35x at eps = 0.001 and stays anti-conservative out to eps = 0.1. Full table in
+`results/theta_intervals/eps_calibration.csv`.
+
+**H1 remains NOT EVALUABLE.** On all four scope x resource combinations, on
+both the snapped and unsnapped arms, and under both estimators, the M(eps)
+curve still never reaches p95's measured violation rate (snapped, all VMs:
+p95 sits at 0.0897 CPU / 0.3548 memory; M(eps) tops out at 0.0354 / 0.1187).
+The feasibility arithmetic above says why, and says no theta the estimators
+could plausibly return would change it. H1 is left as pre-registered.
+
+**Dominance.** Against like-for-like capped baselines, `peak_capped` now
+dominates M(eps) at eps = 0.2 and 0.4 on CPU (all VMs), at eps = 0.2 on CPU
+(non-idle), at eps = 0.1 and 0.2 on memory (all VMs) and at eps = 0.05 and 0.1
+on memory (non-idle). No M(eps) point dominates any baseline. The dependence
+correction moved M(eps) into the region where `peak_capped` lives, and it
+loses there.
+
+### EXPLORATORY -- NOT PRE-REGISTERED
+
+Reclamation at matched **measured** risk against `peak_capped`, the baseline
+the frontier actually overlaps. This is *not* H1: H1 names p95, and
+substituting a different comparator to manufacture a comparison is exactly
+what invariant 7 forbids. It is reported as an observation about where the two
+curves meet. Because the sweep samples eight eps values, the matched-risk
+reading is a linear interpolation between the bracketing points, not a
+measured operating point.
+
+| scope | resource | peak_capped risk | peak_capped recl % | M(eps) recl % at matched risk | gap (pp) |
+|---|---|---|---|---|---|
+| all VMs | CPU | 0.0164 | 37.70 | 32.15 | **-5.56** |
+| all VMs | memory | 0.0644 | 41.81 | 35.52 | **-6.30** |
+| non-idle | CPU | 0.0273 | 20.49 | 18.34 | **-2.15** |
+| non-idle | memory | 0.0708 | 30.97 | 27.36 | **-3.61** |
+
+M(eps) reclaims **less** than `peak_capped` at the same measured risk on all
+four, by 2.2 to 6.3 percentage points. Under runs declustering the gaps are
+the same to within 0.3 pp (-5.21, -5.92, -2.38, -3.33), so this is not an
+estimator artefact. Unsnapped the gaps narrow sharply on memory (-0.83 pp all
+VMs, -1.07 pp non-idle) while widening on CPU (-14.06 pp, -6.07 pp), which
+says most of M(eps)'s memory disadvantage against `peak_capped` is catalog
+quantisation rather than the tail model -- consistent with the 17.0%/25.3%
+quantisation share already measured for the peak-vs-p95 memory gap.
+
+**Suite: 63 -> 74** (`test_baselines.py` 35, `test_replay_agent.py` 3,
+`test_evt.py` 36). The 11 new tests check both estimators against
+hand-computed values (two clusters of five, 996 samples apart: Ferro-Segers
+gives 2*995^2 / (9*995*994) = 0.222446; runs at r = 12 gives 2/10 = 0.2
+exactly), that evenly spaced exceedances clip to theta = 1, that the run
+length is fixed at 12, and that a lower theta never raises an allocation.
+
+## T12 -- ablation (2026-09-23)
+
+**What changed.** `src/ablation.py` and `src/plot_ablation.py` (both new,
+`make ablation`). `src/sweep_eps.py` gains `--no-cap`, has its allocation
+closures (`baseline_allocs`, `provisioned_allocs`, `evt_allocs`) and its
+frontier loop (`run_frontier`) lifted to module level so an ablation arm runs
+the same code as the headline sweep, and gains
+`matched_risk_reclamation`, which is now the single implementation of the
+matched-risk reading used by both files. `tests/test_baselines.py` untouched.
+
+**Bug found and fixed while wiring the threshold arm.** `sweep_eps.load_fleet`
+hardcoded `EVT_THRESHOLD_Q` and `EVT_MIN_EXCEEDANCES`, so `--threshold-q` and
+`--min-exceedances` were accepted, written into `sweep_config.json`, and
+silently ignored. No published number is wrong -- every run so far used the
+default q0.95, which is what the fit actually applied -- but a threshold
+ablation would have produced three identical arms and been reported as
+"threshold does not matter". Fixed, and `tests/test_evt.py` now pins that
+`threshold_q` reaches the fit.
+
+**The measured quantity.** Each arm flips exactly one switch against the same
+reference and is scored on the same number: reclamation at **matched measured
+risk** against `peak_capped`, minus `peak_capped`'s own reclamation
+(`gap_pp`), and then relative to the reference arm's gap
+(`shift_vs_reference_pp`). Reclamation alone would rank an arm that simply
+took more risk as the winner, which is the failure mode this project exists to
+correct. The reading is a linear interpolation between the two bracketing eps
+points, not a measured operating point.
+
+**Cross-check:** the `reference` arm reproduces
+`results/theta_intervals/frontier.csv` and the `theta_off` arm reproduces
+`results/frontier.csv` byte-identically, so the ablation is the same code path
+as T10 and T11 rather than a second implementation of it.
+
+**PRIMARY TABLE -- shift in matched-risk reclamation against `peak_capped`,
+in percentage points. Positive means flipping that switch helped.**
+
+| arm | switch | CPU all | CPU non-idle | mem all | mem non-idle |
+|---|---|---|---|---|---|
+| reference | intervals theta, snapped, capped, u = q0.95 | 0 | 0 | 0 | 0 |
+| theta_off | dependence correction OFF (theta = 1) | **+0.70** | n/a | **+0.93** | **+0.16** |
+| theta_runs | theta from runs declustering, r = 12 | +0.35 | -0.22 | +0.38 | +0.28 |
+| snap_off | catalog snapping OFF *(baseline moves)* | -8.50 | -3.92 | +5.47 | +2.54 |
+| cap_off | cap at original allocation OFF | **-47.03** | **-27.49** | **-67.84** | **-53.44** |
+| u_q90 | GPD threshold at q0.90 | +1.20 | -0.72 | -0.56 | -1.41 |
+| u_q98 | GPD threshold at q0.98 | -1.09 | +1.83 | +5.26 | +2.26 |
+
+`theta_off` on CPU non-idle is **n/a**: at theta = 1 the M(eps) curve tops out
+at 0.0218 measured risk, below `peak_capped`'s 0.0273, so there is no matched
+point. That is the same unreachability that makes H1 unevaluable, showing up
+inside the ablation.
+
+**Which component causes the gain: the cap, and essentially nothing else.**
+Removing it costs 47 to 68 percentage points. Every other switch except the
+threshold moves the answer by under 2 pp. Uncapped, M(eps) does not merely
+reclaim less -- it goes **negative**, to -14.9% vCPU and -32.3% GB-hours at
+matched risk, because the fitted tail asks for more capacity than the VM was
+ever provisioned and the method up-sizes. This is the quantitative version of
+what the capped-VM counts have been saying since T9: the GPD extrapolation
+leaves the support of the distribution it was fitted to on a large fraction of
+VMs, and the cap is what contains it.
+
+Read honestly, that is not a flattering result for M(eps). The cap is a
+constraint from the data model, not a contribution of extreme-value theory. A
+method whose entire measurable advantage comes from "do not allocate more than
+the VM already had" has not yet demonstrated that the tail fit earns its
+complexity. The like-for-like column (uncapped M(eps) against uncapped `peak`)
+gives -52.5 / -29.5 / -65.4 / -44.3 pp, so the conclusion does not depend on
+comparing a capped baseline against an uncapped method.
+
+**The dependence correction does not improve the frontier.** `theta_off` has a
+*positive* shift on three of four combinations: turning T11 OFF is worth
++0.70 pp (CPU all VMs), +0.93 pp (memory all VMs) and +0.16 pp (memory
+non-idle). T11's headline gain -- +4.2 pp memory and +7.2 pp CPU reclamation
+at eps = 0.6 -- was bought entirely with risk. At matched risk the corrected
+and uncorrected methods are the same curve to within one percentage point, and
+if anything the uncorrected one is marginally ahead. The extremal index is
+still the statistically correct thing to do, and the estimates themselves are
+sound (CPU median theta 0.25, memory 0.56); it simply does not move this
+frontier. Reporting the reclamation gain without the matched-risk column would
+have turned a null result into a claimed improvement.
+
+`theta_runs` agrees with `theta_intervals` to within 0.4 pp everywhere, so the
+choice of estimator is not a lever either.
+
+**Threshold quantile is the only other switch with real sign, and it is not
+consistent across resources.** u = q0.98 gains +5.26 pp on memory (all VMs) and
++2.26 pp (non-idle) but loses -1.09 pp on CPU (all VMs); u = q0.90 is worse
+than the reference on three of four. A higher threshold fits a thinner, more
+genuinely extreme tail, which helps where the memory series has one and hurts
+on CPU where 140 VMs already have too few exceedances to fit at all. **q0.95
+was fixed before any of this and is not being changed** -- picking q0.98 now,
+on the basis of this table, would be fitting a hyperparameter against the
+evaluation window and would break invariant 4. It is recorded as a direction
+for future work on a separate dataset, not adopted.
+
+**Snapping.** `snap_off` moves the baseline as well as the method
+(`peak_capped` is itself unsnapped there), so its shift is not directly
+comparable with the other arms' and is flagged as such in the table. The size
+of the move is still informative: unsnapped, the memory gap against
+`peak_capped` nearly closes (+5.47 / +2.54 pp) while the CPU gap widens
+(-8.50 / -3.92 pp), consistent with the 17.0%/25.3% catalog-quantisation share
+already measured for the peak-vs-p95 memory gap. Most of M(eps)'s memory
+disadvantage is the flavour catalog, not the tail model.
+
+**What no arm can fix, and the most important sentence in T12.** The low end
+of the sweep fails for a reason that is not in the ablation list at all. At
+eps = 0.001, **all 21 memory violators have an evaluation-window peak above
+their observation-window peak** (median 3.43x, up to 18.6x), and **18 of the
+19 with a negative fitted shape violate above the finite upper endpoint of
+their own fitted GPD** -- demand the model assigns probability exactly zero.
+That is non-stationarity, not tail mis-specification. Cap, snapping, theta and
+threshold are all statements about how to extrapolate the observation window;
+none of them makes the observation window describe a VM whose demand later
+tripled. Lowering theta makes it strictly worse (2.65% -> 2.90% measured
+memory risk at eps = 0.001), and raising the threshold does not help either,
+because the problem is not where the tail was cut. **Any future work on the
+low end has to address drift -- window length, re-fitting cadence, a
+change-point test -- not the tail model.** Full evidence:
+`evidence/09_low_eps_diagnostic.txt`.
+
+**Figures.** `figures/ablation_cpu.png` and `figures/ablation_mem.png`, one per
+resource, all seven arms overlaid on measured risk against reclamation, with
+`peak_capped` marked. They support the table and are not the answer on their
+own: `u_q98` and `theta_off` sit visibly above the reference curve while being
+level with or behind it at matched risk, which is exactly the confusion the
+matched-risk column exists to prevent. Colour is the validated categorical
+palette in fixed slot order, one slot per arm, never cycled.
+
+**Suite: 74 -> 79** (`test_baselines.py` 35, `test_replay_agent.py` 3,
+`test_evt.py` 41). The five new tests pin the matched-risk reading against a
+hand-computed frontier (two sweep points at risk 0.02/0.06 and reclamation
+20/40, a baseline at risk 0.04 and reclamation 35, giving an interpolated 30
+and a gap of -5), that a baseline outside the swept range returns NaN rather
+than an extrapolation, that the comparator is selectable, and that
+`threshold_q` reaches the fit.

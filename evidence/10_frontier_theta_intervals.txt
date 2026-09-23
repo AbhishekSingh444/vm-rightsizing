@@ -1,0 +1,186 @@
+loading traces from data/fastStorage (21 obs / 9 eval days)
+usable VMs: 792  (idle 425 / non-idle 367, skipped short: 6)
+snapped: True   theta: per-VM via intervals   u: q0.95   eps: [0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.4, 0.6]
+
+================================================================================================
+EXTREMAL INDEX theta -- per VM, observation window only (method: intervals)
+================================================================================================
+  cpu: n=652 estimated   min=0.0085 q25=0.1431 median=0.2509 q75=0.4273 max=1.0000
+       effective trials (theta * n_eval): median=660.3 min=22.1 max=10099.0 (uncorrected n_eval median 2592)
+         0.00 <= theta < 0.05: 57
+         0.05 <= theta < 0.10: 59
+         0.10 <= theta < 0.25: 210
+         0.25 <= theta < 0.50: 211
+         0.50 <= theta < 1.00: 115
+       not estimated, theta=1 used: 140 {'no_fit': 140}
+  mem: n=792 estimated   min=0.0098 q25=0.1961 median=0.5617 q75=0.7819 max=1.0000
+       effective trials (theta * n_eval): median=1456.0 min=25.4 max=10099.0 (uncorrected n_eval median 2592)
+         0.00 <= theta < 0.05: 22
+         0.05 <= theta < 0.10: 100
+         0.10 <= theta < 0.25: 123
+         0.25 <= theta < 0.50: 114
+         0.50 <= theta < 1.00: 433
+  baseline as_provisioned: done
+  baseline peak: done
+  baseline p95: done
+  baseline peak_capped: done
+  baseline p95_capped: done
+  M(eps=0.001): done
+  M(eps=0.005): done
+  M(eps=0.01): done
+  M(eps=0.05): done
+  M(eps=0.1): done
+  M(eps=0.2): done
+  M(eps=0.4): done
+  M(eps=0.6): done
+
+GPD shape xi (cpu): n=652 min=-6.689 q25=0.087 median=0.549 q75=0.958 max=16.583
+    xi<0 (bounded tail): 139   xi>=0.5 (infinite variance): 345   xi>=1 (infinite mean): 152
+
+GPD shape xi (mem): n=792 min=-1.821 q25=-0.112 median=0.105 q75=0.526 max=1.772
+    xi<0 (bounded tail): 309   xi>=0.5 (infinite variance): 211   xi>=1 (infinite mean): 41
+
+================================================================================================
+FRONTIER  -- reclamation beside OBSERVED violation fraction
+================================================================================================
+   scope resource         method   eps  vms  recl_hours  recl_pct  vms_with_violation  viol_frac  events  exhausted_minutes  n_fallback  n_capped
+ all_vms      cpu as_provisioned   NaN  792         0.0     0.000                   0    0.00000       0                  0           0         0
+ all_vms      mem as_provisioned   NaN  792         0.0     0.000                   0    0.00000       0                  0           0         0
+non_idle      cpu as_provisioned   NaN  367         0.0     0.000                   0    0.00000       0                  0           0         0
+non_idle      mem as_provisioned   NaN  367         0.0     0.000                   0    0.00000       0                  0           0         0
+ all_vms      cpu           peak   NaN  792    259416.0    37.637                  13    0.01641      25               6350           0         0
+ all_vms      mem           peak   NaN  792    795941.4    33.034                  51    0.06439     139               2450           0         0
+non_idle      cpu           peak   NaN  367     80568.0    20.383                  10    0.02725      16               5600           0         0
+non_idle      mem           peak   NaN  367    296596.6    18.267                  26    0.07084      88               1030           0         0
+ all_vms      cpu            p95   NaN  792    322272.0    46.757                  71    0.08965     609              25265           0         0
+ all_vms      mem            p95   NaN  792   1726901.4    71.672                 281    0.35480    5748              74125           0         0
+non_idle      cpu            p95   NaN  367    120096.0    30.383                  64    0.17439     582              23610           0         0
+non_idle      mem            p95   NaN  367   1125604.6    69.323                 221    0.60218    5300              68965           0         0
+ all_vms      cpu    peak_capped   NaN  792    259848.0    37.700                  13    0.01641      25               6350           0         1
+ all_vms      mem    peak_capped   NaN  792   1007487.8    41.814                  51    0.06439     139               2450           0       210
+non_idle      cpu    peak_capped   NaN  367     81000.0    20.492                  10    0.02725      16               5600           0         1
+non_idle      mem    peak_capped   NaN  367    502824.4    30.968                  26    0.07084      88               1030           0       179
+ all_vms      cpu     p95_capped   NaN  792    322272.0    46.757                  71    0.08965     609              25265           0         0
+ all_vms      mem     p95_capped   NaN  792   1727205.3    71.684                 281    0.35480    5748              74125           0         7
+non_idle      cpu     p95_capped   NaN  367    120096.0    30.383                  64    0.17439     582              23610           0         0
+non_idle      mem     p95_capped   NaN  367   1125908.5    69.342                 221    0.60218    5300              68965           0         7
+ all_vms      cpu            evt 0.001  792    132408.0    19.210                   4    0.00505       6                445         140       346
+ all_vms      mem            evt 0.001  792    695167.2    28.852                  23    0.02904      63               1755           0       485
+non_idle      cpu            evt 0.001  367     54000.0    13.661                   4    0.01090       6                445         135       112
+non_idle      mem            evt 0.001  367    390071.0    24.024                  13    0.03542      34                490           0       265
+ all_vms      cpu            evt 0.005  792    160056.0    23.222                   7    0.00884      22                925         140       296
+ all_vms      mem            evt 0.005  792    732548.3    30.403                  25    0.03157      68               1805           0       458
+non_idle      cpu            evt 0.005  367     55944.0    14.153                   4    0.01090       6                445         135       103
+non_idle      mem            evt 0.005  367    403550.5    24.854                  14    0.03815      38                535           0       252
+ all_vms      cpu            evt 0.010  792    174528.0    25.321                   8    0.01010      36               1610         140       267
+ all_vms      mem            evt 0.010  792    755316.5    31.348                  31    0.03914      96               2070           0       439
+non_idle      cpu            evt 0.010  367     58752.0    14.863                   5    0.01362       9                490         135        97
+non_idle      mem            evt 0.010  367    418564.5    25.778                  18    0.04905      64                790           0       241
+ all_vms      cpu            evt 0.050  792    204336.0    29.646                  11    0.01389      34               6745         140       202
+ all_vms      mem            evt 0.050  792    834196.7    34.622                  47    0.05934     153               2565           0       373
+non_idle      cpu            evt 0.050  367     64800.0    16.393                   7    0.01907      11               5535         135        78
+non_idle      mem            evt 0.050  367    460290.9    28.348                  31    0.08447     110               1205           0       201
+ all_vms      cpu            evt 0.100  792    215784.0    31.307                  11    0.01389      34               6745         140       172
+ all_vms      mem            evt 0.100  792    877340.3    36.412                  55    0.06944     202               3280           0       345
+non_idle      cpu            evt 0.100  367     67824.0    17.158                   7    0.01907      11               5535         135        64
+non_idle      mem            evt 0.100  367    482237.1    29.700                  38    0.10354     158               1890           0       189
+ all_vms      cpu            evt 0.200  792    230256.0    33.406                  16    0.02020      43               6880         140       132
+ all_vms      mem            evt 0.200  792    919902.5    38.179                  65    0.08207     221               3410           0       320
+non_idle      cpu            evt 0.200  367     75600.0    19.126                  12    0.03270      20               5670         135        57
+non_idle      mem            evt 0.200  367    508246.5    31.302                  45    0.12262     174               2005           0       179
+ all_vms      cpu            evt 0.400  792    258336.0    37.480                  21    0.02652      59               7480         140        82
+ all_vms      mem            evt 0.400  792   1053268.3    43.714                  83    0.10480     358               4525           0       239
+non_idle      cpu            evt 0.400  367     83592.0    21.148                  15    0.04087      33               6030         135        39
+non_idle      mem            evt 0.400  367    572523.1    35.260                  59    0.16076     266               2720           0       157
+ all_vms      cpu            evt 0.600  792    276264.0    40.081                  28    0.03535     108               9775         140        53
+ all_vms      mem            evt 0.600  792   1124547.3    46.672                  94    0.11869     539               7250           0       193
+non_idle      cpu            evt 0.600  367     89424.0    22.623                  21    0.05722      81               8120         135        21
+non_idle      mem            evt 0.600  367    603937.4    37.195                  67    0.18256     439               5375           0       140
+
+================================================================================================
+DOMINANCE  -- a baseline dominates if it has <= risk AND >= reclamation
+================================================================================================
+   scope resource   eps  recl_pct  viol_frac dominated_by dominated_by_capped
+ all_vms      cpu 0.001    19.210    0.00505         none                none
+ all_vms      cpu 0.005    23.222    0.00884         none                none
+ all_vms      cpu 0.010    25.321    0.01010         none                none
+ all_vms      cpu 0.050    29.646    0.01389         none                none
+ all_vms      cpu 0.100    31.307    0.01389         none                none
+ all_vms      cpu 0.200    33.406    0.02020         peak         peak_capped
+ all_vms      cpu 0.400    37.480    0.02652         peak         peak_capped
+ all_vms      cpu 0.600    40.081    0.03535         none                none
+ all_vms      mem 0.001    28.852    0.02904         none                none
+ all_vms      mem 0.005    30.403    0.03157         none                none
+ all_vms      mem 0.010    31.348    0.03914         none                none
+ all_vms      mem 0.050    34.622    0.05934         none                none
+ all_vms      mem 0.100    36.412    0.06944         none         peak_capped
+ all_vms      mem 0.200    38.179    0.08207         none         peak_capped
+ all_vms      mem 0.400    43.714    0.10480         none                none
+ all_vms      mem 0.600    46.672    0.11869         none                none
+non_idle      cpu 0.001    13.661    0.01090         none                none
+non_idle      cpu 0.005    14.153    0.01090         none                none
+non_idle      cpu 0.010    14.863    0.01362         none                none
+non_idle      cpu 0.050    16.393    0.01907         none                none
+non_idle      cpu 0.100    17.158    0.01907         none                none
+non_idle      cpu 0.200    19.126    0.03270         peak         peak_capped
+non_idle      cpu 0.400    21.148    0.04087         none                none
+non_idle      cpu 0.600    22.623    0.05722         none                none
+non_idle      mem 0.001    24.024    0.03542         none                none
+non_idle      mem 0.005    24.854    0.03815         none                none
+non_idle      mem 0.010    25.778    0.04905         none                none
+non_idle      mem 0.050    28.348    0.08447         none         peak_capped
+non_idle      mem 0.100    29.700    0.10354         none         peak_capped
+non_idle      mem 0.200    31.302    0.12262         none                none
+non_idle      mem 0.400    35.260    0.16076         none                none
+non_idle      mem 0.600    37.195    0.18256         none                none
+
+================================================================================================
+CALIBRATION  -- eps TARGET against MEASURED violation fraction
+================================================================================================
+   scope resource  eps_target  measured_viol_frac  vms_with_violation  vms  ratio_measured_over_target         direction  recl_pct
+ all_vms      cpu       0.001             0.00505                   4  792                        5.05 anti-conservative    19.210
+ all_vms      cpu       0.005             0.00884                   7  792                        1.77 anti-conservative    23.222
+ all_vms      cpu       0.010             0.01010                   8  792                        1.01 anti-conservative    25.321
+ all_vms      cpu       0.050             0.01389                  11  792                        0.28      conservative    29.646
+ all_vms      cpu       0.100             0.01389                  11  792                        0.14      conservative    31.307
+ all_vms      cpu       0.200             0.02020                  16  792                        0.10      conservative    33.406
+ all_vms      cpu       0.400             0.02652                  21  792                        0.07      conservative    37.480
+ all_vms      cpu       0.600             0.03535                  28  792                        0.06      conservative    40.081
+ all_vms      mem       0.001             0.02904                  23  792                       29.04 anti-conservative    28.852
+ all_vms      mem       0.005             0.03157                  25  792                        6.31 anti-conservative    30.403
+ all_vms      mem       0.010             0.03914                  31  792                        3.91 anti-conservative    31.348
+ all_vms      mem       0.050             0.05934                  47  792                        1.19 anti-conservative    34.622
+ all_vms      mem       0.100             0.06944                  55  792                        0.69      conservative    36.412
+ all_vms      mem       0.200             0.08207                  65  792                        0.41      conservative    38.179
+ all_vms      mem       0.400             0.10480                  83  792                        0.26      conservative    43.714
+ all_vms      mem       0.600             0.11869                  94  792                        0.20      conservative    46.672
+non_idle      cpu       0.001             0.01090                   4  367                       10.90 anti-conservative    13.661
+non_idle      cpu       0.005             0.01090                   4  367                        2.18 anti-conservative    14.153
+non_idle      cpu       0.010             0.01362                   5  367                        1.36 anti-conservative    14.863
+non_idle      cpu       0.050             0.01907                   7  367                        0.38      conservative    16.393
+non_idle      cpu       0.100             0.01907                   7  367                        0.19      conservative    17.158
+non_idle      cpu       0.200             0.03270                  12  367                        0.16      conservative    19.126
+non_idle      cpu       0.400             0.04087                  15  367                        0.10      conservative    21.148
+non_idle      cpu       0.600             0.05722                  21  367                        0.10      conservative    22.623
+non_idle      mem       0.001             0.03542                  13  367                       35.42 anti-conservative    24.024
+non_idle      mem       0.005             0.03815                  14  367                        7.63 anti-conservative    24.854
+non_idle      mem       0.010             0.04905                  18  367                        4.91 anti-conservative    25.778
+non_idle      mem       0.050             0.08447                  31  367                        1.69 anti-conservative    28.348
+non_idle      mem       0.100             0.10354                  38  367                        1.04 anti-conservative    29.700
+non_idle      mem       0.200             0.12262                  45  367                        0.61      conservative    31.302
+non_idle      mem       0.400             0.16076                  59  367                        0.40      conservative    35.260
+non_idle      mem       0.600             0.18256                  67  367                        0.30      conservative    37.195
+
+================================================================================================
+EXPLORATORY -- NOT PRE-REGISTERED
+Reclamation at matched MEASURED risk against peak_capped, the baseline the
+frontier actually overlaps. H1 names p95 and is unchanged; this is an observation,
+not a hypothesis test, and no pre-registered threshold is adjusted in light of it.
+================================================================================================
+   scope resource  peak_capped_viol_frac  peak_capped_recl_pct  evt_recl_pct_at_matched_risk  gap_pp                                               note
+ all_vms      cpu                0.01641                37.700                        32.145  -5.555 linear interpolation between bracketing eps points
+ all_vms      mem                0.06439                41.814                        35.517  -6.297 linear interpolation between bracketing eps points
+non_idle      cpu                0.02725                20.492                        18.339  -2.153 linear interpolation between bracketing eps points
+non_idle      mem                0.07084                30.968                        27.359  -3.609 linear interpolation between bracketing eps points
+
+wrote results/theta_intervals/frontier.csv, dominance.csv, gpd_shapes.csv, theta_per_vm.csv, eps_calibration.csv, exploratory_matched_risk.csv, sweep_config.json

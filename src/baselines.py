@@ -26,6 +26,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+from scipy.stats import genpareto
 
 # --- Bitbrains fastStorage columns ------------------------------------------
 COL_TS = "Timestamp [ms]"
@@ -41,6 +42,22 @@ FLAVOUR_MEM_GB = [2, 4, 8, 16, 32, 64]
 
 SAMPLE_MINUTES = 5
 CPU_VIOLATION_MIN_RUN = 2  # consecutive samples; memory needs only 1
+
+# --- M(eps): peaks-over-threshold tail model --------------------------------
+# Defaults for the proposed recommender. See ARCHITECTURE.md, "The proposed
+# method M(eps)", and TASKS.md T9.
+EVT_THRESHOLD_Q = 0.95      # threshold u at this quantile of observed demand
+EVT_MIN_EXCEEDANCES = 20    # below this, the tail fit is not trusted
+EVT_DEFAULT_EPS = 0.01
+EVT_DEFAULT_THETA = 1.0     # extremal index; 1.0 = no dependence correction (T11)
+# T11 runs-declustering run length, in samples. 12 samples = one hour at the
+# trace's 5-minute interval. FIXED BEFORE ANY T11 RESULT EXISTED -- runs
+# declustering has a free parameter and the intervals estimator does not,
+# which is exactly why the intervals estimator is the primary method and runs
+# is only the sensitivity check. Choosing r after seeing the frontier would
+# make it a fitted parameter, and fitting anything against the evaluation
+# window breaks CLAUDE.md invariant 4.
+EVT_DEFAULT_RUN_LENGTH = 12
 
 # A capacity-provisioned column is expected to be constant (or near enough)
 # for a given VM. If the first sample is off from the file's own median by
@@ -143,6 +160,324 @@ def detect_capacity_shift(
         "high_level": hi_level,
         "high_share": hi_count / n,
         "ratio": ratio,
+    }
+
+
+def fit_gpd_tail(values, threshold_q=EVT_THRESHOLD_Q, min_exceedances=EVT_MIN_EXCEEDANCES):
+    """Fit a Generalized Pareto tail to exceedances over a high threshold.
+
+    OBSERVATION WINDOW ONLY (CLAUDE.md invariant 6). `values` must never be
+    drawn from the evaluation window.
+
+    The threshold u is the `threshold_q` quantile of `values`; exceedances are
+    the amounts by which samples exceed u. The GPD location is fixed at 0
+    (`floc=0`) because the excesses are already measured relative to u --
+    letting scipy fit a location as well would double-count the threshold and
+    silently shift the tail.
+
+    Returns (fit, None) on success or (None, reason) when the tail cannot be
+    trusted. The caller is expected to fall back to `peak` on a reason, which
+    is the conservative direction: peak reclaims less, so a fallback can only
+    make M(eps) look worse, never better.
+    """
+    v = np.asarray(values, dtype=float)
+    v = v[np.isfinite(v)]
+    n_obs = int(v.size)
+    if n_obs == 0:
+        return None, "no_samples"
+
+    u = float(np.quantile(v, threshold_q))
+    excesses = v[v > u] - u
+    n_exceed = int(excesses.size)
+
+    # Too thin a tail to estimate a shape parameter from. This fires on flat
+    # or heavily quantised series -- a VM pinned at one memory value has a
+    # 95th percentile equal to its maximum and no exceedances at all.
+    if n_exceed < min_exceedances:
+        return None, "few_exceedances"
+
+    try:
+        shape, _loc, scale = genpareto.fit(excesses, floc=0.0)
+    except Exception:
+        return None, "fit_raised"
+
+    if not np.isfinite(shape) or not np.isfinite(scale) or scale <= 0:
+        return None, "fit_degenerate"
+
+    return (
+        {
+            "u": u,
+            "shape": float(shape),
+            "scale": float(scale),
+            "n_exceed": n_exceed,
+            "n_obs": n_obs,
+            # P(X > u) estimated empirically, not from the GPD. This is what
+            # makes p(c) continuous at c = u: rate * sf(0) = rate.
+            "rate": n_exceed / n_obs,
+            "sorted": np.sort(v),
+        },
+        None,
+    )
+
+
+def tail_exceedance_prob(c, fit):
+    """Per-sample probability that demand exceeds capacity c.
+
+        c >= u :  p(c) = rate * GPD_survival(c - u)
+        c <  u :  empirical fraction of observed samples strictly above c
+
+    The two branches agree at c = u, so p(c) is non-increasing in c across the
+    join -- which is what makes the flavour search below well defined.
+    """
+    u = fit["u"]
+    if c >= u:
+        return float(fit["rate"]) * float(
+            genpareto.sf(c - u, fit["shape"], loc=0.0, scale=fit["scale"])
+        )
+    sv = fit["sorted"]
+    return float(np.count_nonzero(sv > c)) / float(sv.size)
+
+
+def exceedance_indices(values, u):
+    """Positions (in sample order) of the samples strictly above u.
+
+    The threshold is the same u the GPD was fitted over, so the tail model and
+    the dependence correction describe the same set of extremes. OBSERVATION
+    WINDOW ONLY (CLAUDE.md invariant 4).
+    """
+    v = np.asarray(values, dtype=float)
+    return np.flatnonzero(np.isfinite(v) & (v > float(u)))
+
+
+def estimate_theta_intervals(values, u):
+    """Extremal index by the intervals estimator (Ferro and Segers, 2003).
+
+    PRIMARY method for T11, because it has no free parameter: the estimator is
+    a function of the interexceedance times alone, so nothing about it can be
+    tuned -- accidentally or otherwise -- against the evaluation window.
+
+    Given exceedance positions S_1 < ... < S_N over u, the interexceedance
+    times are T_i = S_{i+1} - S_i for i = 1..N-1. Ferro and Segers give
+
+        max T <= 2:  theta = min(1,  2 (sum T)^2 / ((N-1) sum T^2))
+        max T >  2:  theta = min(1,  2 (sum (T-1))^2
+                                     / ((N-1) sum (T-1)(T-2)))
+
+    The second form is the bias-corrected one, used whenever any gap exceeds
+    two samples -- which, on five-minute utilisation data, is essentially
+    always. theta near 1 means exceedances arrive independently; theta near 0
+    means they arrive in long clusters, so a 9-day window contains far fewer
+    independent chances to exceed than it has samples.
+
+    Returns (theta, None) or (None, reason) when it cannot be estimated. The
+    caller is expected to fall back to theta = 1, which is the conservative
+    direction: more effective trials means a larger allocation.
+    """
+    idx = exceedance_indices(values, u)
+    n_exceed = int(idx.size)
+    if n_exceed < 2:
+        return None, "too_few_exceedances"
+
+    t = np.diff(idx).astype(float)
+    n = float(n_exceed - 1)
+
+    if t.max() <= 2.0:
+        denom = n * float(np.sum(t * t))
+        numer = 2.0 * float(np.sum(t)) ** 2
+    else:
+        tm1 = t - 1.0
+        denom = n * float(np.sum(tm1 * (t - 2.0)))
+        numer = 2.0 * float(np.sum(tm1)) ** 2
+
+    if not np.isfinite(numer) or not np.isfinite(denom) or denom <= 0:
+        return None, "degenerate"
+
+    theta = numer / denom
+    if not np.isfinite(theta) or theta <= 0:
+        return None, "degenerate"
+    return float(min(1.0, theta)), None
+
+
+def estimate_theta_runs(values, u, run_length=EVT_DEFAULT_RUN_LENGTH):
+    """Extremal index by runs declustering -- the SENSITIVITY CHECK, not the
+    primary estimate.
+
+    Exceedances are grouped into clusters; a gap of more than `run_length`
+    samples between consecutive exceedances starts a new cluster. The estimate
+    is (number of clusters) / (number of exceedances): if every exceedance is
+    its own cluster theta = 1, and if they all fall in one episode
+    theta = 1/N.
+
+    `run_length` is a free parameter, which is the method's weakness and the
+    reason it is secondary. It is fixed at `EVT_DEFAULT_RUN_LENGTH` (one hour)
+    before any T11 result existed; see that constant.
+
+    Returns (theta, None) or (None, reason).
+    """
+    idx = exceedance_indices(values, u)
+    n_exceed = int(idx.size)
+    if n_exceed < 1:
+        return None, "too_few_exceedances"
+    if n_exceed == 1:
+        return 1.0, None
+
+    gaps = np.diff(idx)
+    clusters = 1 + int(np.count_nonzero(gaps > float(run_length)))
+    return float(min(1.0, clusters / n_exceed)), None
+
+
+def estimate_theta(values, u, method="intervals", run_length=EVT_DEFAULT_RUN_LENGTH):
+    """Dispatch to a named extremal-index estimator.
+
+    "fixed" returns None so the caller uses its own theta unchanged -- that is
+    the theta = 1 arm of the T12 ablation, not an estimate.
+    """
+    if method == "fixed":
+        return None, "fixed"
+    if method == "intervals":
+        return estimate_theta_intervals(values, u)
+    if method == "runs":
+        return estimate_theta_runs(values, u, run_length=run_length)
+    raise ValueError(method)
+
+
+def horizon_violation_prob(p, n_eval, theta=EVT_DEFAULT_THETA):
+    """Probability of at least one exceedance over an n_eval-sample horizon.
+
+        P = 1 - (1 - p) ** (theta * n_eval)
+
+    theta is the extremal index. theta = 1 treats every sample as an
+    independent chance to exceed; runs declustering (T11) lowers it, because
+    one 40-minute spike is one event rather than eight. theta is a parameter
+    here precisely so T11 can change it without restructuring anything.
+    """
+    p = min(max(float(p), 0.0), 1.0)
+    trials = float(theta) * float(n_eval)
+    if trials <= 0:
+        return 0.0
+    return float(1.0 - (1.0 - p) ** trials)
+
+
+def evt_required_capacity(fit, eps, n_eval, theta=EVT_DEFAULT_THETA):
+    """Smallest continuous capacity c whose horizon probability P(c) <= eps.
+
+    Inverts horizon_violation_prob analytically rather than scanning, so the
+    snapped and unsnapped (T12) answers come from the same computation:
+
+        p_target = 1 - (1 - eps) ** (1 / (theta * n_eval))
+
+    then invert p(c). Above the threshold that is the GPD inverse survival
+    function; below it -- which happens when eps is loose enough that the
+    target sits inside the body of the distribution -- it is an empirical
+    quantile, since there is no tail model down there to extrapolate with.
+
+    Returns inf when no finite capacity satisfies eps (eps <= 0, or a
+    negative-shape GPD whose support ends before the requirement).
+    """
+    trials = float(theta) * float(n_eval)
+    if trials <= 0:
+        return fit["u"]
+    if eps <= 0:
+        return float("inf")
+    if eps >= 1:
+        return 0.0
+
+    p_target = 1.0 - (1.0 - float(eps)) ** (1.0 / trials)
+
+    if p_target >= fit["rate"]:
+        # Target lies below the threshold: use the empirical distribution.
+        # Smallest observed value c with #{x > c} / n <= p_target.
+        sv = fit["sorted"]
+        n = sv.size
+        k = int(np.floor(p_target * n))  # samples we are allowed to leave above c
+        if k <= 0:
+            return float(sv[-1])
+        if k >= n:
+            return float(sv[0])
+        return float(sv[n - 1 - k])
+
+    q = p_target / fit["rate"]
+    excess = float(genpareto.isf(q, fit["shape"], loc=0.0, scale=fit["scale"]))
+    if not np.isfinite(excess):
+        return float("inf")
+    return fit["u"] + excess
+
+
+def evt_allocation(
+    obs_values,
+    catalog,
+    eps,
+    n_eval,
+    theta=EVT_DEFAULT_THETA,
+    threshold_q=EVT_THRESHOLD_Q,
+    min_exceedances=EVT_MIN_EXCEEDANCES,
+    snap=True,
+    cap=None,
+):
+    """M(eps) allocation for one VM on one resource, observation window only.
+
+    Returns (allocation, diagnostics). `diagnostics["fallback"]` is None on a
+    normal fit, or the reason the VM fell back to peak on this resource.
+    Fallback is per resource: a VM may take a fitted memory allocation and a
+    peak CPU allocation.
+
+    `cap` is the VM's original allocation on this resource. It is the support
+    of the demand distribution, not a tuning knob: `load_vm` clips demand to
+    the original allocation, so demand has bounded support there and
+    P(demand > c) = 0 for every c at or above it. A GPD extrapolated past the
+    cap is therefore predicting mass where the data model permits none, and
+    the capped answer is the one consistent with the model. `capped` in the
+    diagnostics counts how often that happened -- a high count means the
+    fitted tail is badly mis-specified, which is a result worth reporting
+    rather than a number to suppress.
+    """
+    v = np.asarray(obs_values, dtype=float)
+    v = v[np.isfinite(v)]
+    peak = float(v.max()) if v.size else 0.0
+
+    def _apply_cap(alloc):
+        """Returns (allocation, was_capped). Applied after snapping, so the
+        capped result is min(snapped requirement, original allocation) and
+        reclamation on this resource can never go negative: at worst M(eps)
+        recommends leaving the VM exactly as provisioned.
+        """
+        if cap is None or not np.isfinite(cap) or alloc <= cap:
+            return alloc, False
+        return float(cap), True
+
+    def _fallback(reason):
+        alloc, was_capped = _apply_cap(snap_up(peak, catalog) if snap else peak)
+        return alloc, {
+            "fallback": reason,
+            "capped": was_capped,
+            "u": float("nan"),
+            "shape": float("nan"),
+            "scale": float("nan"),
+            "n_exceed": 0,
+            "n_obs": int(v.size),
+            "required_capacity": peak,
+            "peak": peak,
+        }
+
+    fit, reason = fit_gpd_tail(v, threshold_q=threshold_q, min_exceedances=min_exceedances)
+    if fit is None:
+        return _fallback(reason)
+
+    c = evt_required_capacity(fit, eps, n_eval, theta=theta)
+    if not np.isfinite(c):
+        return _fallback("capacity_unbounded")
+
+    alloc, was_capped = _apply_cap(snap_up(c, catalog) if snap else float(c))
+    return alloc, {
+        "fallback": None,
+        "capped": was_capped,
+        "u": fit["u"],
+        "shape": fit["shape"],
+        "scale": fit["scale"],
+        "n_exceed": fit["n_exceed"],
+        "n_obs": fit["n_obs"],
+        "required_capacity": float(c),
+        "peak": peak,
     }
 
 
@@ -279,7 +614,42 @@ def split_obs_eval(df, obs_days, eval_days):
     return obs, ev
 
 
-def recommend(obs, policy, snap=True):
+def recommend_evt(
+    obs,
+    eps,
+    n_eval,
+    theta=EVT_DEFAULT_THETA,
+    threshold_q=EVT_THRESHOLD_Q,
+    min_exceedances=EVT_MIN_EXCEEDANCES,
+    snap=True,
+    cap_cores=None,
+    cap_mem_gb=None,
+):
+    """M(eps) for one VM: returns ((cpu_alloc, mem_alloc), diagnostics).
+
+    Each resource is fitted, capped and falls back independently. Kept
+    separate from `recommend()` so the per-VM tail parameters survive to the
+    diagnostics file -- a frontier point with no record of which VMs fell
+    back or hit the cap is not interpretable.
+
+    `cap_cores` / `cap_mem_gb` are the VM's original allocation; see
+    `evt_allocation` for why the cap is the demand model's support rather
+    than a tuning choice.
+    """
+    cpu_alloc, cpu_diag = evt_allocation(
+        obs["cpu_cores"].to_numpy(), FLAVOUR_VCPU, eps, n_eval,
+        theta=theta, threshold_q=threshold_q,
+        min_exceedances=min_exceedances, snap=snap, cap=cap_cores,
+    )
+    mem_alloc, mem_diag = evt_allocation(
+        obs["mem_gb"].to_numpy(), FLAVOUR_MEM_GB, eps, n_eval,
+        theta=theta, threshold_q=threshold_q,
+        min_exceedances=min_exceedances, snap=snap, cap=cap_mem_gb,
+    )
+    return (cpu_alloc, mem_alloc), {"cpu": cpu_diag, "mem": mem_diag}
+
+
+def recommend(obs, policy, snap=True, **evt_kwargs):
     """Allocation from the observation window under the named policy.
 
     `snap=False` returns the raw continuous value instead of the smallest
@@ -289,6 +659,10 @@ def recommend(obs, policy, snap=True):
     the counterfactual for measuring how much of a reported reclamation gap is
     catalog quantisation rather than workload behaviour. Snapping remains the
     default and the only mode any reported result uses.
+
+    Policy "evt" is the proposed method M(eps) and requires `eps` and
+    `n_eval`; use `recommend_evt` directly when the tail diagnostics are
+    wanted as well.
     """
     if policy == "peak":
         cpu = obs["cpu_cores"].max()
@@ -296,6 +670,9 @@ def recommend(obs, policy, snap=True):
     elif policy == "p95":
         cpu = obs["cpu_cores"].quantile(0.95)
         mem = obs["mem_gb"].quantile(0.95)
+    elif policy == "evt":
+        alloc, _diag = recommend_evt(obs, snap=snap, **evt_kwargs)
+        return alloc
     else:
         raise ValueError(policy)
     if not snap:
@@ -321,6 +698,20 @@ def main():
                          "reclamation gap is catalog quantisation. Write it "
                          "to a separate --out directory; never mix its "
                          "outputs with a reported run.")
+    ap.add_argument("--evt", action="store_true",
+                    help="also run the proposed method M(eps) as a fourth "
+                         "policy. Off by default so the three-baseline run "
+                         "stays byte-identical to the Review 1 result.")
+    ap.add_argument("--eps", type=float, default=EVT_DEFAULT_EPS,
+                    help="M(eps) target probability of at least one "
+                         "exceedance over the evaluation horizon")
+    ap.add_argument("--theta", type=float, default=EVT_DEFAULT_THETA,
+                    help="extremal index for the horizon formula. 1.0 = no "
+                         "dependence correction (T11 makes this per-VM)")
+    ap.add_argument("--evt-threshold-q", type=float, default=EVT_THRESHOLD_Q,
+                    help="quantile of observed demand used as the GPD threshold u")
+    ap.add_argument("--evt-min-exceedances", type=int, default=EVT_MIN_EXCEEDANCES,
+                    help="fall back to peak below this many exceedances over u")
     args = ap.parse_args()
 
     os.makedirs(args.out, exist_ok=True)
@@ -349,7 +740,15 @@ def main():
           f"(~{obs_samples} / ~{eval_samples} samples at uniform 5-min sampling)")
 
     rows = []
+    evt_rows = []
     skipped_short = 0
+    # Fallback tally, per resource -- reported per run (TASKS.md T9).
+    evt_fallbacks = {"cpu": {}, "mem": {}}
+    # Cap tally, per resource. A VM hits the cap when the fitted tail asks for
+    # more capacity than the VM was ever provisioned -- i.e. the extrapolation
+    # left the support of the demand distribution. The count diagnoses tail
+    # mis-specification, so it is reported, not smoothed over.
+    evt_capped = {"cpu": 0, "mem": 0}
 
     for path in paths:
         loaded = load_vm(path)
@@ -374,6 +773,45 @@ def main():
             "peak": recommend(obs, "peak", snap=not args.unsnapped),
             "p95": recommend(obs, "p95", snap=not args.unsnapped),
         }
+
+        if args.evt:
+            # Horizon length in samples, derived from the OBSERVATION
+            # window's own median sampling gap (CLAUDE.md invariant 6). The
+            # nominal 2592 assumes uniform 5-minute sampling, which this
+            # trace does not honour -- intervals vary per VM -- and using a
+            # per-VM count taken from the evaluation window would leak
+            # evaluation data into the recommender.
+            obs_gap = obs["ts"].diff().median()
+            if np.isfinite(obs_gap) and obs_gap > 0:
+                n_eval_vm = max(1, int(round(args.eval_days * 86400.0 / float(obs_gap))))
+            else:
+                n_eval_vm = eval_samples
+
+            evt_alloc, evt_diag = recommend_evt(
+                obs, args.eps, n_eval_vm, theta=args.theta,
+                threshold_q=args.evt_threshold_q,
+                min_exceedances=args.evt_min_exceedances,
+                snap=not args.unsnapped,
+                cap_cores=meta["orig_cores"],
+                cap_mem_gb=meta["orig_mem_gb"],
+            )
+            allocations["evt"] = evt_alloc
+
+            row = {"vm_id": meta["vm_id"], "eps": args.eps, "theta": args.theta,
+                   "n_eval": n_eval_vm}
+            for res in ("cpu", "mem"):
+                d = evt_diag[res]
+                if d["fallback"]:
+                    evt_fallbacks[res][d["fallback"]] = (
+                        evt_fallbacks[res].get(d["fallback"], 0) + 1
+                    )
+                if d["capped"]:
+                    evt_capped[res] += 1
+                for k, v in d.items():
+                    row[f"{res}_{k}"] = v
+            row["cpu_alloc"] = evt_alloc[0]
+            row["mem_alloc"] = evt_alloc[1]
+            evt_rows.append(row)
 
         for method, (cpu_alloc, mem_alloc) in allocations.items():
             cpu_events, cpu_samples = count_violations(
@@ -406,6 +844,35 @@ def main():
     per_vm = pd.DataFrame(rows)
     per_vm.to_csv(os.path.join(args.out, "per_vm_results.csv"), index=False)
 
+    methods = ["as_provisioned", "peak", "p95"] + (["evt"] if args.evt else [])
+
+    if args.evt:
+        evt_df = pd.DataFrame(evt_rows)
+        evt_df.to_csv(os.path.join(args.out, "evt_diagnostics.csv"), index=False)
+        n_evt = len(evt_df)
+        print(f"\nM(eps) tail fits at eps={args.eps:g}, theta={args.theta:g}, "
+              f"u=q{args.evt_threshold_q:g}, min_exceedances={args.evt_min_exceedances}")
+        for res in ("cpu", "mem"):
+            tally = evt_fallbacks[res]
+            total = sum(tally.values())
+            detail = ", ".join(f"{k}={v}" for k, v in sorted(tally.items())) or "none"
+            pct = (100.0 * total / n_evt) if n_evt else 0.0
+            cap_n = evt_capped[res]
+            cap_pct = (100.0 * cap_n / n_evt) if n_evt else 0.0
+            print(f"  {res}: {total}/{n_evt} fell back to peak ({pct:.1f}%) [{detail}]; "
+                  f"{cap_n}/{n_evt} capped at original allocation ({cap_pct:.1f}%)")
+            shapes = evt_df[f"{res}_shape"].dropna()
+            if len(shapes):
+                # The GPD shape is deliberately UNCONSTRAINED. xi >= 0.5 means
+                # infinite variance and xi >= 1 an infinite mean, so the count
+                # above those points is the honest measure of how far the tail
+                # model is being pushed.
+                print(f"        shape xi: n={len(shapes)} min={shapes.min():.3f} "
+                      f"q25={shapes.quantile(.25):.3f} median={shapes.median():.3f} "
+                      f"q75={shapes.quantile(.75):.3f} max={shapes.max():.3f} | "
+                      f"xi<0: {(shapes < 0).sum()}, xi>=0.5: {(shapes >= 0.5).sum()}, "
+                      f"xi>=1 (infinite mean): {(shapes >= 1).sum()}")
+
     n_vms = per_vm["vm_id"].nunique()
     n_idle = per_vm[per_vm["idle"]]["vm_id"].nunique()
     print(
@@ -422,7 +889,7 @@ def main():
             frame[frame["method"] == "as_provisioned"]["orig_mem_gb"].sum() * eval_hours
         )
         out = []
-        for method in ["as_provisioned", "peak", "p95"]:
+        for method in methods:
             sub = frame[frame["method"] == method]
             if sub.empty:
                 continue
@@ -494,6 +961,22 @@ def main():
                 "vms_skipped_short": skipped_short,
                 # False marks a diagnostic counterfactual run, not a result.
                 "snapped_to_catalog": not args.unsnapped,
+                "evt_enabled": bool(args.evt),
+                **(
+                    {
+                        "evt_eps": args.eps,
+                        "evt_theta": args.theta,
+                        "evt_threshold_q": args.evt_threshold_q,
+                        "evt_min_exceedances": args.evt_min_exceedances,
+                        "evt_fallbacks_cpu": evt_fallbacks["cpu"],
+                        "evt_fallbacks_mem": evt_fallbacks["mem"],
+                        "evt_capped_at_orig_cpu": evt_capped["cpu"],
+                        "evt_capped_at_orig_mem": evt_capped["mem"],
+                        "evt_capped_at_orig": True,
+                    }
+                    if args.evt
+                    else {}
+                ),
             },
             fh,
             indent=2,
