@@ -1,0 +1,15 @@
+vm_id,pred_cpu,samples,samples_total,censored,limit_cores,max_demand_cores,pct_demand_over_limit,obs_deadline,pct_deadline,maxrun_deadline,obs_any,pct_any,maxrun_any,obs_saturated,pct_saturated,maxrun_saturated,obs_heavy,pct_heavy,maxrun_heavy
+126,True,396,2576,True,0.0625,0.0749,6.3,True,83.6,45,True,83.6,45,True,65.2,16,True,66.4,16
+142,True,2592,2592,False,0.0625,0.1002,0.4,True,77.9,250,True,77.3,250,True,38.3,103,True,30.6,66
+143,True,1,2576,True,0.0625,0.0268,0.0,False,100.0,1,False,100.0,1,False,100.0,1,False,100.0,1
+215,False,30,5242,True,0.5,0.5206,3.3,True,10.0,2,True,10.0,2,False,3.3,1,False,0.0,0
+324,True,2591,2591,False,0.0625,0.1119,2.4,True,64.1,68,True,62.6,68,True,28.4,52,True,20.3,47
+332,False,2591,2591,False,0.0625,0.0269,0.0,True,97.8,254,True,97.8,254,True,97.7,254,True,97.7,254
+340,False,1785,2580,True,0.0625,0.0332,0.0,True,91.3,130,True,91.0,130,True,62.7,53,True,54.9,53
+344,True,2580,2580,False,0.0625,0.1207,1.5,True,91.7,93,True,91.7,93,True,64.3,45,True,64.8,45
+643,False,7776,7776,False,0.25,0.0,0.0,False,1.1,1,False,1.1,1,False,0.0,0,False,0.0,0
+697,False,2579,2579,False,0.0625,0.0069,0.0,True,0.7,4,True,0.7,4,False,0.0,0,False,0.0,0
+951,True,2577,2577,False,0.0625,0.1331,1.4,True,22.0,11,True,20.9,11,True,11.4,5,True,10.8,5
+971,True,2592,2592,False,0.125,0.2655,5.5,True,99.5,889,True,99.5,889,True,86.6,229,True,79.1,191
+987,False,2592,2592,False,0.0625,0.0206,0.0,True,31.1,13,True,30.2,13,True,6.6,6,True,3.4,6
+1229,True,2592,2592,False,0.0625,0.1601,3.0,True,75.1,248,True,75.1,248,True,57.9,204,True,55.7,162

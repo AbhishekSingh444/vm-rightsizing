@@ -516,6 +516,13 @@ Services Inc."
   unable to replicate any memory claim. If T18 was dropped, replication is
   stated as pending, with the reason.
 
+**Page criterion exceeded (2026-10-22):** the PDF is 9 pages, one over the
+6-8 limit. Compressing §3 and §4 did not reach 8. The remaining candidate cut,
+§6's "findings that survive" bullets, would have removed the multi-split drift
+evidence, which exists only in §6 and is not reported in §5, and it still
+rendered at 9 pages. The extra page is kept pending a check of the limit with
+the guide.
+
 ---
 
 ## Not in scope yet
