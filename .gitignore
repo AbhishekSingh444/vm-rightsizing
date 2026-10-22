@@ -20,3 +20,6 @@ ENVIRONMENT_NOTES.md
 # evidence/ IS committed -- it is the graded deliverable.
 !evidence/
 cols.txt
+
+# make demo output -- synthetic, regenerable.
+demo_out/

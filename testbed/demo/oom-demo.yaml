@@ -1,0 +1,67 @@
+# T19 `make demo-kind`: one pod the kernel OOMKills, on screen, in under a
+# minute. Same replay image and agent as the real waves, but a hand-written
+# 10-sample trace shipped in a ConfigMap rather than a staged Bitbrains VM, so
+# nothing in data/traces is touched and `app: rightsizing-demo` keeps it out of
+# collect_evidence.sh (which selects app=rightsizing-replay).
+#
+# Memory demand is 32 MiB for 4 samples, 64 MiB for 2, then 512 MiB against a
+# 256 MiB limit. The first two levels plus the agent's measured ~60 MiB of
+# overhead (ENVIRONMENT_NOTES.md, MARGIN_MIB) fit; the third cannot. CPU
+# demand is 0.1 core throughout, so CPU never interferes.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rs-demo-trace
+  labels:
+    app: rightsizing-demo
+data:
+  demo.csv: |
+    Timestamp [ms];	CPU cores;	CPU capacity provisioned [MHZ];	CPU usage [MHZ];	Memory capacity provisioned [KB];	Memory usage [KB]
+    0;	1;	2000;	200;	1048576;	32768
+    300;	1;	2000;	200;	1048576;	32768
+    600;	1;	2000;	200;	1048576;	32768
+    900;	1;	2000;	200;	1048576;	32768
+    1200;	1;	2000;	200;	1048576;	65536
+    1500;	1;	2000;	200;	1048576;	65536
+    1800;	1;	2000;	200;	1048576;	524288
+    2100;	1;	2000;	200;	1048576;	524288
+    2400;	1;	2000;	200;	1048576;	524288
+    2700;	1;	2000;	200;	1048576;	524288
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rs-demo-oom
+  labels:
+    app: rightsizing-demo
+spec:
+  restartPolicy: Never
+  containers:
+    - name: replay
+      image: rightsizing/replay:latest
+      imagePullPolicy: IfNotPresent
+      env:
+        - name: TRACE_FILE
+          value: /trace/demo.csv
+        - name: VM_ID
+          value: "demo"
+        - name: SLICE_SECONDS
+          value: "2.0"
+        - name: LIMIT_CORES
+          value: "0.5"
+      resources:
+        requests:
+          cpu: "0.5"
+          memory: "256Mi"
+        limits:
+          cpu: "0.5"
+          memory: "256Mi"
+      volumeMounts:
+        - name: trace
+          mountPath: /trace
+          readOnly: true
+  volumes:
+    - name: trace
+      configMap:
+        name: rs-demo-trace

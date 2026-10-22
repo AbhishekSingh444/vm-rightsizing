@@ -1079,6 +1079,48 @@ demand leaves the observed range, and that happens to 35-39% of VMs in every
 14-day split (30% in the 21-day headline)." The T12 text and the `TASKS.md` T12 Result are left as written.
 The paper uses this wording.
 
+## T19 -- `make demo` (2026-10-22)
+
+`make demo` runs synthetic traces (60 VMs, 30 days, `--seed 42`) through
+`baselines.py`, `sweep_eps.py` at the headline configuration (per-VM theta,
+intervals estimator, 21/9 split, snapped) and `plot_frontier.py`. It prints
+the frontier table and the wall-clock time. No Docker, kind or dataset is
+needed. All outputs go under `DEMO_OUT` (default `demo_out/`, gitignored),
+never under `results/`, so a synthetic number can never sit beside a real one.
+
+**Timed:** 31 s wall clock from a fresh login shell on this laptop
+(`evidence/19_demo.txt`; `time` reports 30.9 s). The target is 120 s. Roughly:
+4 s generation, 10 s baselines, 14 s sweep, 3 s plot.
+
+**Behaviour change, `plot_frontier.py --source`.** The figure subtitle
+hard-coded "Trace: Bitbrains GWA-T-12 fastStorage, graciously provided by...".
+On the first demo run the synthetic figure therefore credited a dataset it
+never read. `--source` now sets that line, and its default is the old string
+unchanged. Checked: `frontier_snapped` redrawn with the pre-change script and
+with the new one is byte-identical, so no existing figure changes.
+
+**Run as `mingw32-make PY=python demo`** on this machine, for the same reason
+as the 2026-09-07 entry: there is no `make` or `python3` on PATH.
+
+**`make demo-kind`** applies `testbed/demo/oom-demo.yaml`: the real replay
+image, plus a 10-sample hand-written trace shipped in a ConfigMap. Memory
+demand is 32 then 64 then 512 MiB, against a 256 MiB limit. Nothing is staged
+into `data/traces`. The label `app: rightsizing-demo` keeps the pod out of
+`collect_evidence.sh`. The cluster was recreated for this with `make cluster
+image`, since none existed. `make image` produced a new image ID because the
+previous build was six weeks old. Result (`evidence/19_demo_kind.txt`): the pod
+reached `OOMKilled`, exit code 137, 15 s after it started, on the first
+512 MiB sample. The whole target took 22.6 s.
+
+**Surprise, logged and not acted on:** sample 4 is the step from 32 to 64 MiB.
+CPU demand there is 0.1 core against a 0.5-core limit, yet that sample logged
+3 throttled periods (83 ms) and `cpu_exhausted: true`. The likely cause is that
+touching every page of the new 64 MiB buffer is CPU work the trace does not
+count. This means a step up in memory can register as a CPU violation in the
+cluster even when trace CPU demand is far below its limit. It may explain some
+CPU disagreements in the T8 offline-versus-kernel table. That was not checked
+here.
+
 ## Threats to validity
 
 What this setup cannot prove, kept here rather than only in the report so the

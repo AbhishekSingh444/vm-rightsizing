@@ -18,7 +18,7 @@ WAVE      ?=
 
 EPS_OUT   ?= $(RESULTS)/theta_intervals
 
-.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures sweep theta theta-sensitivity ablation hypotheses bootstrap multisplit diagnose clean
+.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures sweep theta theta-sensitivity ablation hypotheses bootstrap multisplit demo demo-kind diagnose clean
 
 help:
 	@echo "install    install python dependencies"
@@ -40,6 +40,8 @@ help:
 	@echo "hypotheses T15 H2 (ECE + binomial intervals) and H3 (zero-risk reclamation)"
 	@echo "bootstrap  T16 95% intervals over VMs + every figure redrawn with them (SEED=$(SEED) B=$(B))"
 	@echo "multisplit T17 multi-split sensitivity analysis (headline 21/9 unchanged)"
+	@echo "demo       T19 synthetic end-to-end run, offline, under two minutes (DEMO_OUT=$(DEMO_OUT))"
+	@echo "demo-kind  T19 optional: one pod OOMKilled on the kind cluster (needs cluster + image)"
 	@echo "hooks      install the git hooks (run once per clone)"
 	@echo "check-attribution  scan history for AI attribution trailers"
 
@@ -255,6 +257,38 @@ multisplit:
 	@mkdir -p $(RESULTS)/multisplit $(EVIDENCE)
 	$(PY) src/multisplit.py --traces $(TRACES) --results $(RESULTS) \
 	    --out $(RESULTS)/multisplit | tee $(EVIDENCE)/17_multisplit.txt
+
+# T19: the whole offline pipeline on synthetic traces -- no Docker, no kind,
+# no dataset. Writes only under DEMO_OUT, never results/, so a synthetic number
+# can never land beside a real one. The frontier table is printed by the sweep.
+DEMO_OUT  ?= demo_out
+DEMO_SEED ?= 42
+demo:
+	@start=$$(date +%s); \
+	rm -rf $(DEMO_OUT) && mkdir -p $(DEMO_OUT) && \
+	$(PY) src/make_synthetic_traces.py --vms 60 --days 30 --seed $(DEMO_SEED) \
+	    --out $(DEMO_OUT)/traces && \
+	$(PY) src/baselines.py --traces $(DEMO_OUT)/traces --out $(DEMO_OUT)/baselines \
+	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) && \
+	$(PY) src/sweep_eps.py --traces $(DEMO_OUT)/traces --out $(DEMO_OUT)/frontier \
+	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) \
+	    --theta-method $(THETA_METHOD) --run-length $(RUN_LENGTH) && \
+	$(PY) src/plot_frontier.py --frontier $(DEMO_OUT)/frontier/frontier.csv \
+	    --out $(DEMO_OUT) --name frontier_demo \
+	    --series-label "M(eps), per-VM theta ($(THETA_METHOD))" \
+	    --title "SYNTHETIC DEMO -- frontier on 60 generated VMs (seed $(DEMO_SEED)), not a result" \
+	    --source "Traces: synthetic, src/make_synthetic_traces.py --seed $(DEMO_SEED). No real data." && \
+	echo "" && echo "demo wall clock: $$(( $$(date +%s) - start )) s (target: under 120 s)"
+
+# T19, optional and separate: one pod OOMKilled by the kernel, on screen.
+# Needs `make cluster image` first. The trace ships in a ConfigMap, so nothing
+# is staged into data/traces and the real waves are untouched.
+demo-kind:
+	kubectl delete -f testbed/demo/oom-demo.yaml --ignore-not-found --wait=true
+	kubectl apply -f testbed/demo/oom-demo.yaml
+	kubectl wait pod/rs-demo-oom --timeout=120s \
+	    --for=jsonpath='{.status.containerStatuses[0].state.terminated.reason}'=OOMKilled
+	kubectl get pods -l app=rightsizing-demo
 
 clean:
 	rm -rf $(RESULTS)/* testbed/manifests __pycache__ */__pycache__

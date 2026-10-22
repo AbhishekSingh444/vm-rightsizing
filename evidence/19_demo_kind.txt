@@ -1,0 +1,14 @@
+kubectl delete -f testbed/demo/oom-demo.yaml --ignore-not-found --wait=true
+kubectl apply -f testbed/demo/oom-demo.yaml
+configmap/rs-demo-trace created
+pod/rs-demo-oom created
+kubectl wait pod/rs-demo-oom --timeout=120s \
+    --for=jsonpath='{.status.containerStatuses[0].state.terminated.reason}'=OOMKilled
+pod/rs-demo-oom condition met
+kubectl get pods -l app=rightsizing-demo
+NAME          READY   STATUS      RESTARTS   AGE
+rs-demo-oom   0/1     OOMKilled   0          21s
+
+real	0m22.578s
+user	0m0.000s
+sys	0m0.016s

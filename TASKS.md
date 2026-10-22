@@ -471,7 +471,7 @@ pipeline (baselines, sweep, theta, hypotheses, bootstrap).
 
 ---
 
-## T19 — `make demo`, under two minutes
+## T19 — `make demo`, under two minutes  (done 2026-10-22)
 
 Synthetic traces through baselines, M(eps) sweep, and a frontier plot.
 
@@ -485,6 +485,15 @@ Synthetic traces through baselines, M(eps) sweep, and a frontier plot.
 - It produces a frontier PNG and prints the frontier table.
 - `make demo-kind` shows one pod reaching `OOMKilled` in `kubectl get pods`.
 - `make test` passes in full and the suite has not shrunk.
+
+**Result:** `make demo` takes 31 s from a fresh shell (`evidence/19_demo.txt`)
+and writes `demo_out/frontier_demo.png`. `make demo-kind` takes 22.6 s, and
+`rs-demo-oom` reaches `OOMKilled` with exit code 137
+(`evidence/19_demo_kind.txt`). Suite: 117/117 passed. `plot_frontier.py`
+gained `--source`, so the synthetic figure no longer credits Bitbrains. The
+default is unchanged and checked byte-identical. Surprise: the 32 to 64 MiB
+step logged CPU throttling at 0.1 core of demand, which is page-touch cost.
+See `ENVIRONMENT_NOTES.md`, "T19".
 
 ---
 

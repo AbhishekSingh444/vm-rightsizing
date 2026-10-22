@@ -152,6 +152,13 @@ def main():
                          "intervals on every point. Its run_config.json "
                          "(same directory) supplies the seed and resample "
                          "count printed on the figure.")
+    ap.add_argument("--source", default="Trace: Bitbrains GWA-T-12 fastStorage, "
+                                        "graciously provided by Bitbrains IT "
+                                        "Services Inc.",
+                    help="data-source line printed under the title. The default "
+                         "is the licence acknowledgement for the real trace; "
+                         "override it for any figure not drawn from that trace "
+                         "(the T19 synthetic demo) so it credits what it used.")
     args = ap.parse_args()
 
     os.makedirs(args.out, exist_ok=True)
@@ -222,8 +229,7 @@ def main():
              "Up and to the left is better. Labels on the blue curve are eps. "
              "Filled baseline markers are capped at the original allocation, "
              "matching M(eps); hollow are uncapped.\n"
-             + ci_note + "Trace: Bitbrains GWA-T-12 fastStorage, graciously "
-             "provided by Bitbrains IT Services Inc.",
+             + ci_note + args.source,
              fontsize=8.5, color=INK_2, ha="left")
 
     fig.tight_layout(rect=[0, 0.045, 1, 0.885 if ci_note else 0.905])
