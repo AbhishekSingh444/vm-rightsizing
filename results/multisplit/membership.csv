@@ -1,0 +1,7 @@
+split,vms,skipped_short,idle,non_idle,fleet_drift_cpu_all_vms,fleet_drift_cpu_non_idle,fleet_drift_mem_all_vms,fleet_drift_mem_non_idle,idle_flag_differs_from_headline,became_non_idle,became_idle
+headline,792,6,425,367,184/792,74/367,235/792,119/367,0,0,0
+A0,795,3,407,388,206/795,81/388,275/795,104/388,46,33,13
+A1,794,4,422,372,238/794,89/372,298/794,115/372,26,15,11
+A2,794,4,418,376,234/794,86/376,305/794,129/376,34,21,13
+A3,792,6,410,382,230/792,91/382,305/792,163/382,43,29,14
+B7,792,6,481,311,358/792,125/311,402/792,182/311,72,8,64

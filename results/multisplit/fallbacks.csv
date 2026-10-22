@@ -1,0 +1,25 @@
+split,scope,resource,vms,no_tail_fit,reasons
+headline,all_vms,cpu,792,140,few_exceedances: 140
+headline,non_idle,cpu,367,135,few_exceedances: 135
+headline,all_vms,mem,792,0,
+headline,non_idle,mem,367,0,
+A0,all_vms,cpu,795,145,few_exceedances: 145
+A0,non_idle,cpu,388,135,few_exceedances: 135
+A0,all_vms,mem,795,0,
+A0,non_idle,mem,388,0,
+A1,all_vms,cpu,794,147,few_exceedances: 147
+A1,non_idle,cpu,372,136,few_exceedances: 136
+A1,all_vms,mem,794,1,few_exceedances: 1
+A1,non_idle,mem,372,0,
+A2,all_vms,cpu,794,165,few_exceedances: 165
+A2,non_idle,cpu,376,135,few_exceedances: 135
+A2,all_vms,mem,794,19,few_exceedances: 19
+A2,non_idle,mem,376,0,
+A3,all_vms,cpu,792,157,few_exceedances: 157
+A3,non_idle,cpu,382,128,few_exceedances: 128
+A3,all_vms,mem,792,19,few_exceedances: 19
+A3,non_idle,mem,382,0,
+B7,all_vms,cpu,792,155,few_exceedances: 155
+B7,non_idle,cpu,311,93,few_exceedances: 93
+B7,all_vms,mem,792,36,few_exceedances: 36
+B7,non_idle,mem,311,0,

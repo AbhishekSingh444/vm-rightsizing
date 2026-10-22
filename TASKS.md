@@ -338,6 +338,11 @@ Priority if time runs short: T15, T16, T19, then T20, then T17. T18 last --
 drop Rnd entirely rather than compromise the others, and state in the paper
 that replication is pending, with the reason.
 
+**Schedule, revised 2026-10-22:** T18 is deferred, not dropped -- "multiple
+workloads" is named in the Review 3 rubric. T19 on Thu 22 Oct, T20 draft on
+Fri 23 Oct, T18 (Rnd) on Sat 24 Oct if the draft is on track. If it is not,
+the fallback above applies and the paper states replication as pending.
+
 Stop and report after each task. Propose a commit message; never commit.
 
 ---
@@ -419,7 +424,7 @@ the share is zero. See `ENVIRONMENT_NOTES.md`, "T16".
 
 ---
 
-## T17 — Multi-split sensitivity analysis
+## T17 — Multi-split sensitivity analysis  (done 2026-10-22)
 
 **Why:** the T12 diagnostic says the low end fails on drift. One split cannot
 say whether that is a property of the method or of the particular 21/9 days.
@@ -437,9 +442,20 @@ say whether that is a property of the method or of the particular 21/9 days.
 - Console output captured to `evidence/17_multisplit.txt`.
 - `make test` passes in full and the suite has not shrunk.
 
+**Result:** families A (14/9, origins 0, 7/3, 14/3, 7) and B (7/14/21-day
+observation, eval days 21-30) as approved; `make multisplit`. The headline
+reproduces both published frontiers byte-identically. The matched-risk gap
+against `peak_capped` is negative in every split and every cell, and **H2 is
+NOT SUPPORTED in every split**. The low end is 19-30x anti-conservative in
+every split, so its failure is not specific to days 21-30. **Every eps = 0.001
+violator in every split has an eval peak above its obs peak, but that is close
+to an identity**: the allocation already covers the observation peak on all
+but 1-3 VMs. T12's "21 of 21 drift" has the same weakness. See
+`ENVIRONMENT_NOTES.md`, "T17", for the wording that survives.
+
 ---
 
-## T18 — Replication on GWA-T-12 Rnd
+## T18 — Replication on GWA-T-12 Rnd  (deferred to Sat 24 Oct, not dropped)
 
 Download Rnd, preflight it, run the data-quality gates and the full offline
 pipeline (baselines, sweep, theta, hypotheses, bootstrap).

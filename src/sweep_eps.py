@@ -72,28 +72,59 @@ RESOURCES = (
 )
 
 
-def load_fleet(traces, obs_days, eval_days, limit=0,
-               threshold_q=EVT_THRESHOLD_Q,
-               min_exceedances=EVT_MIN_EXCEEDANCES):
-    """Load and split every usable VM once.
-
-    The GPD fit does not depend on eps, so it is done here too: sweeping eps
-    then costs one inversion per VM per resource instead of one refit.
-    """
+def load_vms(traces, limit=0):
+    """Parse every usable VM, unsplit. Separate from `build_fleet` so T17 can
+    split one parse several ways instead of re-reading 1,250 CSVs per split."""
     paths = sorted(glob.glob(os.path.join(traces, "*.csv")))
     if limit:
         paths = paths[:limit]
     if not paths:
         raise SystemExit(f"no CSVs found in {traces}")
+    return [loaded for loaded in map(load_vm, paths) if loaded is not None]
 
+
+def split_from_origin(df, origin_days, obs_days, eval_days):
+    """Observation [t0 + origin, t0 + origin + obs), evaluation the
+    `eval_days` after it, with t0 the VM's own first sample.
+
+    Goes through the tested `split_obs_eval` with the origin folded into its
+    observation length, then drops the observation samples before the origin.
+    That keeps its end-of-trace tolerance anchored at the true first sample,
+    and at origin 0 it is exactly the published split.
+    """
+    split = split_obs_eval(df, origin_days + obs_days, eval_days)
+    if split is None or not origin_days:
+        return split
+    obs, ev = split
+    return obs[obs["ts"] >= df["ts"].min() + origin_days * 86400.0], ev
+
+
+def load_fleet(traces, obs_days, eval_days, limit=0,
+               threshold_q=EVT_THRESHOLD_Q,
+               min_exceedances=EVT_MIN_EXCEEDANCES, origin_days=0.0):
+    """Load and split every usable VM once."""
+    return build_fleet(load_vms(traces, limit), obs_days, eval_days,
+                       threshold_q=threshold_q,
+                       min_exceedances=min_exceedances,
+                       origin_days=origin_days)
+
+
+def build_fleet(vms, obs_days, eval_days,
+                threshold_q=EVT_THRESHOLD_Q,
+                min_exceedances=EVT_MIN_EXCEEDANCES, origin_days=0.0):
+    """Split already-parsed VMs and fit their tails.
+
+    The GPD fit does not depend on eps, so it is done here too: sweeping eps
+    then costs one inversion per VM per resource instead of one refit.
+
+    `meta` is copied, so one parse can feed several splits without one
+    split's idle flag or fits leaking into another's.
+    """
     fleet = []
     skipped_short = 0
-    for path in paths:
-        loaded = load_vm(path)
-        if loaded is None:
-            continue
-        df, meta = loaded
-        split = split_obs_eval(df, obs_days, eval_days)
+    for df, meta in vms:
+        meta = dict(meta)
+        split = split_from_origin(df, origin_days, obs_days, eval_days)
         if split is None:
             skipped_short += 1
             continue

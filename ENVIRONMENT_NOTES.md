@@ -904,6 +904,181 @@ cell's conditional interval is [-4.02, 0.30] (T16 addendum). The paper states
 the finding for the three cells where it holds and gives the fourth with its
 interval.
 
+## T17 -- multi-split sensitivity analysis (2026-10-22)
+
+**A sensitivity analysis, not the headline.** `docs/HYPOTHESES.txt`
+pre-registers one 21/9 split. It stays the headline, is reported in its own
+column, and is never averaged into anything below.
+
+### Approved split plan (recorded before the first run)
+
+Approved by the user 2026-10-22, as proposed. Every usable VM covers exactly
+30.0 days and over 90% of traces start at Monday 2013-08-12 13:40 UTC, so
+splits fall on the same calendar days for almost the whole fleet.
+
+- **Evaluation is 9 days in every split.** eps is a probability over a horizon
+  of |W_eval|; changing its length changes what eps and H2 mean.
+- **Observation windows are whole weeks** (7, 14 or 21 days), so moving the
+  origin does not change how many weekend days the recommender sees.
+
+| split | family | observation (days) | evaluation (days) |
+|---|---|---|---|
+| headline | B21 | 0-21 | 21-30 |
+| A0 | A | 0-14 | 14-23 |
+| A1 | A | 2.33-16.33 | 16.33-25.33 |
+| A2 | A | 4.67-18.67 | 18.67-27.67 |
+| A3 | A, B14 | 7-21 | 21-30 |
+| B7 | B | 14-21 | 21-30 |
+
+Origins in family A are 0, 7/3, 14/3 and 7 days. **14/9 was kept over 12/9
+with origins 0, 3, 6, 9**: 12/9 would make A0's and A3's evaluation windows
+disjoint, but at the cost of weekend imbalance in the observation windows,
+which is a real confound, and the independence claim is not available under
+either plan. **Family B is included** (history length; T12 named window
+length as where a drift fix would have to look), and it is a second question,
+not a replicate.
+
+Overlap: neighbouring family-A evaluation windows share 74% of their days,
+two steps apart 48%, A0 against A3 22%; observation windows 83% / 67% / 50%.
+A0's evaluation window is 78% inside A3's observation window. Family B's
+evaluation windows are identical and its observation windows nested.
+
+Implementation: `sweep_eps.split_from_origin` folds the origin into
+`split_obs_eval`'s observation length and drops the samples before it, so
+the tested split function is reused unchanged, its end-of-trace tolerance stays
+anchored at the VM's true first sample, and origin 0 is the published split
+sample for sample (`tests/test_multisplit.py`). `load_fleet` is split into
+`load_vms` (parse once) and `build_fleet` (split, idle flag, tail fits), which
+copies `meta` per split. `src/baselines.py` is not touched. Idle membership
+and every tail fit are recomputed from each split's own observation window
+(invariant 4). Two configs per split: `reference` (per-VM theta, intervals
+estimator: M(eps) as pre-registered) and `theta_off` (theta = 1, the
+configuration the T12 drift diagnostic ran in).
+
+### What the spread across splits is, and is not
+
+**The sd across splits is a lower bound on between-split variation, not a
+standard error, and no interval or test is built on it.** The splits share
+the same 792 VMs, heavily overlapping days and a common calendar, so they are
+not independent replicates; overlap makes neighbouring results correlated,
+which shrinks their spread. With k = 4 (family A) the sd is itself very
+imprecise, so every split's value is reported beside mean +- sd. The sd is the
+sample sd (ddof = 1). Family B is a dose-response in history length and gets no
+mean or sd. A shock in days 21-30 hits A3, the headline and all of family B
+together.
+
+### Results (`make multisplit`, 525 s; `evidence/17_multisplit.txt`)
+
+Outputs under `results/multisplit/`: `split_plan.csv` (with calendar dates and
+weekend days per window), `membership.csv`, `fallbacks.csv`,
+`matched_risk_gaps.csv` / `_summary.csv`, `h2_ece.csv` / `_summary.csv`,
+`drift_violators.csv`, `drift_summary.csv`, `summary.csv` (every frontier row,
+both configs) and `<split>/frontier_<config>.csv`.
+
+**Headline reproduces exactly.** The 21/9 split rebuilds
+`theta_intervals/frontier.csv` (reference) and `frontier.csv` (theta_off)
+byte-identically, and its eps = 0.001 memory violators under theta = 1 are
+the same 21 VMs as `results/diag_low_eps_mem_violators.csv`.
+
+**The fleet is not identical across splits: 792-795 VMs.** Three VMs cover 23
+days but not 30, so they enter A0 (795), and two enter A1 and A2 (794); the
+splits ending at day 30 have the published 792. "Every usable VM covers 30.0
+days" was true of the 792, not of every VM `load_vm` accepts.
+
+**Membership** (idle / non-idle, recomputed per split): headline 425 / 367;
+A0 407 / 388, A1 422 / 372, A2 418 / 376, A3 410 / 382; B7 481 / 311. Against
+the headline's flags, 26-46 VMs change class in family A and 72 in B7 (64 of
+them become idle -- a 7-day window more often misses a VM's busy periods).
+
+**Fallbacks** (no usable tail fit, allocation = observation peak):
+
+| split | CPU all / non-idle | memory all / non-idle |
+|---|---|---|
+| headline | 140 / 135 | 0 / 0 |
+| A0 | 145 / 135 | 0 / 0 |
+| A1 | 147 / 136 | 1 / 0 |
+| A2 | 165 / 135 | 19 / 0 |
+| A3 | 157 / 128 | 19 / 0 |
+| B7 | 155 / 93 | 36 / 0 |
+
+All memory fallbacks are idle VMs, rising to 36 on the 7-day window as
+expected; every reason is `few_exceedances`. CPU fallbacks barely move with
+window length.
+
+**Matched-risk gap vs peak_capped, reference config (pp)** -- defined on 4 of
+4 family-A splits and 3 of 3 family-B splits in every cell:
+
+| cell | A0 | A1 | A2 | A3 | A mean +- sd | B7 | headline |
+|---|---|---|---|---|---|---|---|
+| all VMs, CPU | -5.88 | -5.67 | -4.40 | -6.21 | -5.54 +- 0.79 | -4.85 | -5.56 |
+| all VMs, mem | -2.97 | -4.13 | -7.09 | -4.84 | -4.76 +- 1.74 | -1.97 | -6.30 |
+| non-idle, CPU | -4.70 | -1.85 | -2.45 | -3.02 | -3.00 +- 1.23 | -1.69 | -2.15 |
+| non-idle, mem | -1.72 | -1.74 | -4.19 | -3.52 | -2.79 +- 1.26 | -1.00 | -3.61 |
+
+The sign is negative in every split and every cell, including non-idle CPU,
+whose headline bootstrap conditional interval reached zero. That is
+consistency of sign across correlated windows, not an interval: it does not
+upgrade the non-idle CPU cell. Under theta_off the gap is undefined on many
+splits (CPU all VMs 2 of 4, non-idle CPU 2 of 4 and 1 of 3), because
+`peak_capped`'s risk falls outside the swept M(eps) range there.
+
+**H2 is NOT SUPPORTED in every split and every cell**: 2-5 of 5 points
+outside the binomial interval (the binomial leg carries it, as at the
+headline). ECE stays below 0.05 everywhere except B7 non-idle memory (0.097),
+the only cell where the ECE leg would also reject.
+
+**Low-end memory risk at eps = 0.001 (target 0.1%), all VMs:** A0 2.26%,
+A1 1.89%, A2 1.89%, A3 3.03%, mean 2.27 +- 0.54; headline 2.90%; B7 6.44%.
+The splits whose evaluation window is days 21-30 are the worst of the 14-day
+ones, so days 21-30 are harder, but the strict end is 19-30x
+anti-conservative in every split.
+
+**Family B (history length, evaluation fixed at days 21-30):** going from 21
+to 14 to 7 observation days moves memory risk at eps = 0.001 from 2.90% to
+3.03% to 6.44%. 14 days costs almost nothing, and 7 days doubles the
+low-end risk while raising reclamation (all-VM memory at eps = 0.001: 28.9% ->
+29.4% -> 34.0%).
+
+### The drift finding: it holds in every split, and it is close to an identity
+
+At eps = 0.001, in **every** split, under **both** configs and on **both**
+resources, every violator has an evaluation-window peak above its
+observation-window peak. Memory, theta = 1, all VMs: A0 17/17, A1 14/14,
+A2 13/13, A3 24/24, B7 45/45, headline 21/21. Zero exceptions anywhere.
+
+**That is much weaker evidence than it reads.** At eps = 0.001 the per-sample
+target is about 4e-7, and the M(eps) allocation is at or above the
+observation-window peak for **all but 1-3 VMs** in every split and config
+(checked directly). For any other VM, a violation means evaluation demand
+exceeded an allocation that is at or above the observation peak, so the
+evaluation peak is above the observation peak **by construction**. "Every
+low-eps violator drifts" could only have been falsified by those 1-3 VMs. The
+same holds for T12's "21 of 21 drift". It is a near-identity, not a
+diagnostic result. The bounded-tail count is in the same position: where the
+fitted tail is bounded, an allocation that far out sits at or near the
+endpoint, so violating above the endpoint is largely implied as well.
+
+**What does survive, and is not mechanical:**
+
+- Strict-end violations exist in every split (13-24 memory violators at
+  theta = 1 in the 14- and 21-day splits, 45 at 7 days), so the low-end failure is not
+  specific to days 21-30.
+- Exceeding the observation peak is common in every split: 235-305 of
+  ~792 VMs on memory (30-38%) in the 14/21-day splits, and 402 at 7 days.
+- The violating exceedances are large, not marginal: median eval/obs peak
+  ratio 2.4-3.5x on memory, with a maximum of 18-39x (73x at 7 days).
+- The violators are not a fixed set of VMs. Only 8 of A0's 17 memory violators
+  are headline violators, against 20 of A3's 24 (A3 shares the headline's
+  evaluation window).
+
+**Use instead of "all violators drift":** "In every split, the low-eps
+failures are VMs whose evaluation-window demand exceeded their
+observation-window peak by a median factor of 2.4-3.5x. At eps = 0.001 the
+allocation already covers the observed peak, so the method fails exactly when
+demand leaves the observed range, and that happens to 35-39% of VMs in every
+14-day split (30% in the 21-day headline)." The T12 text and the `TASKS.md` T12 Result are left as written.
+The paper uses this wording.
+
 ## Threats to validity
 
 What this setup cannot prove, kept here rather than only in the report so the
@@ -922,6 +1097,20 @@ treated as exchangeable and independent, so demand shocks shared across VMs
 (a common workload event in the evaluation window) are not represented; and
 the settings fixed before any result (q0.95 threshold, catalog, cap) are
 treated as given, not as sampled.
+
+*(After T17: across five further splits, the matched-risk gaps keep their
+sign in every cell and H2 is rejected in every cell; see "T17". The spread
+across splits is a lower bound on split sensitivity, not an interval.)*
+
+### At the strict end, "every violator drifted" is close to true by construction
+
+At eps = 0.001 the M(eps) allocation is at or above the observation-window
+peak for all but 1-3 VMs in every split. A violation therefore implies an
+evaluation peak above the observation peak for every other VM. The T12
+diagnostic's 21 of 21, and T17's zero exceptions across six splits, cannot
+distinguish drift from any other cause of failure. What they do show is where
+the method fails (outside the observed range), not why demand went there.
+See "T17", the drift finding, for the wording the paper uses.
 
 ### The pre-registered ECE bound cannot reject on this sweep
 

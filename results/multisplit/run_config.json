@@ -1,0 +1,104 @@
+{
+  "task": "T17 multi-split sensitivity analysis (not the headline)",
+  "splits": [
+    {
+      "split": "headline",
+      "origin_days": 0.0,
+      "obs_days": 21.0,
+      "eval_days": 9.0,
+      "families": [
+        "B"
+      ]
+    },
+    {
+      "split": "A0",
+      "origin_days": 0.0,
+      "obs_days": 14.0,
+      "eval_days": 9.0,
+      "families": [
+        "A"
+      ]
+    },
+    {
+      "split": "A1",
+      "origin_days": 2.3333333333333335,
+      "obs_days": 14.0,
+      "eval_days": 9.0,
+      "families": [
+        "A"
+      ]
+    },
+    {
+      "split": "A2",
+      "origin_days": 4.666666666666667,
+      "obs_days": 14.0,
+      "eval_days": 9.0,
+      "families": [
+        "A"
+      ]
+    },
+    {
+      "split": "A3",
+      "origin_days": 7.0,
+      "obs_days": 14.0,
+      "eval_days": 9.0,
+      "families": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "split": "B7",
+      "origin_days": 14.0,
+      "obs_days": 7.0,
+      "eval_days": 9.0,
+      "families": [
+        "B"
+      ]
+    }
+  ],
+  "family_a": [
+    "A0",
+    "A1",
+    "A2",
+    "A3"
+  ],
+  "family_b": {
+    "B7": "B7",
+    "B14": "A3",
+    "B21": "headline"
+  },
+  "configs": {
+    "reference": {
+      "theta_method": "intervals",
+      "snap": true,
+      "no_cap": false
+    },
+    "theta_off": {
+      "theta_method": "fixed",
+      "snap": true,
+      "no_cap": false
+    }
+  },
+  "eps_sweep": [
+    0.001,
+    0.005,
+    0.01,
+    0.05,
+    0.1,
+    0.2,
+    0.4,
+    0.6
+  ],
+  "drift_eps": 0.001,
+  "comparator": "peak_capped",
+  "threshold_q": 0.95,
+  "min_exceedances": 20,
+  "sd": "sample sd (ddof = 1) over family A only; a lower bound on between-split variation, not a standard error; no interval or test is built on it",
+  "headline_reproduction": {
+    "theta_intervals/frontier.csv": "identical",
+    "frontier.csv": "identical"
+  },
+  "limit": 0,
+  "random": "nothing in this script is random; no seed"
+}

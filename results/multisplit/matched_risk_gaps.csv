@@ -1,0 +1,49 @@
+split,config,scope,resource,comparator,comparator_viol_frac,comparator_recl_pct,evt_recl_pct,gap_pp,note,n_fallback_min,n_fallback_max
+headline,reference,all_vms,cpu,peak_capped,0.01641,37.7,32.145,-5.555,linear interpolation between bracketing eps points,140,140
+headline,reference,all_vms,mem,peak_capped,0.06439,41.814,35.517,-6.297,linear interpolation between bracketing eps points,0,0
+headline,reference,non_idle,cpu,peak_capped,0.02725,20.492,18.339,-2.153,linear interpolation between bracketing eps points,135,135
+headline,reference,non_idle,mem,peak_capped,0.07084,30.968,27.359,-3.609,linear interpolation between bracketing eps points,0,0
+headline,theta_off,all_vms,cpu,peak_capped,0.01641,37.7,32.842,-4.858,linear interpolation between bracketing eps points,140,140
+headline,theta_off,all_vms,mem,peak_capped,0.06439,41.814,36.448,-5.366,linear interpolation between bracketing eps points,0,0
+headline,theta_off,non_idle,cpu,peak_capped,0.02725,20.492,,,"matched risk outside the swept M(eps) range [0.01090, 0.02180]",135,135
+headline,theta_off,non_idle,mem,peak_capped,0.07084,30.968,27.515,-3.453,linear interpolation between bracketing eps points,0,0
+A0,reference,all_vms,cpu,peak_capped,0.01761,38.95,33.072,-5.878,linear interpolation between bracketing eps points,145,145
+A0,reference,all_vms,mem,peak_capped,0.06415,44.289,41.32,-2.969,linear interpolation between bracketing eps points,0,0
+A0,reference,non_idle,cpu,peak_capped,0.01546,21.162,16.463,-4.699,linear interpolation between bracketing eps points,135,135
+A0,reference,non_idle,mem,peak_capped,0.0799,33.483,31.768,-1.715,linear interpolation between bracketing eps points,0,0
+A0,theta_off,all_vms,cpu,peak_capped,0.01761,38.95,,,"matched risk outside the swept M(eps) range [0.00377, 0.01635]",145,145
+A0,theta_off,all_vms,mem,peak_capped,0.06415,44.289,,,"matched risk outside the swept M(eps) range [0.02138, 0.05912]",0,0
+A0,theta_off,non_idle,cpu,peak_capped,0.01546,21.162,16.418,-4.744,linear interpolation between bracketing eps points,135,135
+A0,theta_off,non_idle,mem,peak_capped,0.0799,33.483,,,"matched risk outside the swept M(eps) range [0.02577, 0.07216]",0,0
+A1,reference,all_vms,cpu,peak_capped,0.01637,38.911,33.24,-5.671,linear interpolation between bracketing eps points,147,147
+A1,reference,all_vms,mem,peak_capped,0.05919,44.286,40.154,-4.132,linear interpolation between bracketing eps points,1,1
+A1,reference,non_idle,cpu,peak_capped,0.02419,20.185,18.339,-1.846,linear interpolation between bracketing eps points,136,136
+A1,reference,non_idle,mem,peak_capped,0.07527,32.717,30.978,-1.739,linear interpolation between bracketing eps points,0,0
+A1,theta_off,all_vms,cpu,peak_capped,0.01637,38.911,33.836,-5.075,linear interpolation between bracketing eps points,147,147
+A1,theta_off,all_vms,mem,peak_capped,0.05919,44.286,41.157,-3.129,linear interpolation between bracketing eps points,1,1
+A1,theta_off,non_idle,cpu,peak_capped,0.02419,20.185,,,"matched risk outside the swept M(eps) range [0.00269, 0.01613]",136,136
+A1,theta_off,non_idle,mem,peak_capped,0.07527,32.717,30.397,-2.32,linear interpolation between bracketing eps points,0,0
+A2,reference,all_vms,cpu,peak_capped,0.01385,38.693,34.297,-4.395,linear interpolation between bracketing eps points,165,165
+A2,reference,all_vms,mem,peak_capped,0.05038,44.561,37.47,-7.091,linear interpolation between bracketing eps points,19,19
+A2,reference,non_idle,cpu,peak_capped,0.01862,20.373,17.92,-2.453,linear interpolation between bracketing eps points,135,135
+A2,reference,non_idle,mem,peak_capped,0.06915,32.919,28.733,-4.186,linear interpolation between bracketing eps points,0,0
+A2,theta_off,all_vms,cpu,peak_capped,0.01385,38.693,,,"matched risk outside the swept M(eps) range [0.00252, 0.01008]",165,165
+A2,theta_off,all_vms,mem,peak_capped,0.05038,44.561,40.711,-3.85,linear interpolation between bracketing eps points,19,19
+A2,theta_off,non_idle,cpu,peak_capped,0.01862,20.373,,,"matched risk outside the swept M(eps) range [0.00532, 0.01064]",135,135
+A2,theta_off,non_idle,mem,peak_capped,0.06915,32.919,29.544,-3.375,linear interpolation between bracketing eps points,0,0
+A3,reference,all_vms,cpu,peak_capped,0.0202,38.64,32.435,-6.205,linear interpolation between bracketing eps points,157,157
+A3,reference,all_vms,mem,peak_capped,0.07828,44.727,39.892,-4.835,linear interpolation between bracketing eps points,19,19
+A3,reference,non_idle,cpu,peak_capped,0.03403,20.2,17.181,-3.019,linear interpolation between bracketing eps points,128,128
+A3,reference,non_idle,mem,peak_capped,0.09686,33.256,29.737,-3.519,linear interpolation between bracketing eps points,0,0
+A3,theta_off,all_vms,cpu,peak_capped,0.0202,38.64,34.548,-4.092,linear interpolation between bracketing eps points,157,157
+A3,theta_off,all_vms,mem,peak_capped,0.07828,44.727,42.183,-2.544,linear interpolation between bracketing eps points,19,19
+A3,theta_off,non_idle,cpu,peak_capped,0.03403,20.2,17.932,-2.268,linear interpolation between bracketing eps points,128,128
+A3,theta_off,non_idle,mem,peak_capped,0.09686,33.256,30.3,-2.956,linear interpolation between bracketing eps points,0,0
+B7,reference,all_vms,cpu,peak_capped,0.0303,45.096,40.244,-4.852,linear interpolation between bracketing eps points,155,155
+B7,reference,all_vms,mem,peak_capped,0.13005,51.494,49.523,-1.971,linear interpolation between bracketing eps points,36,36
+B7,reference,non_idle,cpu,peak_capped,0.06109,25.479,23.789,-1.69,linear interpolation between bracketing eps points,93,93
+B7,reference,non_idle,mem,peak_capped,0.18328,40.587,39.588,-0.999,linear interpolation between bracketing eps points,0,0
+B7,theta_off,all_vms,cpu,peak_capped,0.0303,45.096,,,"matched risk outside the swept M(eps) range [0.00505, 0.02146]",155,155
+B7,theta_off,all_vms,mem,peak_capped,0.13005,51.494,,,"matched risk outside the swept M(eps) range [0.05682, 0.11364]",36,36
+B7,theta_off,non_idle,cpu,peak_capped,0.06109,25.479,,,"matched risk outside the swept M(eps) range [0.01286, 0.04180]",93,93
+B7,theta_off,non_idle,mem,peak_capped,0.18328,40.587,,,"matched risk outside the swept M(eps) range [0.08360, 0.17363]",0,0

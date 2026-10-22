@@ -1,0 +1,265 @@
+T17 -- MULTI-SPLIT SENSITIVITY ANALYSIS (not the headline; docs/HYPOTHESES.txt pre-registers 21/9)
+parsing traces from data/fastStorage once ...
+  798 VMs pass load_vm
+
+[headline] obs days 0.00-21.00, eval 21.00-30.00  VMs 792 (idle 425 / non-idle 367, skipped short 6)
+  cpu: no tail fit (falls back to peak) on 140 VMs
+  reference: reproduces theta_intervals/frontier.csv: identical
+  theta_off: reproduces frontier.csv: identical
+
+[A0] obs days 0.00-14.00, eval 14.00-23.00  VMs 795 (idle 407 / non-idle 388, skipped short 3)
+  cpu: no tail fit (falls back to peak) on 145 VMs
+
+[A1] obs days 2.33-16.33, eval 16.33-25.33  VMs 794 (idle 422 / non-idle 372, skipped short 4)
+  cpu: no tail fit (falls back to peak) on 147 VMs
+  mem: no tail fit (falls back to peak) on 1 VMs
+
+[A2] obs days 4.67-18.67, eval 18.67-27.67  VMs 794 (idle 418 / non-idle 376, skipped short 4)
+  cpu: no tail fit (falls back to peak) on 165 VMs
+  mem: no tail fit (falls back to peak) on 19 VMs
+
+[A3] obs days 7.00-21.00, eval 21.00-30.00  VMs 792 (idle 410 / non-idle 382, skipped short 6)
+  cpu: no tail fit (falls back to peak) on 157 VMs
+  mem: no tail fit (falls back to peak) on 19 VMs
+
+[B7] obs days 14.00-21.00, eval 21.00-30.00  VMs 792 (idle 481 / non-idle 311, skipped short 6)
+  cpu: no tail fit (falls back to peak) on 155 VMs
+  mem: no tail fit (falls back to peak) on 36 VMs
+
+==============================================================================================================
+SPLIT PLAN (approved before the first run; ENVIRONMENT_NOTES.md, T17)
+==============================================================================================================
+   split families  origin_days  obs_days  eval_days obs_window_days eval_window_days        obs_start          obs_end  obs_weekend_days       eval_start         eval_end  eval_weekend_days
+headline        B       0.0000      21.0        9.0      0.00-21.00      21.00-30.00 2013-08-12 13:40 2013-09-02 13:40               6.0 2013-09-02 13:40 2013-09-11 13:40               2.00
+      A0        A       0.0000      14.0        9.0      0.00-14.00      14.00-23.00 2013-08-12 13:40 2013-08-26 13:40               4.0 2013-08-26 13:40 2013-09-04 13:40               2.00
+      A1        A       2.3333      14.0        9.0      2.33-16.33      16.33-25.33 2013-08-14 21:40 2013-08-28 21:40               4.0 2013-08-28 21:40 2013-09-06 21:40               2.00
+      A2        A       4.6667      14.0        9.0      4.67-18.67      18.67-27.67 2013-08-17 05:40 2013-08-31 05:40               4.0 2013-08-31 05:40 2013-09-09 05:40               3.79
+      A3      A+B       7.0000      14.0        9.0      7.00-21.00      21.00-30.00 2013-08-19 13:40 2013-09-02 13:40               4.0 2013-09-02 13:40 2013-09-11 13:40               2.00
+      B7        B      14.0000       7.0        9.0     14.00-21.00      21.00-30.00 2013-08-26 13:40 2013-09-02 13:40               2.0 2013-09-02 13:40 2013-09-11 13:40               2.00
+
+REPRODUCTION -- the headline split against the published frontiers
+  theta_intervals/frontier.csv: identical
+  frontier.csv: identical
+
+==============================================================================================================
+MEMBERSHIP -- idle / non-idle recomputed from each split's own observation window
+==============================================================================================================
+   split  vms  skipped_short  idle  non_idle fleet_drift_cpu_all_vms fleet_drift_cpu_non_idle fleet_drift_mem_all_vms fleet_drift_mem_non_idle  idle_flag_differs_from_headline  became_non_idle  became_idle
+headline  792              6   425       367                 184/792                   74/367                 235/792                  119/367                                0                0            0
+      A0  795              3   407       388                 206/795                   81/388                 275/795                  104/388                               46               33           13
+      A1  794              4   422       372                 238/794                   89/372                 298/794                  115/372                               26               15           11
+      A2  794              4   418       376                 234/794                   86/376                 305/794                  129/376                               34               21           13
+      A3  792              6   410       382                 230/792                   91/382                 305/792                  163/382                               43               29           14
+      B7  792              6   481       311                 358/792                  125/311                 402/792                  182/311                               72                8           64
+
+==============================================================================================================
+FALLBACKS -- VMs with no usable tail fit (allocation falls back to observation peak)
+==============================================================================================================
+   split    scope resource  vms  no_tail_fit              reasons
+headline  all_vms      cpu  792          140 few_exceedances: 140
+headline non_idle      cpu  367          135 few_exceedances: 135
+headline  all_vms      mem  792            0                     
+headline non_idle      mem  367            0                     
+      A0  all_vms      cpu  795          145 few_exceedances: 145
+      A0 non_idle      cpu  388          135 few_exceedances: 135
+      A0  all_vms      mem  795            0                     
+      A0 non_idle      mem  388            0                     
+      A1  all_vms      cpu  794          147 few_exceedances: 147
+      A1 non_idle      cpu  372          136 few_exceedances: 136
+      A1  all_vms      mem  794            1   few_exceedances: 1
+      A1 non_idle      mem  372            0                     
+      A2  all_vms      cpu  794          165 few_exceedances: 165
+      A2 non_idle      cpu  376          135 few_exceedances: 135
+      A2  all_vms      mem  794           19  few_exceedances: 19
+      A2 non_idle      mem  376            0                     
+      A3  all_vms      cpu  792          157 few_exceedances: 157
+      A3 non_idle      cpu  382          128 few_exceedances: 128
+      A3  all_vms      mem  792           19  few_exceedances: 19
+      A3 non_idle      mem  382            0                     
+      B7  all_vms      cpu  792          155 few_exceedances: 155
+      B7 non_idle      cpu  311           93  few_exceedances: 93
+      B7  all_vms      mem  792           36  few_exceedances: 36
+      B7 non_idle      mem  311            0                     
+
+==============================================================================================================
+THE SD IS A LOWER BOUND ON BETWEEN-SPLIT VARIATION, NOT A STANDARD ERROR.
+Splits overlap, so their results are correlated and their spread is shrunk. No interval
+or test is built on it. Family A: k = 4, sample sd (ddof = 1). Family B is a history-length
+dose-response and gets no mean or sd. The headline is its own column and is never averaged in.
+==============================================================================================================
+
+MATCHED-RISK GAP vs peak_capped (pp) -- 'defined on k of n splits'
+   config    scope resource     A0     A1     A2     A3 A_defined  A_mean   A_sd     B7    B14    B21 B_defined  headline_21_9
+reference  all_vms      cpu -5.878 -5.671 -4.395 -6.205    4 of 4 -5.5373 0.7926 -4.852 -6.205 -5.555    3 of 3         -5.555
+reference  all_vms      mem -2.969 -4.132 -7.091 -4.835    4 of 4 -4.7568 1.7360 -1.971 -4.835 -6.297    3 of 3         -6.297
+reference non_idle      cpu -4.699 -1.846 -2.453 -3.019    4 of 4 -3.0042 1.2272 -1.690 -3.019 -2.153    3 of 3         -2.153
+reference non_idle      mem -1.715 -1.739 -4.186 -3.519    4 of 4 -2.7898 1.2570 -0.999 -3.519 -3.609    3 of 3         -3.609
+theta_off  all_vms      cpu    NaN -5.075    NaN -4.092    2 of 4 -4.5835 0.6951    NaN -4.092 -4.858    2 of 3         -4.858
+theta_off  all_vms      mem    NaN -3.129 -3.850 -2.544    3 of 4 -3.1743 0.6542    NaN -2.544 -5.366    2 of 3         -5.366
+theta_off non_idle      cpu -4.744    NaN    NaN -2.268    2 of 4 -3.5060 1.7508    NaN -2.268    NaN    1 of 3            NaN
+theta_off non_idle      mem    NaN -2.320 -3.375 -2.956    3 of 4 -2.8837 0.5312    NaN -2.956 -3.453    2 of 3         -3.453
+
+H2 ECE over the pre-registered sweep (bound 0.05; see the threat on this bound's power)
+   config    scope resource      A0      A1      A2      A3 A_defined  A_mean   A_sd      B7     B14     B21 B_defined  headline_21_9
+reference  all_vms      cpu 0.02879 0.02726 0.02776 0.02503    4 of 4  0.0272 0.0016 0.02579 0.02503 0.02604    3 of 3        0.02604
+reference  all_vms      mem 0.02554 0.02403 0.02025 0.02599    4 of 4  0.0240 0.0026 0.04847 0.02599 0.02473    3 of 3        0.02473
+reference non_idle      cpu 0.03022 0.02796 0.02654 0.02471    4 of 4  0.0274 0.0023 0.02551 0.02471 0.02626    3 of 3        0.02626
+reference non_idle      mem 0.02474 0.02142 0.01744 0.02512    4 of 4  0.0222 0.0036 0.09735 0.02512 0.02893    3 of 3        0.02893
+theta_off  all_vms      cpu 0.03003 0.03003 0.03028 0.02651    4 of 4  0.0292 0.0018 0.02651 0.02651 0.02802    3 of 3        0.02802
+theta_off  all_vms      mem 0.02831 0.02756 0.02655 0.02806    4 of 4  0.0276 0.0008 0.04443 0.02806 0.02680    3 of 3        0.02680
+theta_off non_idle      cpu 0.03125 0.03011 0.02974 0.02523    4 of 4  0.0291 0.0026 0.02551 0.02523 0.02843    3 of 3        0.02843
+theta_off non_idle      mem 0.02938 0.02841 0.02574 0.02575    4 of 4  0.0273 0.0019 0.08256 0.02575 0.02626    3 of 3        0.02626
+
+H2 verdict per split (reference config)
+   split    scope resource     ece  points_outside       verdict
+headline  all_vms      cpu 0.02604               3 NOT SUPPORTED
+headline  all_vms      mem 0.02473               4 NOT SUPPORTED
+headline non_idle      cpu 0.02626               3 NOT SUPPORTED
+headline non_idle      mem 0.02893               4 NOT SUPPORTED
+      A0  all_vms      cpu 0.02879               2 NOT SUPPORTED
+      A0  all_vms      mem 0.02554               5 NOT SUPPORTED
+      A0 non_idle      cpu 0.03022               2 NOT SUPPORTED
+      A0 non_idle      mem 0.02474               4 NOT SUPPORTED
+      A1  all_vms      cpu 0.02726               2 NOT SUPPORTED
+      A1  all_vms      mem 0.02403               4 NOT SUPPORTED
+      A1 non_idle      cpu 0.02796               2 NOT SUPPORTED
+      A1 non_idle      mem 0.02142               4 NOT SUPPORTED
+      A2  all_vms      cpu 0.02776               2 NOT SUPPORTED
+      A2  all_vms      mem 0.02025               4 NOT SUPPORTED
+      A2 non_idle      cpu 0.02654               2 NOT SUPPORTED
+      A2 non_idle      mem 0.01744               3 NOT SUPPORTED
+      A3  all_vms      cpu 0.02503               3 NOT SUPPORTED
+      A3  all_vms      mem 0.02599               4 NOT SUPPORTED
+      A3 non_idle      cpu 0.02471               3 NOT SUPPORTED
+      A3 non_idle      mem 0.02512               4 NOT SUPPORTED
+      B7  all_vms      cpu 0.02579               3 NOT SUPPORTED
+      B7  all_vms      mem 0.04847               4 NOT SUPPORTED
+      B7 non_idle      cpu 0.02551               3 NOT SUPPORTED
+      B7 non_idle      mem 0.09735               5 NOT SUPPORTED
+
+RECL_PCT -- reference config (full table, both configs, every eps: summary.csv)
+   scope resource      method   eps     A0     A1     A2     A3  A_n   A_mean    A_sd     B7    B14    B21  headline_21_9
+ all_vms      cpu         evt 0.001 17.912 19.331 19.581 19.022    4 18.96150 0.73608 18.521 19.022 19.210         19.210
+ all_vms      cpu         evt 0.010 24.695 25.837 25.586 23.880    4 24.99950 0.89282 25.102 23.880 25.321         25.321
+ all_vms      cpu         evt 0.100 30.822 31.936 32.749 32.435    4 31.98550 0.84482 34.253 32.435 31.307         31.307
+ all_vms      cpu         evt 0.600 38.606 40.038 39.443 39.047    4 39.28350 0.60818 43.309 39.047 40.081         40.081
+ all_vms      cpu         p95   NaN 46.858 46.950 46.293 46.286    4 46.59675 0.35678 50.768 46.286 46.757         46.757
+ all_vms      cpu  p95_capped   NaN 46.858 46.950 46.293 46.286    4 46.59675 0.35678 50.768 46.286 46.757         46.757
+ all_vms      cpu        peak   NaN 38.887 38.849 38.630 38.577    4 38.73575 0.15501 45.033 38.577 37.637         37.637
+ all_vms      cpu peak_capped   NaN 38.950 38.911 38.693 38.640    4 38.79850 0.15477 45.096 38.640 37.700         37.700
+ all_vms      mem         evt 0.001 29.862 29.842 29.582 29.437    4 29.68075 0.20657 33.952 29.437 28.852         28.852
+ all_vms      mem         evt 0.010 31.794 33.153 32.260 31.722    4 32.23225 0.65853 37.154 31.722 31.348         31.348
+ all_vms      mem         evt 0.100 36.838 36.867 37.780 38.233    4 37.42950 0.69155 42.888 38.233 36.412         36.412
+ all_vms      mem         evt 0.600 45.688 47.063 47.586 47.440    4 46.94425 0.86600 50.486 47.440 46.672         46.672
+ all_vms      mem         p95   NaN 69.791 70.770 72.148 73.034    4 71.43575 1.43876 74.738 73.034 71.672         71.672
+ all_vms      mem  p95_capped   NaN 69.885 70.820 72.168 73.040    4 71.47825 1.40078 74.743 73.040 71.684         71.684
+ all_vms      mem        peak   NaN 35.591 35.597 35.937 36.279    4 35.85100 0.32797 46.875 36.279 33.034         33.034
+ all_vms      mem peak_capped   NaN 44.289 44.286 44.561 44.727    4 44.46575 0.21670 51.494 44.727 41.814         41.814
+non_idle      cpu         evt 0.001 11.780 11.729 13.013 12.500    4 12.25550 0.61560 15.523 12.500 13.661         13.661
+non_idle      cpu         evt 0.010 13.486 13.257 14.613 14.504    4 13.96500 0.69309 17.996 14.504 14.863         14.863
+non_idle      cpu         evt 0.100 15.458 16.748 17.333 16.825    4 16.59100 0.79868 20.717 16.825 17.158         17.158
+non_idle      cpu         evt 0.600 21.162 21.713 21.707 21.783    4 21.59125 0.28824 24.613 21.783 22.623         22.623
+non_idle      cpu         p95   NaN 31.130 30.551 30.720 31.224    4 30.90625 0.32245 32.591 31.224 30.383         30.383
+non_idle      cpu  p95_capped   NaN 31.130 30.551 30.720 31.224    4 30.90625 0.32245 32.591 31.224 30.383         30.383
+non_idle      cpu        peak   NaN 21.055 20.076 20.267 20.095    4 20.37325 0.46255 25.356 20.095 20.383         20.383
+non_idle      cpu peak_capped   NaN 21.162 20.185 20.373 20.200    4 20.48000 0.46260 25.479 20.200 20.492         20.492
+non_idle      mem         evt 0.001 23.125 24.226 23.664 23.558    4 23.64325 0.45309 31.028 23.558 24.024         24.024
+non_idle      mem         evt 0.010 24.372 26.420 25.894 25.437    4 25.53075 0.87067 33.983 25.437 25.778         25.778
+non_idle      mem         evt 0.100 28.267 29.499 29.855 30.027    4 29.41200 0.79437 36.986 30.027 29.700         29.700
+non_idle      mem         evt 0.600 35.733 36.514 36.839 36.538    4 36.40600 0.47241 42.768 36.538 37.195         37.195
+non_idle      mem         p95   NaN 66.494 67.701 69.616 70.891    4 68.67550 1.95802 71.955 70.891 69.323         69.323
+non_idle      mem  p95_capped   NaN 66.632 67.776 69.646 70.899    4 68.73825 1.90220 71.965 70.899 69.342         69.342
+non_idle      mem        peak   NaN 20.981 19.988 20.215 20.856    4 20.51000 0.48341 33.007 20.856 18.267         18.267
+non_idle      mem peak_capped   NaN 33.483 32.717 32.919 33.256    4 33.09375 0.34172 40.587 33.256 30.968         30.968
+
+VIOL_FRAC -- reference config (full table, both configs, every eps: summary.csv)
+   scope resource      method   eps      A0      A1      A2      A3  A_n  A_mean    A_sd      B7     B14     B21  headline_21_9
+ all_vms      cpu         evt 0.001 0.00377 0.00126 0.00378 0.00758    4 0.00410 0.00261 0.00758 0.00758 0.00505        0.00505
+ all_vms      cpu         evt 0.010 0.00503 0.00504 0.00378 0.01136    4 0.00630 0.00342 0.01010 0.01136 0.01010        0.01010
+ all_vms      cpu         evt 0.100 0.00755 0.01134 0.01259 0.02020    4 0.01292 0.00531 0.01768 0.02020 0.01389        0.01389
+ all_vms      cpu         evt 0.600 0.03522 0.03652 0.02645 0.03788    4 0.03402 0.00516 0.03662 0.03788 0.03535        0.03535
+ all_vms      cpu         p95   NaN 0.09937 0.09446 0.08060 0.08838    4 0.09070 0.00810 0.09470 0.08838 0.08965        0.08965
+ all_vms      cpu  p95_capped   NaN 0.09937 0.09446 0.08060 0.08838    4 0.09070 0.00810 0.09470 0.08838 0.08965        0.08965
+ all_vms      cpu        peak   NaN 0.01761 0.01637 0.01385 0.02020    4 0.01701 0.00264 0.03030 0.02020 0.01641        0.01641
+ all_vms      cpu peak_capped   NaN 0.01761 0.01637 0.01385 0.02020    4 0.01701 0.00264 0.03030 0.02020 0.01641        0.01641
+ all_vms      mem         evt 0.001 0.02264 0.01889 0.01889 0.03030    4 0.02268 0.00538 0.06439 0.03030 0.02904        0.02904
+ all_vms      mem         evt 0.010 0.02390 0.02393 0.02141 0.04167    4 0.02773 0.00937 0.07576 0.04167 0.03914        0.03914
+ all_vms      mem         evt 0.100 0.04277 0.04408 0.05164 0.07071    4 0.05230 0.01288 0.08838 0.07071 0.06944        0.06944
+ all_vms      mem         evt 0.600 0.09057 0.09698 0.09698 0.11995    4 0.10112 0.01291 0.14268 0.11995 0.11869        0.11869
+ all_vms      mem         p95   NaN 0.35346 0.34509 0.33375 0.36111    4 0.34835 0.01173 0.36490 0.36111 0.35480        0.35480
+ all_vms      mem  p95_capped   NaN 0.35346 0.34509 0.33375 0.36111    4 0.34835 0.01173 0.36490 0.36111 0.35480        0.35480
+ all_vms      mem        peak   NaN 0.06415 0.05919 0.05038 0.07828    4 0.06300 0.01167 0.13005 0.07828 0.06439        0.06439
+ all_vms      mem peak_capped   NaN 0.06415 0.05919 0.05038 0.07828    4 0.06300 0.01167 0.13005 0.07828 0.06439        0.06439
+non_idle      cpu         evt 0.001 0.00258 0.00269 0.00532 0.01309    4 0.00592 0.00494 0.01929 0.01309 0.01090        0.01090
+non_idle      cpu         evt 0.010 0.00258 0.00538 0.00532 0.02094    4 0.00856 0.00836 0.02251 0.02094 0.01362        0.01362
+non_idle      cpu         evt 0.100 0.00515 0.01075 0.01596 0.03141    4 0.01582 0.01129 0.03859 0.03141 0.01907        0.01907
+non_idle      cpu         evt 0.600 0.04639 0.05645 0.04255 0.06021    4 0.05140 0.00830 0.06752 0.06021 0.05722        0.05722
+non_idle      cpu         p95   NaN 0.17010 0.17473 0.14894 0.15445    4 0.16205 0.01232 0.20900 0.15445 0.17439        0.17439
+non_idle      cpu  p95_capped   NaN 0.17010 0.17473 0.14894 0.15445    4 0.16205 0.01232 0.20900 0.15445 0.17439        0.17439
+non_idle      cpu        peak   NaN 0.01546 0.02419 0.01862 0.03403    4 0.02307 0.00815 0.06109 0.03403 0.02725        0.02725
+non_idle      cpu peak_capped   NaN 0.01546 0.02419 0.01862 0.03403    4 0.02307 0.00815 0.06109 0.03403 0.02725        0.02725
+non_idle      mem         evt 0.001 0.02835 0.02688 0.02128 0.02880    4 0.02633 0.00346 0.10289 0.02880 0.03542        0.03542
+non_idle      mem         evt 0.010 0.03093 0.02957 0.02660 0.04712    4 0.03356 0.00922 0.12862 0.04712 0.04905        0.04905
+non_idle      mem         evt 0.100 0.05412 0.06183 0.07979 0.09948    4 0.07380 0.02021 0.15434 0.09948 0.10354        0.10354
+non_idle      mem         evt 0.600 0.11856 0.13978 0.14894 0.17277    4 0.14501 0.02246 0.23151 0.17277 0.18256        0.18256
+non_idle      mem         p95   NaN 0.60052 0.60753 0.59043 0.62042    4 0.60472 0.01260 0.71383 0.62042 0.60218        0.60218
+non_idle      mem  p95_capped   NaN 0.60052 0.60753 0.59043 0.62042    4 0.60472 0.01260 0.71383 0.62042 0.60218        0.60218
+non_idle      mem        peak   NaN 0.07990 0.07527 0.06915 0.09686    4 0.08030 0.01189 0.18328 0.09686 0.07084        0.07084
+non_idle      mem peak_capped   NaN 0.07990 0.07527 0.06915 0.09686    4 0.08030 0.01189 0.18328 0.09686 0.07084        0.07084
+
+==============================================================================================================
+DRIFT -- violators at eps = 0.001: is the eval-window peak above the obs-window peak?
+fleet_drift_base_rate = share of ALL VMs in scope whose eval peak exceeds their obs peak
+==============================================================================================================
+   split    config resource    scope   eps  violators  drifting  not_drifting  all_violators_drift  median_drift_ratio  max_drift_ratio  bounded_tail  bounded_above_endpoint  fell_back fleet_drift_base_rate
+headline reference      cpu  all_vms 0.001          4         4             0                 True               1.417            3.100             4                       4          0               184/792
+headline reference      cpu non_idle 0.001          4         4             0                 True               1.417            3.100             4                       4          0                74/367
+headline reference      mem  all_vms 0.001         23        23             0                 True               3.302           18.625            21                      19          0               235/792
+headline reference      mem non_idle 0.001         13        13             0                 True               2.445            9.634            12                      10          0               119/367
+headline theta_off      cpu  all_vms 0.001          4         4             0                 True               1.417            3.100             4                       4          0               184/792
+headline theta_off      cpu non_idle 0.001          4         4             0                 True               1.417            3.100             4                       4          0                74/367
+headline theta_off      mem  all_vms 0.001         21        21             0                 True               3.430           18.625            19                      18          0               235/792
+headline theta_off      mem non_idle 0.001         11        11             0                 True               2.573            9.634            10                       9          0               119/367
+      A0 reference      cpu  all_vms 0.001          3         3             0                 True               3.413            7.178             2                       2          0               206/795
+      A0 reference      cpu non_idle 0.001          1         1             0                 True               3.413            3.413             0                       0          0                81/388
+      A0 reference      mem  all_vms 0.001         18        18             0                 True               3.014           39.435            15                      14          0               275/795
+      A0 reference      mem non_idle 0.001         11        11             0                 True               2.168            9.634             9                       8          0               104/388
+      A0 theta_off      cpu  all_vms 0.001          3         3             0                 True               3.413            7.178             2                       2          0               206/795
+      A0 theta_off      cpu non_idle 0.001          1         1             0                 True               3.413            3.413             0                       0          0                81/388
+      A0 theta_off      mem  all_vms 0.001         17        17             0                 True               3.236           39.435            14                      13          0               275/795
+      A0 theta_off      mem non_idle 0.001         10        10             0                 True               2.480            9.634             8                       7          0               104/388
+      A1 reference      cpu  all_vms 0.001          1         1             0                 True               3.545            3.545             0                       0          0               238/794
+      A1 reference      cpu non_idle 0.001          1         1             0                 True               3.545            3.545             0                       0          0                89/372
+      A1 reference      mem  all_vms 0.001         15        15             0                 True               2.452           18.190            12                      11          0               298/794
+      A1 reference      mem non_idle 0.001         10        10             0                 True               1.900           12.157             9                       8          0               115/372
+      A1 theta_off      cpu  all_vms 0.001          1         1             0                 True               3.545            3.545             0                       0          0               238/794
+      A1 theta_off      cpu non_idle 0.001          1         1             0                 True               3.545            3.545             0                       0          0                89/372
+      A1 theta_off      mem  all_vms 0.001         14        14             0                 True               2.604           18.190            11                      11          0               298/794
+      A1 theta_off      mem non_idle 0.001          9         9             0                 True               2.168           12.157             8                       8          0               115/372
+      A2 reference      cpu  all_vms 0.001          3         3             0                 True               1.454           30.786             2                       2          0               234/794
+      A2 reference      cpu non_idle 0.001          2         2             0                 True               1.246            1.454             2                       2          0                86/376
+      A2 reference      mem  all_vms 0.001         15        15             0                 True               2.757           22.350            11                       9          0               305/794
+      A2 reference      mem non_idle 0.001          8         8             0                 True               2.509           12.157             8                       6          0               129/376
+      A2 theta_off      cpu  all_vms 0.001          2         2             0                 True               1.246            1.454             2                       2          0               234/794
+      A2 theta_off      cpu non_idle 0.001          2         2             0                 True               1.246            1.454             2                       2          0                86/376
+      A2 theta_off      mem  all_vms 0.001         13        13             0                 True               2.877           22.350            10                       9          0               305/794
+      A2 theta_off      mem non_idle 0.001          7         7             0                 True               2.445           12.157             7                       6          0               129/376
+      A3 reference      cpu  all_vms 0.001          6         6             0                 True               1.571           28.122             4                       4          0               230/792
+      A3 reference      cpu non_idle 0.001          5         5             0                 True               1.226            3.100             4                       4          0                91/382
+      A3 reference      mem  all_vms 0.001         24        24             0                 True               3.543           18.708            20                      19          0               305/792
+      A3 reference      mem non_idle 0.001         11        11             0                 True               2.445           12.157             9                       8          0               163/382
+      A3 theta_off      cpu  all_vms 0.001          4         4             0                 True               1.571            3.100             3                       3          0               230/792
+      A3 theta_off      cpu non_idle 0.001          4         4             0                 True               1.571            3.100             3                       3          0                91/382
+      A3 theta_off      mem  all_vms 0.001         24        24             0                 True               3.543           18.708            20                      19          0               305/792
+      A3 theta_off      mem non_idle 0.001         11        11             0                 True               2.445           12.157             9                       8          0               163/382
+      B7 reference      cpu  all_vms 0.001          6         6             0                 True               1.527            2.313             4                       3          0               358/792
+      B7 reference      cpu non_idle 0.001          6         6             0                 True               1.527            2.313             4                       3          0               125/311
+      B7 reference      mem  all_vms 0.001         51        51             0                 True               2.349           72.940            46                      41          0               402/792
+      B7 reference      mem non_idle 0.001         32        32             0                 True               1.745           72.940            31                      27          0               182/311
+      B7 theta_off      cpu  all_vms 0.001          4         4             0                 True               1.461            2.313             3                       3          0               358/792
+      B7 theta_off      cpu non_idle 0.001          4         4             0                 True               1.461            2.313             3                       3          0               125/311
+      B7 theta_off      mem  all_vms 0.001         45        45             0                 True               2.445           72.940            41                      40          0               402/792
+      B7 theta_off      mem non_idle 0.001         26        26             0                 True               1.753           72.940            26                      26          0               182/311
+
+wrote results/multisplit/: split_plan, membership, fallbacks, matched_risk_gaps(+_summary), h2_ece(+_summary), drift_violators, drift_summary, summary .csv; <split>/frontier_<config>.csv
+elapsed 525 s

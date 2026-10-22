@@ -18,7 +18,7 @@ WAVE      ?=
 
 EPS_OUT   ?= $(RESULTS)/theta_intervals
 
-.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures sweep theta theta-sensitivity ablation hypotheses bootstrap diagnose clean
+.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures sweep theta theta-sensitivity ablation hypotheses bootstrap multisplit diagnose clean
 
 help:
 	@echo "install    install python dependencies"
@@ -39,6 +39,7 @@ help:
 	@echo "ablation   T12 one-switch-per-arm ablation + figures"
 	@echo "hypotheses T15 H2 (ECE + binomial intervals) and H3 (zero-risk reclamation)"
 	@echo "bootstrap  T16 95% intervals over VMs + every figure redrawn with them (SEED=$(SEED) B=$(B))"
+	@echo "multisplit T17 multi-split sensitivity analysis (headline 21/9 unchanged)"
 	@echo "hooks      install the git hooks (run once per clone)"
 	@echo "check-attribution  scan history for AI attribution trailers"
 
@@ -64,6 +65,7 @@ test:
 	cd tests && $(PY) test_evt.py
 	cd tests && $(PY) test_hypotheses.py
 	cd tests && $(PY) test_bootstrap.py
+	cd tests && $(PY) test_multisplit.py
 
 synthetic:
 	$(PY) src/make_synthetic_traces.py --vms 60 --days 30 --out data/synthetic
@@ -243,6 +245,16 @@ bootstrap:
 	    --intervals $(BOOT)
 	$(PY) src/make_figures.py --results $(RESULTS) --traces $(TRACES) \
 	    --out $(FIGURES) --ci --ci-seed $(SEED) --resamples $(B)
+
+# T17: sensitivity of the headline numbers to the observation/evaluation split.
+# The split plan is fixed in src/multisplit.py and was approved before the
+# first run (ENVIRONMENT_NOTES.md, "T17"); it is deliberately not a variable.
+# The 21/9 headline is rerun and must reproduce the published frontiers
+# exactly. Not the headline -- docs/HYPOTHESES.txt pre-registers 21/9.
+multisplit:
+	@mkdir -p $(RESULTS)/multisplit $(EVIDENCE)
+	$(PY) src/multisplit.py --traces $(TRACES) --results $(RESULTS) \
+	    --out $(RESULTS)/multisplit | tee $(EVIDENCE)/17_multisplit.txt
 
 clean:
 	rm -rf $(RESULTS)/* testbed/manifests __pycache__ */__pycache__
