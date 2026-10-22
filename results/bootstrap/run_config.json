@@ -7,6 +7,7 @@
   "level": 0.95,
   "interval": "percentile (numpy.percentile, linear) on resamples; Wilson score on every violation fraction",
   "gap_interval_rule": "reported only when undefined_share == 0",
+  "conditional_interval_rule": "supplementary cond_lo/cond_hi: percentile over defined resamples only, filled only where the strict interval is withheld",
   "comparator": "peak_capped",
   "not_like_for_like": {
     "cap_off": "peak"

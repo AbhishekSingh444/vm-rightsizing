@@ -1432,72 +1432,75 @@ non_idle      mem         evt 0.600  367    37.195    23.23    48.87            
 MATCHED-RISK GAPS (pp; M(eps) reclamation minus the comparator's, at the comparator's measured risk)
 undefined_share = fraction of resamples where the comparator's risk lies outside the swept M(eps) range.
 An interval is reported only where undefined_share is 0.
+cond_lo/hi: SUPPLEMENTARY, only where that interval is withheld -- percentile over the defined resamples alone,
+i.e. conditional on the gap existing. Not a substitute for the strict interval; read it with undefined_share.
 ==============================================================================================================
-           config    scope resource  comparator  gap_pp  undefined_share  gap_lo  gap_hi excludes_zero
-        reference  all_vms      cpu peak_capped  -5.555           0.0000  -11.07   -2.47          True
-        reference  all_vms      mem peak_capped  -6.297           0.0000   -9.18   -3.45          True
-        reference non_idle      cpu peak_capped  -2.153           0.0001     NaN     NaN           NaN
-        reference non_idle      mem peak_capped  -3.609           0.0000   -5.71   -1.66          True
-        theta_off  all_vms      cpu peak_capped  -4.858           0.4034     NaN     NaN           NaN
-        theta_off  all_vms      mem peak_capped  -5.366           0.0117     NaN     NaN           NaN
-        theta_off non_idle      cpu peak_capped     NaN           0.8691     NaN     NaN           NaN
-        theta_off non_idle      mem peak_capped  -3.453           0.0000   -5.64   -1.58          True
-       theta_runs  all_vms      cpu peak_capped  -5.210           0.0000   -7.96   -0.92          True
-       theta_runs  all_vms      mem peak_capped  -5.917           0.0000   -8.61   -2.64          True
-       theta_runs non_idle      cpu peak_capped  -2.377           0.0000   -4.39    1.11         False
-       theta_runs non_idle      mem peak_capped  -3.327           0.0000   -5.42   -1.52          True
-         snap_off  all_vms      cpu peak_capped -14.059           0.0000  -18.57  -10.26          True
-         snap_off  all_vms      mem peak_capped  -0.831           0.0000   -4.52    2.87         False
-         snap_off non_idle      cpu peak_capped  -6.073           0.0003     NaN     NaN           NaN
-         snap_off non_idle      mem peak_capped  -1.066           0.0000   -6.58    3.80         False
-          cap_off  all_vms      cpu peak_capped -52.589           0.0000  -89.81  -33.43          True
-          cap_off  all_vms      cpu        peak -52.526           0.0000  -89.81  -33.37          True
-          cap_off  all_vms      mem peak_capped -74.141           0.0000 -107.20  -39.47          True
-          cap_off  all_vms      mem        peak -65.361           0.0000  -97.22  -31.74          True
-          cap_off non_idle      cpu peak_capped -29.639           0.0001     NaN     NaN           NaN
-          cap_off non_idle      cpu        peak -29.530           0.0001     NaN     NaN           NaN
-          cap_off non_idle      mem peak_capped -57.050           0.0000  -79.16  -37.27          True
-          cap_off non_idle      mem        peak -44.349           0.0000  -64.00  -27.07          True
-            u_q90  all_vms      cpu peak_capped  -4.356           0.0000   -9.14   -1.43          True
-            u_q90  all_vms      mem peak_capped  -6.854           0.0000  -10.14   -3.25          True
-            u_q90 non_idle      cpu peak_capped  -2.869           0.0010     NaN     NaN           NaN
-            u_q90 non_idle      mem peak_capped  -5.017           0.0000   -7.97   -2.58          True
-            u_q98  all_vms      cpu peak_capped  -6.648           0.0000  -11.64   -2.85          True
-            u_q98  all_vms      mem peak_capped  -1.036           0.0000   -3.39    2.03         False
-            u_q98 non_idle      cpu peak_capped  -0.327           0.0000   -2.42    1.34         False
-            u_q98 non_idle      mem peak_capped  -1.346           0.0000   -3.17    0.49         False
-theta_1_unsnapped  all_vms      cpu peak_capped -11.294           0.0000  -14.41   -8.84          True
-theta_1_unsnapped  all_vms      mem peak_capped  -5.116           0.0017     NaN     NaN           NaN
-theta_1_unsnapped non_idle      cpu peak_capped  -5.738           0.0072     NaN     NaN           NaN
-theta_1_unsnapped non_idle      mem peak_capped  -4.269           0.0616     NaN     NaN           NaN
+           config    scope resource  comparator  gap_pp  undefined_share  gap_lo  gap_hi excludes_zero  cond_lo  cond_hi cond_excludes_zero
+        reference  all_vms      cpu peak_capped  -5.555           0.0000  -11.07   -2.47          True      NaN      NaN                NaN
+        reference  all_vms      mem peak_capped  -6.297           0.0000   -9.18   -3.45          True      NaN      NaN                NaN
+        reference non_idle      cpu peak_capped  -2.153           0.0001     NaN     NaN           NaN    -4.02     0.30              False
+        reference non_idle      mem peak_capped  -3.609           0.0000   -5.71   -1.66          True      NaN      NaN                NaN
+        theta_off  all_vms      cpu peak_capped  -4.858           0.4034     NaN     NaN           NaN    -8.95    -3.48               True
+        theta_off  all_vms      mem peak_capped  -5.366           0.0117     NaN     NaN           NaN    -8.32    -0.90               True
+        theta_off non_idle      cpu peak_capped     NaN           0.8691     NaN     NaN           NaN    -4.65    -0.56               True
+        theta_off non_idle      mem peak_capped  -3.453           0.0000   -5.64   -1.58          True      NaN      NaN                NaN
+       theta_runs  all_vms      cpu peak_capped  -5.210           0.0000   -7.96   -0.92          True      NaN      NaN                NaN
+       theta_runs  all_vms      mem peak_capped  -5.917           0.0000   -8.61   -2.64          True      NaN      NaN                NaN
+       theta_runs non_idle      cpu peak_capped  -2.377           0.0000   -4.39    1.11         False      NaN      NaN                NaN
+       theta_runs non_idle      mem peak_capped  -3.327           0.0000   -5.42   -1.52          True      NaN      NaN                NaN
+         snap_off  all_vms      cpu peak_capped -14.059           0.0000  -18.57  -10.26          True      NaN      NaN                NaN
+         snap_off  all_vms      mem peak_capped  -0.831           0.0000   -4.52    2.87         False      NaN      NaN                NaN
+         snap_off non_idle      cpu peak_capped  -6.073           0.0003     NaN     NaN           NaN    -9.43    -3.68               True
+         snap_off non_idle      mem peak_capped  -1.066           0.0000   -6.58    3.80         False      NaN      NaN                NaN
+          cap_off  all_vms      cpu peak_capped -52.589           0.0000  -89.81  -33.43          True      NaN      NaN                NaN
+          cap_off  all_vms      cpu        peak -52.526           0.0000  -89.81  -33.37          True      NaN      NaN                NaN
+          cap_off  all_vms      mem peak_capped -74.141           0.0000 -107.20  -39.47          True      NaN      NaN                NaN
+          cap_off  all_vms      mem        peak -65.361           0.0000  -97.22  -31.74          True      NaN      NaN                NaN
+          cap_off non_idle      cpu peak_capped -29.639           0.0001     NaN     NaN           NaN   -39.70   -12.44               True
+          cap_off non_idle      cpu        peak -29.530           0.0001     NaN     NaN           NaN   -39.58   -12.31               True
+          cap_off non_idle      mem peak_capped -57.050           0.0000  -79.16  -37.27          True      NaN      NaN                NaN
+          cap_off non_idle      mem        peak -44.349           0.0000  -64.00  -27.07          True      NaN      NaN                NaN
+            u_q90  all_vms      cpu peak_capped  -4.356           0.0000   -9.14   -1.43          True      NaN      NaN                NaN
+            u_q90  all_vms      mem peak_capped  -6.854           0.0000  -10.14   -3.25          True      NaN      NaN                NaN
+            u_q90 non_idle      cpu peak_capped  -2.869           0.0010     NaN     NaN           NaN    -5.21     0.21              False
+            u_q90 non_idle      mem peak_capped  -5.017           0.0000   -7.97   -2.58          True      NaN      NaN                NaN
+            u_q98  all_vms      cpu peak_capped  -6.648           0.0000  -11.64   -2.85          True      NaN      NaN                NaN
+            u_q98  all_vms      mem peak_capped  -1.036           0.0000   -3.39    2.03         False      NaN      NaN                NaN
+            u_q98 non_idle      cpu peak_capped  -0.327           0.0000   -2.42    1.34         False      NaN      NaN                NaN
+            u_q98 non_idle      mem peak_capped  -1.346           0.0000   -3.17    0.49         False      NaN      NaN                NaN
+theta_1_unsnapped  all_vms      cpu peak_capped -11.294           0.0000  -14.41   -8.84          True      NaN      NaN                NaN
+theta_1_unsnapped  all_vms      mem peak_capped  -5.116           0.0017     NaN     NaN           NaN   -12.33     0.48              False
+theta_1_unsnapped non_idle      cpu peak_capped  -5.738           0.0072     NaN     NaN           NaN    -8.66    -3.37               True
+theta_1_unsnapped non_idle      mem peak_capped  -4.269           0.0616     NaN     NaN           NaN   -13.22     1.79              False
 
 ==============================================================================================================
 T12 ABLATION SHIFTS (pp, arm gap minus reference gap, paired within each resample)
+cond_lo/hi as above: supplementary, conditional on both gaps being defined in the resample.
 ==============================================================================================================
-       arm    scope resource  shift_vs_reference_pp  undefined_share  shift_lo  shift_hi excludes_zero  baseline_moved
- theta_off  all_vms      cpu                  0.697           0.4034       NaN       NaN           NaN           False
- theta_off  all_vms      mem                  0.931           0.0117       NaN       NaN           NaN           False
- theta_off non_idle      cpu                    NaN           0.8691       NaN       NaN           NaN           False
- theta_off non_idle      mem                  0.156           0.0000     -0.79      0.96         False           False
-theta_runs  all_vms      cpu                  0.345           0.0000     -0.63      3.71         False           False
-theta_runs  all_vms      mem                  0.380           0.0000     -0.34      1.56         False           False
-theta_runs non_idle      cpu                 -0.224           0.0001       NaN       NaN           NaN           False
-theta_runs non_idle      mem                  0.282           0.0000     -0.31      0.83         False           False
-  snap_off  all_vms      cpu                 -8.504           0.0000    -13.45     -2.47          True            True
-  snap_off  all_vms      mem                  5.466           0.0000      1.80      9.08          True            True
-  snap_off non_idle      cpu                 -3.920           0.0004       NaN       NaN           NaN            True
-  snap_off non_idle      mem                  2.543           0.0000     -3.31      7.64         False            True
-   cap_off  all_vms      cpu                -47.034           0.0000    -79.53    -30.62          True           False
-   cap_off  all_vms      mem                -67.844           0.0000    -99.14    -34.79          True           False
-   cap_off non_idle      cpu                -27.486           0.0001       NaN       NaN           NaN           False
-   cap_off non_idle      mem                -53.441           0.0000    -75.30    -34.17          True           False
-     u_q90  all_vms      cpu                  1.199           0.0000     -0.87      3.66         False           False
-     u_q90  all_vms      mem                 -0.557           0.0000     -1.80      1.11         False           False
-     u_q90 non_idle      cpu                 -0.716           0.0010       NaN       NaN           NaN           False
-     u_q90 non_idle      mem                 -1.408           0.0000     -3.47      0.01         False           False
-     u_q98  all_vms      cpu                 -1.093           0.0000     -5.01      2.26         False           False
-     u_q98  all_vms      mem                  5.261           0.0000      3.40      7.62          True           False
-     u_q98 non_idle      cpu                  1.826           0.0001       NaN       NaN           NaN           False
-     u_q98 non_idle      mem                  2.263           0.0000      0.76      3.90          True           False
+       arm    scope resource  shift_vs_reference_pp  undefined_share  shift_lo  shift_hi excludes_zero  cond_lo  cond_hi cond_excludes_zero  baseline_moved
+ theta_off  all_vms      cpu                  0.697           0.4034       NaN       NaN           NaN    -1.67     4.61              False           False
+ theta_off  all_vms      mem                  0.931           0.0117       NaN       NaN           NaN    -0.33     3.90              False           False
+ theta_off non_idle      cpu                    NaN           0.8691       NaN       NaN           NaN    -1.14     0.95              False           False
+ theta_off non_idle      mem                  0.156           0.0000     -0.79      0.96         False      NaN      NaN                NaN           False
+theta_runs  all_vms      cpu                  0.345           0.0000     -0.63      3.71         False      NaN      NaN                NaN           False
+theta_runs  all_vms      mem                  0.380           0.0000     -0.34      1.56         False      NaN      NaN                NaN           False
+theta_runs non_idle      cpu                 -0.224           0.0001       NaN       NaN           NaN    -0.94     1.65              False           False
+theta_runs non_idle      mem                  0.282           0.0000     -0.31      0.83         False      NaN      NaN                NaN           False
+  snap_off  all_vms      cpu                 -8.504           0.0000    -13.45     -2.47          True      NaN      NaN                NaN            True
+  snap_off  all_vms      mem                  5.466           0.0000      1.80      9.08          True      NaN      NaN                NaN            True
+  snap_off non_idle      cpu                 -3.920           0.0004       NaN       NaN           NaN    -7.61    -2.04               True            True
+  snap_off non_idle      mem                  2.543           0.0000     -3.31      7.64         False      NaN      NaN                NaN            True
+   cap_off  all_vms      cpu                -47.034           0.0000    -79.53    -30.62          True      NaN      NaN                NaN           False
+   cap_off  all_vms      mem                -67.844           0.0000    -99.14    -34.79          True      NaN      NaN                NaN           False
+   cap_off non_idle      cpu                -27.486           0.0001       NaN       NaN           NaN   -36.91   -12.54               True           False
+   cap_off non_idle      mem                -53.441           0.0000    -75.30    -34.17          True      NaN      NaN                NaN           False
+     u_q90  all_vms      cpu                  1.199           0.0000     -0.87      3.66         False      NaN      NaN                NaN           False
+     u_q90  all_vms      mem                 -0.557           0.0000     -1.80      1.11         False      NaN      NaN                NaN           False
+     u_q90 non_idle      cpu                 -0.716           0.0010       NaN       NaN           NaN    -2.61     1.21              False           False
+     u_q90 non_idle      mem                 -1.408           0.0000     -3.47      0.01         False      NaN      NaN                NaN           False
+     u_q98  all_vms      cpu                 -1.093           0.0000     -5.01      2.26         False      NaN      NaN                NaN           False
+     u_q98  all_vms      mem                  5.261           0.0000      3.40      7.62          True      NaN      NaN                NaN           False
+     u_q98 non_idle      cpu                  1.826           0.0001       NaN       NaN           NaN    -0.41     3.56              False           False
+     u_q98 non_idle      mem                  2.263           0.0000      0.76      3.90          True      NaN      NaN                NaN           False
 
-wrote results/bootstrap/frontier_<config>_ci.csv, matched_risk_gaps_ci.csv, ablation_shifts_ci.csv, run_config.json (935 s)
+wrote results/bootstrap/frontier_<config>_ci.csv, matched_risk_gaps_ci.csv, ablation_shifts_ci.csv, run_config.json (719 s)

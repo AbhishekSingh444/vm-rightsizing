@@ -307,6 +307,9 @@ shift of 0.16 to 0.93 pp — it bought its extra reclamation entirely with
 risk. Threshold choice is the only other switch with real sign: u at q0.98
 gains 5.3 pp on memory (all VMs) but loses 1.1 pp on CPU. See
 `ENVIRONMENT_NOTES.md`, "T12".
+**Corrected after T16:** the theta_off shift and the q0.98 CPU loss are both
+inside intervals that contain zero. Use the wording in `ENVIRONMENT_NOTES.md`,
+"Corrections to Review 2 claims", not this paragraph.
 
 **Carried forward from the T11 diagnostic, and not fixable by any arm:** all
 21 memory violators at eps = 0.001 have evaluation-window peaks above their

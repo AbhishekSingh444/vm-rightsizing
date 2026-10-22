@@ -46,6 +46,16 @@ alone would describe a conditional distribution while looking like the
 unconditional one, and would hide exactly the cells where the comparison is
 fragile.
 
+CONDITIONAL INTERVALS ARE SUPPLEMENTARY. So that a withheld cell is not left
+blank, every row whose strict interval is withheld also carries `cond_lo`,
+`cond_hi` and `cond_excludes_zero`: the percentile interval over the defined
+resamples only, with `undefined_share` beside it saying how much was dropped.
+They are left empty wherever the strict interval exists (there the two would
+be identical). The conditional interval is not the same quantity: it is the
+gap's distribution GIVEN that the comparator's risk lands inside the M(eps)
+range, and that condition selects resamples, so it is not an unbiased stand-in
+for the unconditional one. The strict columns stay primary.
+
 Usage:
     python3 bootstrap.py --traces data/fastStorage --results results \
         --out results/bootstrap --seed 16 --resamples 10000
@@ -145,6 +155,29 @@ def defined_interval(samples, level=LEVEL):
         return undefined, np.nan, np.nan
     lo, hi = percentile_interval(s, level)
     return 0.0, lo, hi
+
+
+def conditional_interval(samples, level=LEVEL):
+    """(n_defined, lo, hi): the percentile interval over the defined
+    resamples only. SUPPLEMENTARY -- reported beside a withheld strict
+    interval, never in place of it. NaN when no resample is defined."""
+    s = np.asarray(samples, dtype=float)
+    s = s[~np.isnan(s)]
+    if len(s) == 0:
+        return 0, np.nan, np.nan
+    lo, hi = percentile_interval(s, level)
+    return len(s), lo, hi
+
+
+def conditional_columns(samples, strict_undefined, level=LEVEL):
+    """cond_lo / cond_hi / cond_excludes_zero for one gap or shift row:
+    filled only where the strict interval is withheld."""
+    if strict_undefined == 0:
+        return {"cond_lo": np.nan, "cond_hi": np.nan,
+                "cond_excludes_zero": np.nan}
+    n, lo, hi = conditional_interval(samples, level)
+    return {"cond_lo": round(lo, 2), "cond_hi": round(hi, 2),
+            "cond_excludes_zero": (bool(lo > 0 or hi < 0) if n else np.nan)}
 
 
 def resampled_stats(per_vm_tables, idle, counts, eval_hours):
@@ -315,6 +348,7 @@ def main():
                         "gap_lo": round(lo, 2), "gap_hi": round(hi, 2),
                         "excludes_zero": (bool(lo > 0 or hi < 0)
                                           if und == 0 else np.nan),
+                        **conditional_columns(g, und),
                         "point_note": point["note"],
                     })
     gap_df = pd.DataFrame(gap_rows)
@@ -342,6 +376,7 @@ def main():
                     "shift_lo": round(lo, 2), "shift_hi": round(hi, 2),
                     "excludes_zero": (bool(lo > 0 or hi < 0)
                                       if und == 0 else np.nan),
+                    **conditional_columns(sh, und),
                     "baseline_moved": name in BASELINE_MOVED,
                 })
     shift_df = pd.DataFrame(shift_rows)
@@ -369,11 +404,17 @@ def main():
         print("undefined_share = fraction of resamples where the comparator's "
               "risk lies outside the swept M(eps) range.")
         print("An interval is reported only where undefined_share is 0.")
+        print("cond_lo/hi: SUPPLEMENTARY, only where that interval is "
+              "withheld -- percentile over the defined resamples alone,")
+        print("i.e. conditional on the gap existing. Not a substitute for "
+              "the strict interval; read it with undefined_share.")
         print("=" * 110)
         print(gap_df.drop(columns=["point_note"]).to_string(index=False))
         print("\n" + "=" * 110)
         print("T12 ABLATION SHIFTS (pp, arm gap minus reference gap, paired "
               "within each resample)")
+        print("cond_lo/hi as above: supplementary, conditional on both gaps "
+              "being defined in the resample.")
         print("=" * 110)
         print(shift_df.drop(columns=["switch"]).to_string(index=False))
 
@@ -387,6 +428,10 @@ def main():
             "interval": "percentile (numpy.percentile, linear) on resamples; "
                         "Wilson score on every violation fraction",
             "gap_interval_rule": "reported only when undefined_share == 0",
+            "conditional_interval_rule": "supplementary cond_lo/cond_hi: "
+                                         "percentile over defined resamples "
+                                         "only, filled only where the strict "
+                                         "interval is withheld",
             "comparator": COMPARATOR,
             "not_like_for_like": NOT_LIKE_FOR_LIKE,
             "varies": "fleet composition only",

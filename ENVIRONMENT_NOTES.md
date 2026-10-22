@@ -541,6 +541,10 @@ sound (CPU median theta 0.25, memory 0.56); it simply does not move this
 frontier. Reporting the reclamation gain without the matched-risk column would
 have turned a null result into a claimed improvement.
 
+> **Corrected after T16:** the theta_off shifts are not distinguishable from
+> zero; "marginally ahead" is withdrawn. See "Corrections to Review 2 claims",
+> Correction 1.
+
 `theta_runs` agrees with `theta_intervals` to within 0.4 pp everywhere, so the
 choice of estimator is not a lever either.
 
@@ -554,6 +558,10 @@ was fixed before any of this and is not being changed** -- picking q0.98 now,
 on the basis of this table, would be fitting a hyperparameter against the
 evaluation window and would break invariant 4. It is recorded as a direction
 for future work on a separate dataset, not adopted.
+
+> **Corrected after T16:** the CPU effect of u = q0.98 has an interval
+> spanning zero; "not consistent across resources" is withdrawn. See
+> "Corrections to Review 2 claims", Correction 2.
 
 **Snapping.** `snap_off` moves the baseline as well as the method
 (`peak_capped` is itself unsnapped there), so its shift is not directly
@@ -777,6 +785,125 @@ Suite: **92 -> 106** (`test_bootstrap.py` 14). `test_baselines.py` untouched.
 The new test for Wilson's 0-of-n bound failed on first run (6.9e-18, not 0);
 the code was fixed, not the test.
 
+### T16 addendum -- supplementary conditional intervals (2026-10-22)
+
+**What changed.** `src/bootstrap.py` gains `conditional_interval` and three
+columns on `matched_risk_gaps_ci.csv` and `ablation_shifts_ci.csv`:
+`cond_lo`, `cond_hi`, `cond_excludes_zero`. **The strict rule is unchanged and
+stays primary**: `gap_lo`/`gap_hi` and `shift_lo`/`shift_hi` are still given
+only when `undefined_share` is 0. The conditional columns are filled **only**
+on rows where the strict interval is withheld, so a reader is not left with a
+blank cell; they are the percentile interval over the defined resamples alone,
+and are always to be read with `undefined_share` beside them.
+
+**Why it is supplementary, not a replacement.** Conditioning on "the gap
+exists" selects resamples: it keeps those where the comparator's risk lands
+inside the M(eps) range. For theta_off CPU (all VMs) that discards 40% of
+resamples, and the 60% kept are not a random 60%. The conditional interval
+describes that subset, not the fleet.
+
+**Reproduction.** Re-run at seed 16, B = 10,000: all eight
+`frontier_<config>_ci.csv` byte-identical to the T16 run, and every
+pre-existing column of the gap and shift tables identical; only the three new
+columns and one `run_config.json` key (`conditional_interval_rule`) differ.
+`evidence/16_bootstrap.txt` re-captured. Suite **106 -> 108**
+(`test_bootstrap.py` 14 -> 16).
+
+**Conditional intervals, matched-risk gap against `peak_capped` (pp):**
+
+| config | scope | res | gap | undefined | conditional 95% |
+|---|---|---|---|---|---|
+| reference | non-idle | CPU | -2.15 | 0.0001 | [-4.02, 0.30] |
+| theta_off | all VMs | CPU | -4.86 | 0.4034 | [-8.95, -3.48] |
+| theta_off | all VMs | mem | -5.37 | 0.0117 | [-8.32, -0.90] |
+| theta_off | non-idle | CPU | n/a | 0.8691 | [-4.65, -0.56] |
+| snap_off | non-idle | CPU | -6.07 | 0.0003 | [-9.43, -3.68] |
+| cap_off | non-idle | CPU | -29.64 | 0.0001 | [-39.70, -12.44] |
+| u_q90 | non-idle | CPU | -2.87 | 0.0010 | [-5.21, 0.21] |
+| theta = 1 unsnapped | all VMs | mem | -5.12 | 0.0017 | [-12.33, 0.48] |
+| theta = 1 unsnapped | non-idle | CPU | -5.74 | 0.0072 | [-8.66, -3.37] |
+| theta = 1 unsnapped | non-idle | mem | -4.27 | 0.0616 | [-13.22, 1.79] |
+
+**Conditional intervals, ablation shifts (pp, paired):**
+
+| arm | scope | res | shift | undefined | conditional 95% |
+|---|---|---|---|---|---|
+| theta_off | all VMs | CPU | +0.70 | 0.4034 | [-1.67, 4.61] |
+| theta_off | all VMs | mem | +0.93 | 0.0117 | [-0.33, 3.90] |
+| theta_off | non-idle | CPU | n/a | 0.8691 | [-1.14, 0.95] |
+| theta_runs | non-idle | CPU | -0.22 | 0.0001 | [-0.94, 1.65] |
+| snap_off * | non-idle | CPU | -3.92 | 0.0004 | [-7.61, -2.04] |
+| cap_off | non-idle | CPU | -27.49 | 0.0001 | [-36.91, -12.54] |
+| u_q90 | non-idle | CPU | -0.72 | 0.0010 | [-2.61, 1.21] |
+| u_q98 | non-idle | CPU | +1.83 | 0.0001 | [-0.41, 3.56] |
+
+**What surprised me: the headline gap on non-idle CPU does not exclude zero
+even conditionally.** The reference arm's non-idle CPU gap of -2.15 pp was
+withheld at 1 resample in 10,000, and it read as a technicality. Its
+conditional interval is [-4.02, 0.30], so that cell must not be grouped with
+the other three as "M(eps) reclaims less at matched risk, interval excludes
+zero". The finding holds on three of four cells; on non-idle CPU it is a
+point estimate whose interval reaches zero. The same applies to u_q90 on that
+cell. Every conditional *shift* for theta_off contains zero, which is what
+Correction 1 below relies on.
+
+## Corrections to Review 2 claims (after T16, 2026-10-22)
+
+Two ablation claims made at Review 2 do not survive the T16 bootstrap. The
+original text is left where it was written (T12 above, the T12 "Result" in
+`TASKS.md`, and the "flag ignored" threat below), each with a pointer here.
+**The paper uses the corrected wording, not the original.** Numbers are from
+`results/bootstrap/ablation_shifts_ci.csv` (seed 16, B = 10,000, paired).
+
+### Correction 1 -- theta_off's +0.7 pp is indistinguishable from zero
+
+- **Review 2 said:** "turning T11 OFF is worth +0.70 pp (CPU all VMs),
+  +0.93 pp (memory all VMs) and +0.16 pp (memory non-idle) ... if anything the
+  uncorrected one is marginally ahead" (T12); "The dependence correction (T11)
+  has a *negative* shift of 0.16 to 0.93 pp" (`TASKS.md`, T12 Result).
+- **What the bootstrap shows:** no theta_off shift can be told from zero.
+  CPU all VMs +0.70 has no strict interval (undefined in 40.3% of resamples;
+  conditional [-1.67, 4.61]). Memory all VMs +0.93 has none either (1.2%
+  undefined; conditional [-0.33, 3.90]). Memory non-idle +0.16 is
+  [-0.79, 0.96]. CPU non-idle is n/a at the point estimate (87% undefined;
+  conditional [-1.14, 0.95]).
+- **Use instead:** "At matched risk, the dependence correction has no
+  detectable effect on the frontier: every theta_off shift interval contains
+  zero, and on CPU (all VMs) the uncorrected curve fails to reach
+  `peak_capped`'s risk in 40% of resamples. Its reclamation gain at fixed eps
+  (T11) is bought with risk." Do not say the correction hurts, or that the
+  uncorrected method is ahead, marginally or otherwise.
+
+### Correction 2 -- u = q0.98's CPU effect is not detectable
+
+- **Review 2 said:** "Threshold quantile is the only other switch with real
+  sign, and it is not consistent across resources. u = q0.98 gains +5.26 pp
+  on memory ... but loses -1.09 pp on CPU" (T12); "u at q0.98 gains 5.3 pp on
+  memory (all VMs) but loses 1.1 pp on CPU" (`TASKS.md`); "u = q0.98 shifts
+  matched-risk memory reclamation by +5.26 pp on all VMs and -1.09 pp on CPU"
+  ("flag ignored" threat). The T12 mechanism sentence ("hurts on CPU where
+  140 VMs already have too few exceedances") explains an effect that is not
+  resolved.
+- **What the bootstrap shows:** CPU all VMs -1.09 [-5.01, 2.26]; CPU non-idle
+  +1.83, withheld at 1 resample in 10,000, conditional [-0.41, 3.56]. The CPU
+  point estimates do not even agree in sign across scopes, and both intervals
+  span zero. Memory is real: +5.26 [3.40, 7.62] all VMs, +2.26 [0.76, 3.90]
+  non-idle.
+- **Use instead:** "Raising the threshold to q0.98 improves matched-risk
+  memory reclamation (+5.26 pp, 95% interval [3.40, 7.62]); its effect on CPU
+  cannot be distinguished from zero." Not "inconsistent across resources",
+  which asserts an opposite-signed CPU effect the data does not resolve. The
+  ablation's conclusion that the threshold matters stands, on memory. q0.95
+  remains the fixed setting (invariant 4).
+
+### Related, not a Review 2 claim but the same kind of error
+
+T16's own summary grouped the headline gap as "M(eps) reclaims less than
+`peak_capped` at matched risk, interval excludes zero". On non-idle CPU that
+cell's conditional interval is [-4.02, 0.30] (T16 addendum). The paper states
+the finding for the three cells where it holds and gives the fourth with its
+interval.
+
 ## Threats to validity
 
 What this setup cannot prove, kept here rather than only in the report so the
@@ -825,7 +952,10 @@ thresholds, and would have been **more** confident than the truth, because a
 null result reported across three arms reads as robust. The real answer is
 that the threshold is the second-largest lever in the ablation (u = q0.98
 shifts matched-risk memory reclamation by +5.26 pp on all VMs and -1.09 pp on
-CPU).
+CPU). *(After T16: the -1.09 pp CPU figure is inside [-5.01, 2.26] and is not
+a detectable effect -- see "Corrections to Review 2 claims", Correction 2.
+The threat itself is unaffected: the memory shift alone would have been
+erased by the bug.)*
 
 Found while wiring the T12 threshold arm, fixed, and pinned by a test in
 `tests/test_evt.py` that asserts `threshold_q` reaches the fit and changes both

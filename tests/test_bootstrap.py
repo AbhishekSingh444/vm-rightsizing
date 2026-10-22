@@ -17,6 +17,9 @@ What these tests are actually defending:
     definitions as the published frontier, not a re-derivation of them.
   * An undefined matched-risk gap is counted, never dropped, and suppresses
     the interval rather than shrinking the sample it is computed over.
+  * The conditional interval (over defined resamples only) is supplementary:
+    it fills a withheld cell, never replaces a strict interval, and the strict
+    interval stays withheld.
   * Ablation shifts are paired: an arm compared against itself shifts by
     exactly zero on every resample.
 """
@@ -31,6 +34,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 from bootstrap import (  # noqa: E402
     DEFAULT_SEED,
+    conditional_columns,
+    conditional_interval,
     defined_interval,
     gap_samples,
     percentile_interval,
@@ -127,6 +132,35 @@ def main():
         "undefined gives the plain percentile interval",
         f"3 of 10 NaN -> share={und} interval=({lo}, {hi}); "
         f"none NaN -> ({lo0}, {hi0})",
+    )
+    # 0..100 with every tenth value (11 of them) replaced by NaN: the
+    # conditional interval is the percentile interval of the 90 that remain,
+    # and says how many there were.
+    s = np.arange(101.0)
+    s[::10] = np.nan
+    n, lo, hi = conditional_interval(s)
+    want_lo, want_hi = percentile_interval(s[~np.isnan(s)])
+    n0, lo0, hi0 = conditional_interval(np.full(5, np.nan))
+    failures += check(
+        n == 90 and abs(lo - want_lo) < TOL and abs(hi - want_hi) < TOL
+        and n0 == 0 and np.isnan(lo0) and np.isnan(hi0),
+        "the conditional interval is the percentile interval of the defined "
+        "resamples alone; none defined gives no interval",
+        f"n={n} ({lo:.3f}, {hi:.3f}) want ({want_lo:.3f}, {want_hi:.3f}); "
+        f"all NaN -> n={n0} ({lo0}, {hi0})",
+    )
+    s = np.arange(1.0, 101.0)
+    s[3] = np.nan
+    und, lo, hi = defined_interval(s)
+    cond = conditional_columns(s, und)
+    full = conditional_columns(np.arange(1.0, 101.0), 0.0)
+    failures += check(
+        np.isnan(lo) and np.isnan(hi)
+        and cond["cond_lo"] > 0 and cond["cond_excludes_zero"] is True
+        and all(np.isnan(v) for v in full.values()),
+        "a withheld strict interval stays withheld; the conditional one is "
+        "filled beside it, and left empty wherever the strict one exists",
+        f"strict=({lo}, {hi}) cond={cond} when-defined={full}",
     )
 
     # ---- matched-risk reading ----------------------------------------------
@@ -241,7 +275,7 @@ def main():
         f"max |shift|={np.max(np.abs(g1 - g2))}",
     )
 
-    total = 14
+    total = 16
     print(f"\n{total - failures}/{total} passed")
     return 1 if failures else 0
 
