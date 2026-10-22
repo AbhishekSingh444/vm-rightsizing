@@ -18,7 +18,7 @@ WAVE      ?=
 
 EPS_OUT   ?= $(RESULTS)/theta_intervals
 
-.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures sweep theta theta-sensitivity ablation diagnose clean
+.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures sweep theta theta-sensitivity ablation hypotheses diagnose clean
 
 help:
 	@echo "install    install python dependencies"
@@ -37,6 +37,7 @@ help:
 	@echo "sweep      T10 eps sweep + frontier at theta = 1 (correction off)"
 	@echo "theta      T11 eps sweep + frontier at per-VM estimated theta"
 	@echo "ablation   T12 one-switch-per-arm ablation + figures"
+	@echo "hypotheses T15 H2 (ECE + binomial intervals) and H3 (zero-risk reclamation)"
 	@echo "hooks      install the git hooks (run once per clone)"
 	@echo "check-attribution  scan history for AI attribution trailers"
 
@@ -60,6 +61,7 @@ test:
 	cd tests && $(PY) test_baselines.py
 	cd tests && $(PY) test_replay_agent.py
 	cd tests && $(PY) test_evt.py
+	cd tests && $(PY) test_hypotheses.py
 
 synthetic:
 	$(PY) src/make_synthetic_traces.py --vms 60 --days 30 --out data/synthetic
@@ -191,6 +193,18 @@ ablation:
 	$(PY) src/ablation.py --traces $(TRACES) --out $(RESULTS)/ablation \
 	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) \
 	    --figures $(FIGURES) | tee $(EVIDENCE)/13_ablation.txt
+
+# T15: H2 and H3 against their pre-registered statistics. Post-processing of
+# the frontiers written by `theta`, `theta-sensitivity` and `sweep`. The first
+# frontier is the headline -- M(eps) as pre-registered includes the
+# extremal-index correction; the other two are context.
+hypotheses:
+	@mkdir -p $(RESULTS)/hypotheses $(EVIDENCE)
+	$(PY) src/hypotheses.py --out $(RESULTS)/hypotheses \
+	    --frontier $(EPS_OUT)/frontier.csv:theta_intervals \
+	    --frontier $(RESULTS)/theta_runs/frontier.csv:theta_runs \
+	    --frontier $(RESULTS)/frontier.csv:theta_1 \
+	    | tee $(EVIDENCE)/15_hypotheses.txt
 
 clean:
 	rm -rf $(RESULTS)/* testbed/manifests __pycache__ */__pycache__
