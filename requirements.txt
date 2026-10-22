@@ -1,3 +1,4 @@
 pandas>=2.0
 numpy>=1.24
 matplotlib>=3.8   # figures only (src/make_figures.py); not needed by the pipeline
+scipy>=1.10
