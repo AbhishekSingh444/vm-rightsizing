@@ -1,0 +1,103 @@
+{
+  "seed": 16,
+  "resamples": 10000,
+  "rng": "numpy.random.default_rng (PCG64), numpy 2.4.6",
+  "unit": "VM, with replacement; samples within a VM never resampled",
+  "paired_across_configs": true,
+  "level": 0.95,
+  "interval": "percentile (numpy.percentile, linear) on resamples; Wilson score on every violation fraction",
+  "gap_interval_rule": "reported only when undefined_share == 0",
+  "comparator": "peak_capped",
+  "not_like_for_like": {
+    "cap_off": "peak"
+  },
+  "varies": "fleet composition only",
+  "fixed": "obs/eval split, trace, catalog, every recommender setting",
+  "obs_days": 21.0,
+  "eval_days": 9.0,
+  "eps_sweep": [
+    0.001,
+    0.005,
+    0.01,
+    0.05,
+    0.1,
+    0.2,
+    0.4,
+    0.6
+  ],
+  "configs": {
+    "reference": {
+      "switch": "full method: intervals theta, snapped, capped, u = q0.95",
+      "theta_method": "intervals",
+      "snap": true,
+      "no_cap": false,
+      "threshold_q": 0.95
+    },
+    "theta_off": {
+      "switch": "dependence correction OFF (theta = 1, the T10 arm)",
+      "theta_method": "fixed",
+      "snap": true,
+      "no_cap": false,
+      "threshold_q": 0.95
+    },
+    "theta_runs": {
+      "switch": "theta from runs declustering, r = 12",
+      "theta_method": "runs",
+      "snap": true,
+      "no_cap": false,
+      "threshold_q": 0.95
+    },
+    "snap_off": {
+      "switch": "catalog snapping OFF (continuous allocations)",
+      "theta_method": "intervals",
+      "snap": false,
+      "no_cap": false,
+      "threshold_q": 0.95
+    },
+    "cap_off": {
+      "switch": "cap at the original allocation OFF",
+      "theta_method": "intervals",
+      "snap": true,
+      "no_cap": true,
+      "threshold_q": 0.95
+    },
+    "u_q90": {
+      "switch": "GPD threshold u at q0.90",
+      "theta_method": "intervals",
+      "snap": true,
+      "no_cap": false,
+      "threshold_q": 0.9
+    },
+    "u_q98": {
+      "switch": "GPD threshold u at q0.98",
+      "theta_method": "intervals",
+      "snap": true,
+      "no_cap": false,
+      "threshold_q": 0.98
+    },
+    "theta_1_unsnapped": {
+      "switch": "theta = 1, unsnapped (T10 diagnostic; figure only)",
+      "theta_method": "fixed",
+      "snap": false,
+      "no_cap": false,
+      "threshold_q": 0.95
+    }
+  },
+  "published_check": {
+    "theta_intervals/frontier.csv": "identical",
+    "ablation/frontier_reference.csv": "identical",
+    "frontier.csv": "identical",
+    "ablation/frontier_theta_off.csv": "identical",
+    "theta_runs/frontier.csv": "identical",
+    "ablation/frontier_theta_runs.csv": "identical",
+    "theta_intervals_unsnapped/frontier.csv": "identical",
+    "ablation/frontier_snap_off.csv": "identical",
+    "ablation/frontier_cap_off.csv": "identical",
+    "ablation/frontier_u_q90.csv": "identical",
+    "ablation/frontier_u_q98.csv": "identical",
+    "unsnapped/frontier.csv": "identical"
+  },
+  "vms_used": 792,
+  "vms_idle": 425,
+  "limit": 0
+}

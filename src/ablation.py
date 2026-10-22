@@ -93,15 +93,19 @@ BASELINE_MOVED = {"snap_off"}
 NOT_LIKE_FOR_LIKE = {"cap_off": "peak"}
 
 
-def run_arm(fleet, settings, eps_sweep, eval_hours, theta_fixed=1.0):
-    """One ablation arm over an already-loaded fleet. Returns its frontier."""
+def set_theta(fleet, settings, theta_fixed=1.0):
+    """Put an arm's theta on every VM. Shared with src/bootstrap.py so the
+    intervals are drawn around exactly the arms this file reports."""
     if settings["theta_method"] == "fixed":
         for _o, _e, m in fleet:
             m["theta"] = {res: theta_fixed for res, *_r in RESOURCES}
-        theta_df = None
-    else:
-        theta_df = attach_theta(fleet, settings["theta_method"],
-                                EVT_DEFAULT_RUN_LENGTH)
+        return None
+    return attach_theta(fleet, settings["theta_method"], EVT_DEFAULT_RUN_LENGTH)
+
+
+def run_arm(fleet, settings, eps_sweep, eval_hours, theta_fixed=1.0):
+    """One ablation arm over an already-loaded fleet. Returns its frontier."""
+    theta_df = set_theta(fleet, settings, theta_fixed)
     fr = run_frontier(fleet, eps_sweep, eval_hours,
                       snap=settings["snap"], no_cap=settings["no_cap"])
     return fr, theta_df

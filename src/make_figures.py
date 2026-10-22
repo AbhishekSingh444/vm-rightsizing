@@ -21,9 +21,17 @@ Both raise rather than plot a wrong number.
 Greyscale: no figure uses colour as its only channel. Bars are separated by
 hatch, lines by dash pattern, scatter classes by marker shape.
 
+`--ci` (T16) draws the interval versions instead: figures 1, 2, 3, 5 and 6 as
+`fig<n>_<name>_ci.png/.svg`, with 95% bootstrap percentile intervals over VMs
+(the same resampler, seed and resample count as src/bootstrap.py) and Wilson
+intervals where the quantity is a count. The Review 1 figures are evidence for
+a closed review and are never overwritten by `--ci`. Figure 4 has no `_ci`
+version; CAPTIONS.md says why.
+
 Usage:
     python3 src/make_figures.py --out figures/
     python3 src/make_figures.py --out figures/ --only 2 5
+    python3 src/make_figures.py --out figures/ --ci --seed 16 --resamples 10000
 """
 
 import argparse
@@ -45,21 +53,77 @@ DASH = [(0, ()), (0, (5, 2)), (0, (1, 1.5)), (0, (6, 2, 1, 2))]
 MARKER = ["o", "s", "^", "D"]
 
 CAPTIONS = []
+CI_CAPTIONS = []
+
+# CAPTIONS.md keeps the --ci captions between these markers, so a --ci run
+# can rewrite its own section without touching the Review 1 captions, and a
+# full Review 1 regeneration carries the section over instead of dropping it.
+CI_BEGIN = "<!-- T16 intervals: written by `make_figures.py --ci` -->"
+CI_END = "<!-- end T16 intervals -->"
+FOOTER = "---\n\nThis trace was graciously provided by Bitbrains IT Services Inc.\n"
 
 
 def figpath(out, n, name):
     return os.path.join(out, f"fig{n}_{name}")
 
 
-def save(fig, out, n, name, caption, sources):
-    """Write PNG + SVG and register the caption."""
+def save(fig, out, n, name, caption, sources, ci=None):
+    """Write PNG + SVG and register the caption. With `ci`, the file gets the
+    `_ci` suffix and the caption goes to the T16 section."""
     os.makedirs(out, exist_ok=True)
-    base = figpath(out, n, name)
+    base = figpath(out, n, name + ("_ci" if ci else ""))
     fig.savefig(base + ".png", dpi=200, bbox_inches="tight")
     fig.savefig(base + ".svg", bbox_inches="tight")
     plt.close(fig)
-    CAPTIONS.append((n, os.path.basename(base), caption, sources))
+    (CI_CAPTIONS if ci else CAPTIONS).append(
+        (n, os.path.basename(base), caption, sources))
     print(f"  wrote {base}.png / .svg")
+
+
+class Resampler:
+    """T16 bootstrap over the usable VMs, for the --ci figures.
+
+    Uses src/bootstrap.py's `resample_counts`, so with the same seed and
+    resample count a figure's intervals are drawn from the same resampled
+    fleets as results/bootstrap/. Rows must be supplied in the fleet's order
+    (trace file name, string-sorted); `align` enforces it.
+    """
+
+    def __init__(self, n, resamples, seed):
+        import numpy as np
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from bootstrap import resample_counts, wilson_interval
+        self.np = np
+        self.wilson = wilson_interval
+        self.n, self.resamples, self.seed = n, resamples, seed
+        self.counts = resample_counts(n, resamples, seed).astype(float)
+
+    @staticmethod
+    def align(rows, key):
+        rows = sorted(rows, key=lambda r: str(r[key]).replace(".csv", "")
+                      + ".csv")
+        return rows
+
+    def interval(self, samples):
+        lo, hi = self.np.percentile(samples, [2.5, 97.5])
+        return float(lo), float(hi)
+
+    def pooled(self, num, den, mask=None):
+        """Point estimate and resamples of 100 * sum(num) / sum(den)."""
+        np = self.np
+        num, den = np.asarray(num, float), np.asarray(den, float)
+        if mask is not None:
+            num, den = num * mask, den * mask
+        point = 100.0 * num.sum() / den.sum()
+        return point, 100.0 * (self.counts @ num) / (self.counts @ den)
+
+    def share(self, flag, mask=None):
+        """Point estimate and resamples of the percentage of VMs with `flag`."""
+        np = self.np
+        flag = np.asarray(flag, float)
+        m = np.ones(len(flag)) if mask is None else np.asarray(mask, float)
+        point = 100.0 * (flag * m).sum() / m.sum()
+        return point, 100.0 * (self.counts @ (flag * m)) / (self.counts @ m)
 
 
 def read(path):
@@ -347,7 +411,7 @@ def fig4_exclusion_cascade(results, traces, out):
          "+ file count in data/fastStorage/")
 
 
-def fig5_t8_validation(results, out, seed):
+def fig5_t8_validation(results, out, seed, ci=None):
     import random
     rows = []
     for w in range(1, 6):
@@ -413,6 +477,31 @@ def fig5_t8_validation(results, out, seed):
     if mism:
         raise SystemExit(f"figure 5 would misrepresent the result: "
                          f"{len(mism)} mismatches found")
+    if ci:
+        # 50 replayed VMs are not a resample of anything; the uncertainty
+        # worth stating is how large a mismatch rate zero-in-n can rule out.
+        decided = len(rows) - len(band)
+        lo_a, hi_a = ci.wilson(len(mism), len(rows))
+        lo_d, hi_d = ci.wilson(len(mism), decided)
+        ax.text(0.99, 0.04,
+                f"mismatches: {len(mism)} of {len(rows)} — Wilson 95% "
+                f"[{100 * lo_a:.1f}%, {100 * hi_a:.1f}%]\n"
+                f"excluding the {len(band)} undecidable: {len(mism)} of "
+                f"{decided} — [{100 * lo_d:.1f}%, {100 * hi_d:.1f}%]",
+                transform=ax.transAxes, ha="right", va="bottom", fontsize=7.5,
+                bbox=dict(facecolor="white", edgecolor="black", lw=0.5,
+                          pad=3))
+        save(fig, out, 5, "t8_validation",
+             f"Figure 5 with the uncertainty on its headline. Zero mismatches "
+             f"between the like-with-like offline rule and the kernel's "
+             f"verdict in {len(rows)} replayed VMs bounds the true mismatch "
+             f"rate only to below {100 * hi_a:.1f}% (Wilson 95%); excluding "
+             f"the {len(band)} margin-band VMs the testbed cannot adjudicate, "
+             f"below {100 * hi_d:.1f}% in {decided}. The 50 VMs are a "
+             f"stratified subset, not a resample of the fleet, so no "
+             f"bootstrap is drawn.",
+             "results/wave{1..5}_outcomes.csv", ci=True)
+        return
     save(fig, out, 5, "t8_validation",
          f"Offline prediction against kernel outcome for the {len(rows)} "
          f"cluster-replayed VMs. The like-with-like rule -- demand above the "
@@ -482,6 +571,307 @@ def fig6_idle_contamination(results, out):
          "(verified against results/baseline_summary.csv)")
 
 
+# ------------------------------------------------- T16 interval figures (--ci)
+
+def per_vm_arrays(results, rs):
+    """Per-VM Review 1 baseline rows as arrays in fleet order, per method."""
+    import numpy as np
+    rows, eval_hours, _pooled, _ = check_pooled_pct(results)
+    out = {}
+    order = None
+    for m in ("peak", "p95"):
+        sub = rs.align([r for r in rows if r["method"] == m], "vm_id")
+        ids = [r["vm_id"] for r in sub]
+        if len(sub) != rs.n or (order is not None and ids != order):
+            raise SystemExit(f"per_vm_results.csv: {m} rows do not cover the "
+                             f"same {rs.n} VMs in fleet order")
+        order = ids
+        f = lambda c: np.array([float(r[c]) for r in sub])
+        out[m] = {
+            "idle": np.array([r["idle"] == "True" for r in sub], float),
+            "cpu_num": f("recl_vcpu_hours"),
+            "cpu_den": f("orig_cores") * eval_hours,
+            "mem_num": f("recl_mem_gb_hours"),
+            "mem_den": f("orig_mem_gb") * eval_hours,
+            "any": np.array([r["any_violation"] == "True" for r in sub], float),
+            "cpu_v": (f("cpu_events") > 0).astype(float),
+            "mem_v": (f("mem_events") > 0).astype(float),
+        }
+    return out
+
+
+def bar_ci(ax, xs, points, samples, rs, colour, hatch, label, w, fmt="{:.1f}"):
+    import numpy as np
+    lo_hi = [rs.interval(s) for s in samples]
+    err = np.array([[p - lo for p, (lo, _h) in zip(points, lo_hi)],
+                    [hi - p for p, (_l, hi) in zip(points, lo_hi)]])
+    ax.bar(xs, points, width=w, color=colour, hatch=hatch, edgecolor="black",
+           lw=0.6, label=label, yerr=err, capsize=2.5,
+           error_kw=dict(lw=0.9, ecolor="black"))
+    for x, p, (_lo, hi) in zip(xs, points, lo_hi):
+        ax.text(x, hi + 1.0, fmt.format(p), ha="center", fontsize=7)
+    return lo_hi
+
+
+def ci_note(rs, lead="Error bars"):
+    return (f"{lead}: 95% bootstrap percentile intervals over VMs "
+            f"({rs.resamples:,} resamples, seed {rs.seed}); fleet composition "
+            f"only, not the observation/evaluation split.")
+
+
+def fig1_headroom_ci(results, out, rs):
+    import numpy as np
+    rows = rs.align(read(os.path.join(results, "dataset_report.csv")), "file")
+    if len(rows) != rs.n:
+        raise SystemExit("dataset_report.csv does not hold the fleet's VMs")
+    grid = np.linspace(0, 110, 441)
+    k95 = max(0, min(rs.n - 1, int(round(0.95 * (rs.n - 1)))))
+    fig, axes = plt.subplots(1, 2, figsize=(9.4, 3.9), sharey=True)
+    handles, notes = [], []
+    for ax, (res, unit) in zip(axes, (("cpu", "CPU"), ("mem", "Memory"))):
+        for i, stat in enumerate(("mean", "p95")):
+            vals = np.array([100.0 * float(r[f"{res}_{stat}_util"])
+                             for r in rows])
+            ind = (vals[:, None] <= grid[None, :]).astype(float)
+            cdf_b = 100.0 * (rs.counts @ ind) / rs.n
+            lo, hi = np.percentile(cdf_b, [2.5, 97.5], axis=0)
+            ax.fill_between(grid, lo, hi, color=GREYS[i * 2], alpha=0.22,
+                            lw=0, step="post")
+            xs, ys = cdf(vals.tolist())
+            ln, = ax.plot(xs, [100 * y for y in ys], color=GREYS[i * 2],
+                          ls=DASH[i], lw=1.6,
+                          label=f"per-VM {stat} utilisation")
+            if len(handles) < 2:
+                handles.append(ln)
+            # 95th percentile (nearest rank, as in fig 1) on every resample.
+            order = np.argsort(vals, kind="stable")
+            cum = np.cumsum(rs.counts[:, order], axis=1)
+            q_b = vals[order][np.argmax(cum >= k95 + 1, axis=1)]
+            q = pct_of(vals.tolist(), 95)
+            qlo, qhi = rs.interval(q_b)
+            ax.axvspan(qlo, qhi, color=GREYS[i * 2], alpha=0.15, lw=0)
+            ax.axvline(q, color=GREYS[i * 2], ls=DASH[i], lw=1.0, alpha=0.7)
+            ax.annotate(f"95th pct, {stat}: {q:.0f}% [{qlo:.0f}, {qhi:.0f}]",
+                        xy=(q, 99), xytext=(-4, -2),
+                        textcoords="offset points", fontsize=7.5,
+                        color=GREYS[i * 2], rotation=90, ha="right", va="top")
+            notes.append(f"{unit} {stat} {q:.0f}% [{qlo:.0f}, {qhi:.0f}]")
+        style(ax, f"{unit} utilisation (% of provisioned)",
+              "VMs at or below (%)" if res == "cpu" else "", unit)
+        ax.set_xlim(0, 110)
+        ax.set_ylim(0, 100)
+        ax.axvline(100, color="black", lw=0.7, alpha=0.5)
+    fig.legend(handles=handles, fontsize=9, frameon=False, ncol=2,
+               loc="lower center", bbox_to_anchor=(0.5, -0.09))
+    fig.suptitle(f"Objective O1 — allocated capacity vastly exceeds used, "
+                 f"across {len(rows)} usable VMs", fontsize=11, y=1.0)
+    fig.text(0.5, -0.14, "Shaded: pointwise band on each CDF and interval on "
+             "each 95th percentile. " + ci_note(rs, lead="Both are"),
+             ha="center", fontsize=7, style="italic")
+    save(fig, out, 1, "headroom",
+         f"Figure 1 with intervals. Shaded bands are 95% pointwise bootstrap "
+         f"bands on each utilisation CDF, and shaded verticals the 95% "
+         f"interval on each 95th percentile ({'; '.join(notes)}). The bands "
+         f"are narrow: the headroom claim does not rest on which VMs happen "
+         f"to be in the fleet.",
+         "results/dataset_report.csv", ci=True)
+
+
+def fig2_reclamation_vs_safety_ci(results, out, rs):
+    arr = per_vm_arrays(results, rs)
+    summary = sorted([r for r in read(os.path.join(results,
+                                                   "baseline_summary.csv"))
+                      if r["method"] != "as_provisioned"], key=order_key)
+    labels = [f"{r['scope'].replace('_', ' ')}\n{r['method']}" for r in summary]
+    series = [("vCPU reclaimed", "recl_vcpu_pct"),
+              ("Memory reclaimed", "recl_mem_pct"),
+              ("VMs violation-free", "pct_vms_safe")]
+    stats = {col: ([], []) for _n, col in series}
+    for r in summary:
+        a = arr[r["method"]]
+        mask = None if r["scope"] == "all_vms" else 1.0 - a["idle"]
+        got = {
+            "recl_vcpu_pct": rs.pooled(a["cpu_num"], a["cpu_den"], mask),
+            "recl_mem_pct": rs.pooled(a["mem_num"], a["mem_den"], mask),
+        }
+        p, s = rs.share(a["any"], mask)
+        got["pct_vms_safe"] = (100.0 - p, 100.0 - s)
+        for col, (pt, smp) in got.items():
+            if abs(pt - float(r[col])) > 0.06:
+                raise SystemExit(f"{col} for {r['scope']}/{r['method']} "
+                                 f"derives as {pt:.2f} but baseline_summary "
+                                 f"says {r[col]}")
+            stats[col][0].append(pt)
+            stats[col][1].append(smp)
+
+    fig, ax = plt.subplots(figsize=(8.0, 4.2))
+    n, w = len(series), 0.26
+    for i, (name, col) in enumerate(series):
+        xs = [x + (i - (n - 1) / 2) * w for x in range(len(summary))]
+        bar_ci(ax, xs, stats[col][0], stats[col][1], rs, GREYS[i], HATCH[i],
+               name, w)
+    ax.set_xticks(range(len(summary)))
+    ax.set_xticklabels(labels, fontsize=9)
+    style(ax, "", "percent (%)",
+          "Reclamation is bought with safety, and the price is not uniform")
+    ax.set_ylim(0, 108)
+    ax.legend(fontsize=8.5, frameon=False, ncol=3, loc="upper center",
+              bbox_to_anchor=(0.5, -0.13))
+    fig.text(0.5, -0.1, ci_note(rs), ha="center", fontsize=7, style="italic")
+    save(fig, out, 2, "reclamation_vs_safety",
+         "Figure 2 with 95% bootstrap intervals over VMs on every bar. "
+         "Intervals are widest for non-idle VMs, the smaller population; "
+         "the p95-versus-peak safety gap is far larger than either interval "
+         "on every scope.",
+         "results/per_vm_results.csv (verified against "
+         "results/baseline_summary.csv)", ci=True)
+
+
+def fig3_safety_split_ci(results, out, rs):
+    arr = per_vm_arrays(results, rs)
+    summary = sorted([r for r in read(os.path.join(results,
+                                                   "baseline_summary.csv"))
+                      if r["method"] != "as_provisioned"], key=order_key)
+    labels = [f"{r['scope'].replace('_', ' ')}\n{r['method']}" for r in summary]
+    series = [("CPU safe", "cpu_pct_safe", "cpu_v"),
+              ("Memory safe", "mem_pct_safe", "mem_v")]
+    fig, ax = plt.subplots(figsize=(7.6, 4.2))
+    w = 0.34
+    for i, (name, col, flag) in enumerate(series):
+        pts, smps = [], []
+        for r in summary:
+            a = arr[r["method"]]
+            mask = None if r["scope"] == "all_vms" else 1.0 - a["idle"]
+            p, s = rs.share(a[flag], mask)
+            if abs((100.0 - p) - float(r[col])) > 0.06:
+                raise SystemExit(f"{col} for {r['scope']}/{r['method']} "
+                                 f"derives as {100 - p:.2f} but "
+                                 f"baseline_summary says {r[col]}")
+            pts.append(100.0 - p)
+            smps.append(100.0 - s)
+        xs = [x + (i - 0.5) * w for x in range(len(summary))]
+        bar_ci(ax, xs, pts, smps, rs, GREYS[i * 2], HATCH[i * 2 + 1], name, w)
+    ax.set_xticks(range(len(summary)))
+    ax.set_xticklabels(labels, fontsize=9)
+    style(ax, "", "VMs with no violation (%)",
+          "Memory safety collapses while CPU safety holds")
+    ax.set_ylim(0, 108)
+    ax.legend(fontsize=9, frameon=False, ncol=2, loc="lower center",
+              bbox_to_anchor=(0.5, -0.28))
+    fig.text(0.5, -0.17, ci_note(rs), ha="center", fontsize=7, style="italic")
+    save(fig, out, 3, "safety_split",
+         "Figure 3 with 95% bootstrap intervals over VMs. The CPU-versus-"
+         "memory safety gap under p95 is many times the width of either "
+         "interval, so the asymmetry the violation rule defends is not a "
+         "fleet-composition artefact.",
+         "results/per_vm_results.csv (verified against "
+         "results/baseline_summary.csv)", ci=True)
+
+
+def fig6_idle_contamination_ci(results, out, rs):
+    arr = per_vm_arrays(results, rs)
+    methods = ["peak", "p95"]
+    fig, axes = plt.subplots(1, 2, figsize=(9.0, 4.0), sharey=True)
+    panels = [("vCPU", "cpu"), ("Memory", "mem")]
+    gaps = {}
+    for ax, (res, key) in zip(axes, panels):
+        w = 0.34
+        per_class = {}
+        for i, (cname, is_idle) in enumerate((("idle", 1.0), ("non-idle", 0.0))):
+            pts, smps = [], []
+            for m in methods:
+                a = arr[m]
+                mask = a["idle"] if is_idle else 1.0 - a["idle"]
+                p, s = rs.pooled(a[f"{key}_num"], a[f"{key}_den"], mask)
+                pts.append(p)
+                smps.append(s)
+            per_class[cname] = (pts, smps)
+            xs = [x + (i - 0.5) * w for x in range(len(methods))]
+            n_cls = int((arr["peak"]["idle"] == is_idle).sum())
+            bar_ci(ax, xs, pts, smps, rs, GREYS[i * 2], HATCH[i * 2 + 1],
+                   f"{cname} (n={n_cls})", w)
+        for x, m in enumerate(methods):
+            g = per_class["idle"][0][x] - per_class["non-idle"][0][x]
+            g_b = per_class["idle"][1][x] - per_class["non-idle"][1][x]
+            lo, hi = rs.interval(g_b)
+            gaps[(res, m)] = (g, lo, hi)
+            ax.annotate(f"gap {g:+.1f} pp\n[{lo:+.1f}, {hi:+.1f}]",
+                        xy=(x, 109), ha="center", fontsize=7, style="italic")
+        ax.set_xticks(range(len(methods)))
+        ax.set_xticklabels(methods)
+        style(ax, "", "reclaimed (% of provisioned, pooled)"
+              if res == "vCPU" else "", res)
+        ax.set_ylim(0, 122)
+    h, lb = axes[0].get_legend_handles_labels()
+    fig.legend(h, lb, fontsize=9, frameon=False, ncol=2, loc="lower center",
+               bbox_to_anchor=(0.5, -0.06))
+    fig.suptitle("Idle VMs inflate reclamation on BOTH resources under peak; "
+                 "only memory/p95 is nearly clean", fontsize=10.5, y=1.02)
+    fig.text(0.5, -0.1, ci_note(rs), ha="center", fontsize=7, style="italic")
+    fmt = lambda k: f"{gaps[k][0]:+.1f} pp [{gaps[k][1]:+.1f}, {gaps[k][2]:+.1f}]"
+    save(fig, out, 6, "idle_contamination",
+         f"Figure 6 with 95% bootstrap intervals over VMs, on each bar and on "
+         f"each idle-minus-non-idle gap: CPU peak {fmt(('vCPU', 'peak'))}, "
+         f"memory peak {fmt(('Memory', 'peak'))}, CPU p95 "
+         f"{fmt(('vCPU', 'p95'))}, memory p95 {fmt(('Memory', 'p95'))}. "
+         f"The idle class is resampled along with everything else, so its "
+         f"size varies between resamples.",
+         "results/per_vm_results.csv + results/run_config.json", ci=True)
+
+
+def ci_section(rs):
+    """The T16 block of CAPTIONS.md, from the captions this run registered."""
+    lines = [CI_BEGIN, "", "## Interval versions (T16)", "",
+             f"The `_ci` figures are the Review 1 figures above, redrawn with "
+             f"95% intervals. The originals are Review 1 evidence and are not "
+             f"modified. Bootstrap: VMs resampled with replacement, "
+             f"{rs.resamples:,} resamples, seed {rs.seed} -- the same "
+             f"resampler and seed as `results/bootstrap/`. It captures fleet "
+             f"composition only, not the choice of the 21/9-day split.", ""]
+    for n, base, cap, src in sorted(CI_CAPTIONS):
+        lines += [f"### Figure {n} — `{base}.png` / `.svg`", "",
+                  cap, "", f"**Source:** `{src}`", ""]
+    lines += [
+        "### Review 2 figures", "",
+        "`frontier_snapped`, `frontier_unsnapped`, `frontier_theta_intervals`, "
+        "`frontier_theta_intervals_unsnapped`, `ablation_cpu` and "
+        "`ablation_mem` are redrawn in place with 95% bootstrap intervals on "
+        "both axes of every point (`src/plot_frontier.py --intervals`, "
+        "`src/plot_ablation.py --intervals`). Interval tables: "
+        "`results/bootstrap/`.", "",
+        "### Shown without intervals, deliberately", "",
+        "- **Figure 4 (`fig4_exclusion_cascade`)** counts how many of the "
+        "1,250 trace files fail each deterministic data-quality gate. It is "
+        "a census of this dataset, not an estimate from a sample, and no "
+        "inference is drawn from it; resampling VMs would put an interval on "
+        "a number that is exact by construction.",
+        "- **`slide13.png`, `slide13_2.png`** are screenshots of `kubectl` "
+        "output from the Review 1 cluster testbed (one pod's `describe`, and "
+        "a three-pod status listing). They show recorded state, not a "
+        "computed quantity, and there is nothing to put an interval on.", "",
+        CI_END, ""]
+    return "\n".join(lines)
+
+
+def splice_captions(path, review1=None, ci=None):
+    """Rewrite CAPTIONS.md, replacing only the parts given. `review1` is the
+    Review 1 caption text (header and per-figure sections); `ci` is the T16
+    block. A part not given is carried over from the existing file."""
+    old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+    body = old.split(FOOTER)[0] if FOOTER in old else old
+    old_ci = ""
+    if CI_BEGIN in body:
+        head, rest = body.split(CI_BEGIN, 1)
+        old_ci = CI_BEGIN + rest.split(CI_END, 1)[0] + CI_END + "\n"
+        body = head + rest.split(CI_END, 1)[1].lstrip("\n")
+    review1 = review1 if review1 is not None else body
+    ci = ci if ci is not None else old_ci
+    text = review1.rstrip("\n") + "\n\n" + (ci + "\n" if ci else "") + FOOTER
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+    print(f"  wrote {path}")
+
+
 def write_captions(out):
     path = os.path.join(out, "CAPTIONS.md")
     lines = ["# Figure captions", "",
@@ -490,12 +880,7 @@ def write_captions(out):
     for n, base, cap, src in sorted(CAPTIONS):
         lines += [f"## Figure {n} — `{base}.png` / `.svg`", "",
                   cap, "", f"**Source:** `{src}`", ""]
-    lines += ["---", "",
-              "This trace was graciously provided by Bitbrains IT Services "
-              "Inc.", ""]
-    with open(path, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write("\n".join(lines))
-    print(f"  wrote {path}")
+    splice_captions(path, review1="\n".join(lines))
 
 
 def main():
@@ -510,6 +895,14 @@ def main():
                     help="jitter seed for figure 5 (deterministic by default)")
     ap.add_argument("--only", nargs="+", type=int, default=[],
                     help="generate only these figure numbers")
+    ap.add_argument("--ci", action="store_true",
+                    help="T16: draw the _ci interval versions of figures "
+                         "1, 2, 3, 5, 6 instead of the Review 1 figures, and "
+                         "rewrite only the T16 section of CAPTIONS.md")
+    ap.add_argument("--ci-seed", type=int, default=16,
+                    help="bootstrap seed for --ci (same as src/bootstrap.py)")
+    ap.add_argument("--resamples", type=int, default=10_000,
+                    help="bootstrap resamples for --ci")
     args = ap.parse_args()
 
     plt.rcParams.update({
@@ -525,6 +918,37 @@ def main():
     print("verifying derivations against published results...")
     check_pooled_pct(args.results)
     print("  pooled reclamation % reconciles with baseline_summary.csv")
+
+    if args.ci:
+        n = len(read(os.path.join(args.results, "dataset_report.csv")))
+        rs = Resampler(n, args.resamples, args.ci_seed)
+        jobs = [
+            (1, lambda: fig1_headroom_ci(args.results, args.out, rs)),
+            (2, lambda: fig2_reclamation_vs_safety_ci(args.results, args.out, rs)),
+            (3, lambda: fig3_safety_split_ci(args.results, args.out, rs)),
+            (5, lambda: fig5_t8_validation(args.results, args.out, args.seed,
+                                           ci=rs)),
+            (6, lambda: fig6_idle_contamination_ci(args.results, args.out, rs)),
+        ]
+        failed = []
+        for k, fn in jobs:
+            if args.only and k not in args.only:
+                continue
+            print(f"figure {k} (intervals):")
+            try:
+                fn()
+            except SystemExit as exc:
+                failed.append((k, str(exc)))
+                print(f"  SKIPPED: {exc}", file=sys.stderr)
+        if args.only or failed:
+            print("\npartial --ci run: left the T16 section of CAPTIONS.md "
+                  "untouched")
+        else:
+            splice_captions(os.path.join(args.out, "CAPTIONS.md"),
+                            ci=ci_section(rs))
+        for k, why in failed:
+            print(f"  figure {k}: {why}")
+        return 1 if failed else 0
 
     jobs = [
         (1, lambda: fig1_headroom(args.results, args.out)),

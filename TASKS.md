@@ -377,7 +377,7 @@ is 0%. See `ENVIRONMENT_NOTES.md`, "T15".
 
 ---
 
-## T16 — Bootstrap over VMs, fixed and exposed `--seed`
+## T16 — Bootstrap over VMs, fixed and exposed `--seed`  (done 2026-10-22)
 
 **Why:** every number so far is a point estimate on one fleet. Without an
 interval there is no way to tell a 0.7 pp ablation shift from noise.
@@ -399,6 +399,20 @@ interval there is no way to tell a 0.7 pp ablation shift from noise.
 - Every figure under `figures/` used in the paper shows intervals.
 - Console output captured to `evidence/16_bootstrap.txt`.
 - `make test` passes in full and the suite has not shrunk.
+
+**Result:** B = 10,000, seed 16, VM as the unit, paired across arms. M(eps)
+reclaims **less** than `peak_capped` at matched risk, with intervals excluding
+zero (all VMs: CPU -5.56 [-11.07, -2.47], memory -6.30 [-9.18, -3.45]). The
+cap remains the whole gain (-47 to -68 pp, every interval 30+ pp below zero).
+**The 0.7 pp theta_off shift is not resolvable:** on CPU (all VMs) the
+theta = 1 curve misses `peak_capped`'s risk in 40% of resamples, and the one
+cell defined on every seed-16 resample is +0.16 [-0.79, 0.96]. Same seed
+reproduces exactly; seed 17 moves endpoints by <= 0.4 pp except `cap_off`
+(up to 1.3 pp on 35-70 pp wide intervals), and flips two cells from defined to
+1-in-10,000 undefined. u = q0.98's memory gain is real
+(+5.26 [3.40, 7.62]); its CPU loss is not distinguishable from zero.
+Undefined-gap shares are reported for every cell, and intervals only where
+the share is zero. See `ENVIRONMENT_NOTES.md`, "T16".
 
 ---
 

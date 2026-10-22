@@ -639,11 +639,162 @@ drifted above anything in their observation window.
 
 Suite: **79 -> 92** (`test_hypotheses.py` 13). `test_baselines.py` untouched.
 
+## T16 -- bootstrap over VMs (2026-10-22)
+
+**What changed.** `src/bootstrap.py` and `tests/test_bootstrap.py` (both new),
+`make bootstrap`. `src/sweep_eps.py`: `run_frontier` is split into
+`run_per_vm` (per-VM tables for every policy) and `frontier_from_per_vm`, and
+the matched-risk interpolation is lifted into `interp_at_risk`, now the single
+implementation used by `matched_risk_reclamation` and by every resample.
+`src/ablation.py`: theta setting lifted into `set_theta`, shared with the
+bootstrap. `src/plot_frontier.py` and `src/plot_ablation.py` gain
+`--intervals`; `src/make_figures.py` gains `--ci`. Behaviour of every existing
+target is unchanged: all eight published frontiers are rebuilt by the new code
+path and compared, byte for byte after a CSV round trip, before any interval
+is drawn -- all eight **identical**. `make` is still not on PATH here, so the
+target's commands were run directly.
+
+**Settings, fixed before the first run:** B = 10,000 resamples, seed 16
+(`--seed`, recorded in `results/bootstrap/run_config.json`). The VM is the
+unit: each resample draws 792 VMs with replacement and keeps each VM's whole
+evaluation window; samples within a VM are never resampled. One resample
+matrix is shared by every frontier, arm, scope and resource, so the ablation
+shifts are **paired**. 95% percentile intervals on reclamation, violation
+fraction, matched-risk gap and shift; Wilson 95% on every violation fraction.
+
+**Undefined gaps are reported, not dropped.** A matched-risk gap exists only
+when the comparator's measured risk falls inside the swept M(eps) range of
+that resample. Every gap and shift row carries `undefined_share`, the
+fraction of resamples where it does not, and **a percentile interval is given
+only when that share is zero**. The rule is strict, and it costs intervals on
+non-idle CPU in particular. Gaps withheld at tiny shares: reference 0.0001,
+cap_off 0.0001, snap_off 0.0003, u_q90 0.0010 (all non-idle CPU). Because
+the reference gap on non-idle CPU is undefined on one resample, **every
+non-idle CPU shift is withheld** too. Substantial shares: theta_off CPU all
+VMs 0.40, non-idle CPU 0.87, memory all VMs 0.012; theta = 1 unsnapped memory
+all VMs 0.0017, non-idle CPU 0.0072, non-idle memory 0.062. The full list is
+in `results/bootstrap/matched_risk_gaps_ci.csv` and `ablation_shifts_ci.csv`.
+
+**Reproducibility.** Three seed-16 runs (the first before two cosmetic fixes:
+a duplicated console line and Wilson's k = 0 bound now exactly 0 rather than
+6.9e-18, invisible at 4 dp) wrote byte-identical CSVs. A seed-17 run moved:
+
+- reclamation interval endpoints by at most 0.40 pp, violation-fraction
+  endpoints by at most 0.0017, gap and shift endpoints by at most 0.17 pp --
+  except `cap_off`, whose intervals are 35 to 70 pp wide and moved by up to
+  1.3 pp (gap) and 1.06 pp (reclamation). At two decimals that is more than
+  the "last digit or two" the acceptance criterion names. The cause is the
+  heavy left tail of the uncapped arm; it does not touch the conclusion (every
+  cap_off interval stays 30+ pp below zero), but it is a shortfall against the
+  criterion as written.
+- **definedness in two cells.** theta_off and u_q90, memory non-idle, are
+  defined on every seed-16 resample and undefined on 1 of 10,000 seed-17
+  resamples, so the strict rule withholds their interval under seed 17. A
+  1-in-10,000 event flips whether an interval is printed: that is the price
+  of the strict rule, and it is reported rather than smoothed.
+
+**Matched-risk gap against `peak_capped`, headline frontier (reference arm):**
+
+| scope | resource | gap (pp) | 95% interval | undefined share |
+|---|---|---|---|---|
+| all VMs | CPU | -5.56 | [-11.07, -2.47] | 0 |
+| all VMs | memory | -6.30 | [-9.18, -3.45] | 0 |
+| non-idle | CPU | -2.15 | withheld | 0.0001 |
+| non-idle | memory | -3.61 | [-5.71, -1.66] | 0 |
+
+M(eps) reclaims less than `peak_capped` at matched risk, and on the three
+cells with an interval the interval excludes zero. The T11 exploratory finding
+survives fleet resampling.
+
+**T12 ablation shifts, paired, with intervals (pp; positive = flipping the
+switch helped):**
+
+| arm | CPU all | CPU non-idle | mem all | mem non-idle |
+|---|---|---|---|---|
+| theta_off | +0.70, undef 0.40 | n/a, undef 0.87 | +0.93, undef 0.012 | +0.16 [-0.79, 0.96] |
+| theta_runs | +0.35 [-0.63, 3.71] | -0.22, undef 0.0001 | +0.38 [-0.34, 1.56] | +0.28 [-0.31, 0.83] |
+| snap_off * | **-8.50 [-13.45, -2.47]** | -3.92, undef 0.0004 | **+5.47 [1.80, 9.08]** | +2.54 [-3.31, 7.64] |
+| cap_off | **-47.03 [-79.53, -30.62]** | -27.49, undef 0.0001 | **-67.84 [-99.14, -34.79]** | **-53.44 [-75.30, -34.17]** |
+| u_q90 | +1.20 [-0.87, 3.66] | -0.72, undef 0.0010 | -0.56 [-1.80, 1.11] | -1.41 [-3.47, 0.01] |
+| u_q98 | -1.09 [-5.01, 2.26] | +1.83, undef 0.0001 | **+5.26 [3.40, 7.62]** | **+2.26 [0.76, 3.90]** |
+
+Bold = interval excludes zero. \* baseline moves too; not directly comparable.
+
+**What this changes in the T12 reading.**
+
+- **The cap is the gain, and that is now a statement with an interval.** Every
+  cap_off cell with an interval lies 30 pp or more below zero.
+- **The "theta_off is marginally ahead" sentence in T12 is withdrawn.** On CPU
+  (all VMs) the theta = 1 curve does not reach `peak_capped`'s risk in 40% of
+  resamples, and on memory (all VMs) in 1.2%, so those two shifts have no
+  interval at all. The one cell defined on every seed-16 resample, memory
+  non-idle, is +0.16 [-0.79, 0.96] (1 resample in 10,000 undefined under
+  seed 17): no detectable effect either way. What survives is the
+  T12 point that the correction's reclamation gain at fixed eps is bought with
+  risk; what does not survive is any claim that turning it off helps.
+- **Threshold: real on memory, not detectable on CPU.** u = q0.98 gains
+  +5.26 [3.40, 7.62] pp on memory (all VMs) and +2.26 [0.76, 3.90] (non-idle);
+  the CPU loss of -1.09 pp is inside [-5.01, 2.26]. T12's "not consistent
+  across resources" overstates it: the memory gain is real, and the CPU effect
+  cannot be told from zero. q0.95 is still not being changed (invariant 4).
+- **theta_runs** sits inside noise on every cell with an interval, so the choice
+  of estimator remains not a lever.
+- **Catalog quantisation on memory is real:** snap_off moves the memory gap by
+  +5.47 [1.80, 9.08] pp (all VMs).
+
+**Two things that looked wrong and are not bugs, but matter for the paper.**
+
+1. **Memory reclamation intervals are wide, and one includes zero.** Review 1's
+   uncapped `peak` reclaims 18.27% of non-idle GB-hours, 95% interval
+   [-0.17, 33.74]; all VMs 33.03% [22.67, 42.40]. That non-idle number is a
+   small net of large opposing terms: 179 of 367 non-idle VMs book *negative*
+   reclamation (snapping pushes them above their original allocation), and
+   the ten largest contributors carry 124% of the net. Capping narrows it
+   (`peak_capped` non-idle memory 30.97 [15.94, 43.47]) but not by much. Any
+   memory reclamation figure in the paper needs its interval beside it.
+2. **Wilson and bootstrap agree on violation fractions** to within 0.005 on
+   every endpoint of every row (e.g. p95 memory all VMs: bootstrap
+   [0.3220, 0.3876], Wilson [0.3223, 0.3887]). Independence across VMs is therefore not visibly
+   distorting the count intervals. Where they would differ is anything
+   capacity-weighted, which Wilson does not cover.
+
+**Figures.** Review 2 figures redrawn in place with 95% intervals on both axes
+of every point: `frontier_snapped`, `frontier_unsnapped`,
+`frontier_theta_intervals`, `frontier_theta_intervals_unsnapped`,
+`ablation_cpu`, `ablation_mem`. Review 1 figures 1, 2, 3, 5 and 6 drawn as new
+`fig<n>_<name>_ci` files (same seed and B); the originals are untouched.
+Figure 4 and `slide13*.png` get no intervals, with the reason in
+`figures/CAPTIONS.md`. Figure 5's interval is Wilson on the mismatch rate: 0 of
+50 bounds it below 7.1% (0 of 46 decidable, below 7.7%).
+
+**Results now tracked.** The summary CSVs the docs cite are force-added to git
+despite the `results/` ignore rule (frontiers, dominance, calibration,
+exploratory matched-risk, ablation, hypotheses, bootstrap, and
+`baseline_summary.csv`), so a reader can check a cited number. Per-VM tables
+stay ignored and are regenerable.
+
+Suite: **92 -> 106** (`test_bootstrap.py` 14). `test_baselines.py` untouched.
+The new test for Wilson's 0-of-n bound failed on first run (6.9e-18, not 0);
+the code was fixed, not the test.
+
 ## Threats to validity
 
 What this setup cannot prove, kept here rather than only in the report so the
 claims and their limits live in one file. Testbed scale is a separate,
 earlier section above; dataset exclusions are in `docs/DATA_QUALITY.md`.
+
+### The bootstrap intervals capture fleet composition only, not the split choice
+
+The T16 bootstrap resamples which VMs make up the fleet. It holds the 21/9-day
+observation/evaluation split fixed in every resample, so its intervals say
+nothing about how the results would move under a different split -- and the
+low-eps failures are drift between the two windows (T12), which is exactly
+what a split change would perturb. T17's multi-split analysis is the evidence
+for that axis. Two further assumptions sit under the intervals: VMs are
+treated as exchangeable and independent, so demand shocks shared across VMs
+(a common workload event in the evaluation window) are not represented; and
+the settings fixed before any result (q0.95 threshold, catalog, cap) are
+treated as given, not as sampled.
 
 ### The pre-registered ECE bound cannot reject on this sweep
 

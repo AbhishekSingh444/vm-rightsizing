@@ -16,11 +16,20 @@ is the like-for-like comparison against M(eps) (itself capped). On memory the
 two differ substantially, because upward snapping pushes `peak` above the
 original allocation on a large minority of VMs.
 
+With `--intervals` (a `results/bootstrap/frontier_<config>_ci.csv` from T16)
+every point carries a cross of 95% bootstrap percentile intervals over VMs:
+horizontal on measured risk, vertical on reclamation. The interval file must
+describe the same frontier -- its point estimates are checked against
+`--frontier` and the figure is refused if they differ.
+
 Usage:
     python3 plot_frontier.py --frontier results/frontier.csv --out figures
+    python3 plot_frontier.py --frontier results/frontier.csv --out figures \
+        --intervals results/bootstrap/frontier_theta_off_ci.csv
 """
 
 import argparse
+import json
 import os
 
 import matplotlib
@@ -44,9 +53,30 @@ RESOURCE_LABEL = {"cpu": "CPU (vCPU-hours)", "mem": "Memory (GB-hours)"}
 SCOPE_LABEL = {"all_vms": "All VMs", "non_idle": "Non-idle VMs"}
 
 
-def panel(ax, sub, resource, scope, annotate_eps, _seen, series_label):
+def error_cross(ax, ci, method, eps, colour):
+    """95% bootstrap intervals on both axes for one frontier point."""
+    if ci is None:
+        return
+    hit = ci[(ci.method == method)
+             & ((ci.eps == eps) if eps == eps else ci.eps.isna())]
+    if hit.empty:
+        return
+    r = hit.iloc[0]
+    x, y = r.viol_frac * 100, r.recl_pct
+    ax.errorbar(x, y,
+                xerr=[[x - r.viol_lo * 100], [r.viol_hi * 100 - x]],
+                yerr=[[y - r.recl_lo], [r.recl_hi - y]],
+                fmt="none", ecolor=colour, elinewidth=1.1, capsize=2.5,
+                alpha=0.75, zorder=2)
+
+
+def panel(ax, sub, resource, scope, annotate_eps, _seen, series_label,
+          ci=None):
     evt = sub[sub.method == "evt"].sort_values("eps")
     ax.set_facecolor(SURFACE)
+
+    for _i, r in evt.iterrows():
+        error_cross(ax, ci, "evt", r.eps, C_EVT)
 
     # M(eps) frontier.
     ax.plot(evt.viol_frac * 100, evt.recl_pct, "-", color=C_EVT, lw=2, zorder=3)
@@ -85,6 +115,7 @@ def panel(ax, sub, resource, scope, annotate_eps, _seen, series_label):
             variants.append((rp, colour, label))
 
         for r, face, text in variants:
+            error_cross(ax, ci, r.method, r.eps, colour)
             ax.plot(r.viol_frac * 100, r.recl_pct, marker, ms=11,
                     markerfacecolor=face, markeredgecolor=colour,
                     markeredgewidth=2.2, zorder=5,
@@ -116,10 +147,34 @@ def main():
                          "theta in use -- a frontier drawn at a per-VM "
                          "estimated theta is not the same curve as one at "
                          "theta = 1, and the two are routinely compared.")
+    ap.add_argument("--intervals", default=None,
+                    help="T16 frontier_<config>_ci.csv; draws 95%% bootstrap "
+                         "intervals on every point. Its run_config.json "
+                         "(same directory) supplies the seed and resample "
+                         "count printed on the figure.")
     args = ap.parse_args()
 
     os.makedirs(args.out, exist_ok=True)
     fr = pd.read_csv(args.frontier)
+    ci, ci_note = None, ""
+    if args.intervals:
+        ci = pd.read_csv(args.intervals)
+        key = ["scope", "resource", "method", "eps"]
+        both = fr.merge(ci, on=key, suffixes=("", "_ci"), how="outer",
+                        indicator=True)
+        if ((both._merge != "both").any()
+                or (both.recl_pct != both.recl_pct_ci).any()
+                or (both.viol_frac != both.viol_frac_ci).any()):
+            raise SystemExit(f"{args.intervals} does not describe the "
+                             f"frontier in {args.frontier}; refusing to draw "
+                             f"intervals around different points")
+        with open(os.path.join(os.path.dirname(args.intervals),
+                               "run_config.json")) as fh:
+            cfg = json.load(fh)
+        ci_note = (f"Bars: 95% bootstrap percentile intervals over VMs on "
+                   f"both axes ({cfg['resamples']:,} resamples, seed "
+                   f"{cfg['seed']}); fleet composition only, not the "
+                   f"21/9-day split.\n")
     annotate_eps = {0.001, 0.1, 0.6}
     seen = set()
 
@@ -129,7 +184,9 @@ def main():
             sub = fr[(fr.resource == resource) & (fr.scope == scope)
                      & (fr.method != "as_provisioned")]
             panel(axes[row][col], sub, resource, scope, annotate_eps, seen,
-                  args.series_label)
+                  args.series_label,
+                  None if ci is None else ci[(ci.resource == resource)
+                                             & (ci.scope == scope)])
 
     for ax in axes[1]:
         ax.set_xlabel("% of VMs with at least one violation (measured)",
@@ -161,15 +218,15 @@ def main():
     title = args.title or ("Risk-quantified right-sizing frontier "
                            "(theta = 1, capped at original allocation)")
     fig.suptitle(title, fontsize=12, color=INK, x=0.02, y=0.985, ha="left")
-    fig.text(0.02, 0.935,
+    fig.text(0.02, 0.918 if ci_note else 0.935,
              "Up and to the left is better. Labels on the blue curve are eps. "
              "Filled baseline markers are capped at the original allocation, "
              "matching M(eps); hollow are uncapped.\n"
-             "Trace: Bitbrains GWA-T-12 fastStorage, graciously provided by "
-             "Bitbrains IT Services Inc.",
+             + ci_note + "Trace: Bitbrains GWA-T-12 fastStorage, graciously "
+             "provided by Bitbrains IT Services Inc.",
              fontsize=8.5, color=INK_2, ha="left")
 
-    fig.tight_layout(rect=[0, 0.045, 1, 0.905])
+    fig.tight_layout(rect=[0, 0.045, 1, 0.885 if ci_note else 0.905])
     path = os.path.join(args.out, f"{args.name}.png")
     fig.savefig(path, dpi=160, facecolor=SURFACE)
     print(f"wrote {path}")

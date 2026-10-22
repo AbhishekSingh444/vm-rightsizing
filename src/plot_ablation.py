@@ -21,6 +21,11 @@ always present.
 The `peak_capped` reference is drawn once, because six of the seven arms share
 it exactly; `snap_off` moves the baseline as well as the method and gets its
 own marker in its own hue.
+
+With `--intervals` (T16), every M(eps) point carries thin 95% bootstrap
+percentile bars on both axes. Overlapping bars between two arms are not a test
+of the shift between them: the shifts are paired within each resample, and
+their intervals are in `results/bootstrap/ablation_shifts_ci.csv`.
 """
 
 import os
@@ -42,9 +47,11 @@ RESOURCE_LABEL = {"cpu": "CPU (vCPU-hours)", "mem": "Memory (GB-hours)"}
 SCOPE_LABEL = {"all_vms": "All VMs", "non_idle": "Non-idle VMs"}
 
 
-def plot(frontiers, arms, resource, out_dir, name=None):
+def plot(frontiers, arms, resource, out_dir, name=None, intervals=None,
+         ci_note=""):
     """One figure for `resource`, two panels (all VMs / non-idle), every arm
-    overlaid. `frontiers` maps arm name -> that arm's frontier DataFrame.
+    overlaid. `frontiers` maps arm name -> that arm's frontier DataFrame;
+    `intervals`, if given, maps arm name -> its T16 interval DataFrame.
     """
     fig, axes = plt.subplots(1, 2, figsize=(12, 6.4), facecolor=SURFACE)
 
@@ -57,6 +64,16 @@ def plot(frontiers, arms, resource, out_dir, name=None):
             sub = fr[(fr.resource == resource) & (fr.scope == scope)]
             evt = sub[sub.method == "evt"].sort_values("eps")
             colour = SLOTS[i % len(SLOTS)]
+            if intervals is not None:
+                ci = intervals[arm]
+                ci = ci[(ci.resource == resource) & (ci.scope == scope)
+                        & (ci.method == "evt")].sort_values("eps")
+                x, y = ci.viol_frac * 100, ci.recl_pct
+                ax.errorbar(x, y,
+                            xerr=[x - ci.viol_lo * 100, ci.viol_hi * 100 - x],
+                            yerr=[y - ci.recl_lo, ci.recl_hi - y],
+                            fmt="none", ecolor=colour, elinewidth=0.8,
+                            capsize=0, alpha=0.55, zorder=2)
             ax.plot(evt.viol_frac * 100, evt.recl_pct, "-",
                     color=colour, lw=2, zorder=3)
             # 2px surface ring so overlapping markers stay separable.
@@ -128,11 +145,12 @@ def plot(frontiers, arms, resource, out_dir, name=None):
              "table\n(results/ablation/ablation_matched_risk.csv), not by the "
              "curves — an arm that slides along the frontier bought "
              "reclamation with risk.\n"
+             + ci_note +
              "Trace: Bitbrains GWA-T-12 fastStorage, graciously provided by "
              "Bitbrains IT Services Inc.",
              fontsize=8.5, color=INK_2, ha="left", va="top")
 
-    fig.tight_layout(rect=[0, 0.10, 1, 0.84])
+    fig.tight_layout(rect=[0, 0.10, 1, 0.82 if ci_note else 0.84])
     path = os.path.join(out_dir, name or f"ablation_{resource}.png")
     fig.savefig(path, dpi=160, facecolor=SURFACE)
     plt.close(fig)
@@ -155,6 +173,9 @@ def main():
                     help="directory holding frontier_<arm>.csv and "
                          "ablation_config.json")
     ap.add_argument("--out", default="figures")
+    ap.add_argument("--intervals", default=None,
+                    help="T16 results/bootstrap directory; draws 95%% "
+                         "bootstrap intervals from its frontier_<arm>_ci.csv")
     args = ap.parse_args()
 
     with open(os.path.join(args.ablation, "ablation_config.json")) as fh:
@@ -165,9 +186,32 @@ def main():
         name: pd.read_csv(os.path.join(args.ablation, f"frontier_{name}.csv"))
         for name, _d, _s in arms
     }
+    intervals, ci_note = None, ""
+    if args.intervals:
+        intervals = {}
+        for name, _d, _s in arms:
+            ci = pd.read_csv(os.path.join(args.intervals,
+                                          f"frontier_{name}_ci.csv"))
+            both = frontiers[name].merge(
+                ci, on=["scope", "resource", "method", "eps"],
+                suffixes=("", "_ci"))
+            if (len(both) != len(frontiers[name])
+                    or (both.recl_pct != both.recl_pct_ci).any()
+                    or (both.viol_frac != both.viol_frac_ci).any()):
+                raise SystemExit(f"intervals for arm {name} do not describe "
+                                 f"its frontier; refusing to draw them")
+            intervals[name] = ci
+        with open(os.path.join(args.intervals, "run_config.json")) as fh:
+            cfg = json.load(fh)
+        ci_note = (f"Bars: 95% bootstrap percentile intervals over VMs "
+                   f"({cfg['resamples']:,} resamples, seed {cfg['seed']}); "
+                   f"whether a shift is real is read from the paired "
+                   f"intervals in results/bootstrap/ablation_shifts_ci.csv.\n")
     os.makedirs(args.out, exist_ok=True)
     for resource in ("cpu", "mem"):
-        print(f"wrote {plot(frontiers, arms, resource, args.out)}")
+        path = plot(frontiers, arms, resource, args.out,
+                    intervals=intervals, ci_note=ci_note)
+        print(f"wrote {path}")
 
 
 if __name__ == "__main__":

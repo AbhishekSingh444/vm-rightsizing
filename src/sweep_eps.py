@@ -195,14 +195,15 @@ def evt_allocs(eps, snap=True, no_cap=False):
     return f
 
 
-def run_frontier(fleet, eps_sweep, eval_hours, snap=True, no_cap=False):
-    """Baselines plus the whole M(eps) sweep over an already-loaded fleet,
-    returned as a frontier DataFrame. Factored out so an ablation arm is one
-    call against a fleet loaded once, rather than a re-parse of 1,250 CSVs.
+def run_per_vm(fleet, eps_sweep, eval_hours, snap=True, no_cap=False):
+    """Every policy of the frontier replayed over the fleet, kept per VM.
 
-    The fleet must already carry `meta["theta"]` (see `attach_theta`).
+    Returns a list of ((method, eps), per_vm DataFrame) in frontier row
+    order. `run_frontier` summarises exactly these tables, and the T16
+    bootstrap resamples them, so an interval can never come from a
+    different allocation than the point estimate it surrounds.
     """
-    frontier = []
+    out = []
     for method, fn in (
         ("as_provisioned", provisioned_allocs),
         ("peak", baseline_allocs("peak", snap=snap)),
@@ -210,17 +211,52 @@ def run_frontier(fleet, eps_sweep, eval_hours, snap=True, no_cap=False):
         ("peak_capped", baseline_allocs("peak", snap=snap, cap=True)),
         ("p95_capped", baseline_allocs("p95", snap=snap, cap=True)),
     ):
-        per_vm = evaluate(fleet, fn, eval_hours)
-        frontier += summarise(per_vm, "all_vms", method, np.nan, eval_hours)
-        frontier += summarise(per_vm[~per_vm["idle"]], "non_idle", method,
-                              np.nan, eval_hours)
+        out.append(((method, np.nan), evaluate(fleet, fn, eval_hours)))
     for eps in eps_sweep:
-        per_vm = evaluate(fleet, evt_allocs(eps, snap=snap, no_cap=no_cap),
-                          eval_hours)
-        frontier += summarise(per_vm, "all_vms", "evt", eps, eval_hours)
-        frontier += summarise(per_vm[~per_vm["idle"]], "non_idle", "evt", eps,
-                              eval_hours)
+        out.append((("evt", eps),
+                    evaluate(fleet, evt_allocs(eps, snap=snap, no_cap=no_cap),
+                             eval_hours)))
+    return out
+
+
+def frontier_from_per_vm(per_vm_tables, eval_hours):
+    frontier = []
+    for (method, eps), per_vm in per_vm_tables:
+        frontier += summarise(per_vm, "all_vms", method, eps, eval_hours)
+        frontier += summarise(per_vm[~per_vm["idle"]], "non_idle", method,
+                              eps, eval_hours)
     return pd.DataFrame(frontier)
+
+
+def run_frontier(fleet, eps_sweep, eval_hours, snap=True, no_cap=False):
+    """Baselines plus the whole M(eps) sweep over an already-loaded fleet,
+    returned as a frontier DataFrame. Factored out so an ablation arm is one
+    call against a fleet loaded once, rather than a re-parse of 1,250 CSVs.
+
+    The fleet must already carry `meta["theta"]` (see `attach_theta`).
+    """
+    return frontier_from_per_vm(
+        run_per_vm(fleet, eps_sweep, eval_hours, snap=snap, no_cap=no_cap),
+        eval_hours)
+
+
+def interp_at_risk(viol_frac, recl_pct, target):
+    """Reclamation on the M(eps) curve at measured risk `target`, by linear
+    interpolation between the bracketing sweep points; NaN when `target` is
+    outside the swept range. Points are ordered by measured risk with a
+    stable sort, so tied risks keep eps order.
+
+    The one implementation of the matched-risk reading: used by
+    `matched_risk_reclamation` on a frontier and by the T16 bootstrap on
+    every resample.
+    """
+    x = np.asarray(viol_frac, dtype=float)
+    y = np.asarray(recl_pct, dtype=float)
+    order = np.argsort(x, kind="stable")
+    x, y = x[order], y[order]
+    if target < x[0] or target > x[-1]:
+        return np.nan
+    return float(np.interp(target, x, y))
 
 
 def matched_risk_reclamation(frontier, scope, resource, baseline="peak_capped"):
@@ -245,7 +281,7 @@ def matched_risk_reclamation(frontier, scope, resource, baseline="peak_capped"):
     """
     sub = frontier[(frontier.scope == scope) & (frontier.resource == resource)]
     base = sub[sub.method == baseline]
-    evt = sub[sub.method == "evt"].sort_values("viol_frac")
+    evt = sub[sub.method == "evt"].sort_values("viol_frac", kind="stable")
     if base.empty or evt.empty:
         return {"baseline": baseline, "baseline_viol_frac": np.nan,
                 "baseline_recl_pct": np.nan, "evt_recl_pct": np.nan,
@@ -264,7 +300,7 @@ def matched_risk_reclamation(frontier, scope, resource, baseline="peak_capped"):
                              f"[{x.min():.5f}, {x.max():.5f}]")})
         return out
 
-    interp = float(np.interp(target, x, y))
+    interp = interp_at_risk(x, y, target)
     out.update({"evt_recl_pct": round(interp, 3),
                 "gap_pp": round(interp - float(b.recl_pct), 3),
                 "note": "linear interpolation between bracketing eps points"})

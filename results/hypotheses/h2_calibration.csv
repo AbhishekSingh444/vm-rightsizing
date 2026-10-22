@@ -1,0 +1,61 @@
+frontier,scope,resource,eps,vms,vms_with_violation,observed,interval_lo,interval_hi,inside,side,abs_gap
+theta_intervals,all_vms,cpu,0.001,792,4,0.00505,0.0,0.00379,False,above (anti-conservative),0.00405
+theta_intervals,all_vms,cpu,0.005,792,7,0.00884,0.00126,0.0101,True,inside,0.00384
+theta_intervals,all_vms,cpu,0.01,792,8,0.0101,0.00379,0.01768,True,inside,0.0001
+theta_intervals,all_vms,cpu,0.05,792,11,0.01389,0.03535,0.06566,False,below (conservative),0.03611
+theta_intervals,all_vms,cpu,0.1,792,11,0.01389,0.07955,0.12121,False,below (conservative),0.08611
+theta_intervals,all_vms,mem,0.001,792,23,0.02904,0.0,0.00379,False,above (anti-conservative),0.02804
+theta_intervals,all_vms,mem,0.005,792,25,0.03157,0.00126,0.0101,False,above (anti-conservative),0.02657
+theta_intervals,all_vms,mem,0.01,792,31,0.03914,0.00379,0.01768,False,above (anti-conservative),0.02914
+theta_intervals,all_vms,mem,0.05,792,47,0.05934,0.03535,0.06566,True,inside,0.00934
+theta_intervals,all_vms,mem,0.1,792,55,0.06944,0.07955,0.12121,False,below (conservative),0.03056
+theta_intervals,non_idle,cpu,0.001,367,4,0.0109,0.0,0.00545,False,above (anti-conservative),0.0099
+theta_intervals,non_idle,cpu,0.005,367,4,0.0109,0.0,0.01362,True,inside,0.0059
+theta_intervals,non_idle,cpu,0.01,367,5,0.01362,0.0,0.0218,True,inside,0.00362
+theta_intervals,non_idle,cpu,0.05,367,7,0.01907,0.02997,0.07357,False,below (conservative),0.03093
+theta_intervals,non_idle,cpu,0.1,367,7,0.01907,0.07084,0.13079,False,below (conservative),0.08093
+theta_intervals,non_idle,mem,0.001,367,13,0.03542,0.0,0.00545,False,above (anti-conservative),0.03442
+theta_intervals,non_idle,mem,0.005,367,14,0.03815,0.0,0.01362,False,above (anti-conservative),0.03315
+theta_intervals,non_idle,mem,0.01,367,18,0.04905,0.0,0.0218,False,above (anti-conservative),0.03905
+theta_intervals,non_idle,mem,0.05,367,31,0.08447,0.02997,0.07357,False,above (anti-conservative),0.03447
+theta_intervals,non_idle,mem,0.1,367,38,0.10354,0.07084,0.13079,True,inside,0.00354
+theta_runs,all_vms,cpu,0.001,792,4,0.00505,0.0,0.00379,False,above (anti-conservative),0.00405
+theta_runs,all_vms,cpu,0.005,792,5,0.00631,0.00126,0.0101,True,inside,0.00131
+theta_runs,all_vms,cpu,0.01,792,6,0.00758,0.00379,0.01768,True,inside,0.00242
+theta_runs,all_vms,cpu,0.05,792,9,0.01136,0.03535,0.06566,False,below (conservative),0.03864
+theta_runs,all_vms,cpu,0.1,792,11,0.01389,0.07955,0.12121,False,below (conservative),0.08611
+theta_runs,all_vms,mem,0.001,792,23,0.02904,0.0,0.00379,False,above (anti-conservative),0.02804
+theta_runs,all_vms,mem,0.005,792,26,0.03283,0.00126,0.0101,False,above (anti-conservative),0.02783
+theta_runs,all_vms,mem,0.01,792,30,0.03788,0.00379,0.01768,False,above (anti-conservative),0.02788
+theta_runs,all_vms,mem,0.05,792,46,0.05808,0.03535,0.06566,True,inside,0.00808
+theta_runs,all_vms,mem,0.1,792,56,0.07071,0.07955,0.12121,False,below (conservative),0.02929
+theta_runs,non_idle,cpu,0.001,367,4,0.0109,0.0,0.00545,False,above (anti-conservative),0.0099
+theta_runs,non_idle,cpu,0.005,367,4,0.0109,0.0,0.01362,True,inside,0.0059
+theta_runs,non_idle,cpu,0.01,367,4,0.0109,0.0,0.0218,True,inside,0.0009
+theta_runs,non_idle,cpu,0.05,367,6,0.01635,0.02997,0.07357,False,below (conservative),0.03365
+theta_runs,non_idle,cpu,0.1,367,7,0.01907,0.07084,0.13079,False,below (conservative),0.08093
+theta_runs,non_idle,mem,0.001,367,13,0.03542,0.0,0.00545,False,above (anti-conservative),0.03442
+theta_runs,non_idle,mem,0.005,367,14,0.03815,0.0,0.01362,False,above (anti-conservative),0.03315
+theta_runs,non_idle,mem,0.01,367,17,0.04632,0.0,0.0218,False,above (anti-conservative),0.03632
+theta_runs,non_idle,mem,0.05,367,30,0.08174,0.02997,0.07357,False,above (anti-conservative),0.03174
+theta_runs,non_idle,mem,0.1,367,39,0.10627,0.07084,0.13079,True,inside,0.00627
+theta_1,all_vms,cpu,0.001,792,4,0.00505,0.0,0.00379,False,above (anti-conservative),0.00405
+theta_1,all_vms,cpu,0.005,792,4,0.00505,0.00126,0.0101,True,inside,5e-05
+theta_1,all_vms,cpu,0.01,792,5,0.00631,0.00379,0.01768,True,inside,0.00369
+theta_1,all_vms,cpu,0.05,792,6,0.00758,0.03535,0.06566,False,below (conservative),0.04242
+theta_1,all_vms,cpu,0.1,792,8,0.0101,0.07955,0.12121,False,below (conservative),0.0899
+theta_1,all_vms,mem,0.001,792,21,0.02652,0.0,0.00379,False,above (anti-conservative),0.02552
+theta_1,all_vms,mem,0.005,792,24,0.0303,0.00126,0.0101,False,above (anti-conservative),0.0253
+theta_1,all_vms,mem,0.01,792,25,0.03157,0.00379,0.01768,False,above (anti-conservative),0.02157
+theta_1,all_vms,mem,0.05,792,33,0.04167,0.03535,0.06566,True,inside,0.00833
+theta_1,all_vms,mem,0.1,792,37,0.04672,0.07955,0.12121,False,below (conservative),0.05328
+theta_1,non_idle,cpu,0.001,367,4,0.0109,0.0,0.00545,False,above (anti-conservative),0.0099
+theta_1,non_idle,cpu,0.005,367,4,0.0109,0.0,0.01362,True,inside,0.0059
+theta_1,non_idle,cpu,0.01,367,4,0.0109,0.0,0.0218,True,inside,0.0009
+theta_1,non_idle,cpu,0.05,367,4,0.0109,0.02997,0.07357,False,below (conservative),0.0391
+theta_1,non_idle,cpu,0.1,367,5,0.01362,0.07084,0.13079,False,below (conservative),0.08638
+theta_1,non_idle,mem,0.001,367,11,0.02997,0.0,0.00545,False,above (anti-conservative),0.02897
+theta_1,non_idle,mem,0.005,367,13,0.03542,0.0,0.01362,False,above (anti-conservative),0.03042
+theta_1,non_idle,mem,0.01,367,13,0.03542,0.0,0.0218,False,above (anti-conservative),0.02542
+theta_1,non_idle,mem,0.05,367,17,0.04632,0.02997,0.07357,True,inside,0.00368
+theta_1,non_idle,mem,0.1,367,21,0.05722,0.07084,0.13079,False,below (conservative),0.04278

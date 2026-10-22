@@ -38,6 +38,53 @@ Pooled (capacity-hour-weighted) reclamation for idle versus non-idle VMs. Idle m
 
 **Source:** `results/per_vm_results.csv + results/run_config.json (verified against results/baseline_summary.csv)`
 
+<!-- T16 intervals: written by `make_figures.py --ci` -->
+
+## Interval versions (T16)
+
+The `_ci` figures are the Review 1 figures above, redrawn with 95% intervals. The originals are Review 1 evidence and are not modified. Bootstrap: VMs resampled with replacement, 10,000 resamples, seed 16 -- the same resampler and seed as `results/bootstrap/`. It captures fleet composition only, not the choice of the 21/9-day split.
+
+### Figure 1 — `fig1_headroom_ci.png` / `.svg`
+
+Figure 1 with intervals. Shaded bands are 95% pointwise bootstrap bands on each utilisation CDF, and shaded verticals the 95% interval on each 95th percentile (CPU mean 45% [44, 47]; CPU p95 104% [104, 104]; Memory mean 15% [13, 17]; Memory p95 40% [39, 42]). The bands are narrow: the headroom claim does not rest on which VMs happen to be in the fleet.
+
+**Source:** `results/dataset_report.csv`
+
+### Figure 2 — `fig2_reclamation_vs_safety_ci.png` / `.svg`
+
+Figure 2 with 95% bootstrap intervals over VMs on every bar. Intervals are widest for non-idle VMs, the smaller population; the p95-versus-peak safety gap is far larger than either interval on every scope.
+
+**Source:** `results/per_vm_results.csv (verified against results/baseline_summary.csv)`
+
+### Figure 3 — `fig3_safety_split_ci.png` / `.svg`
+
+Figure 3 with 95% bootstrap intervals over VMs. The CPU-versus-memory safety gap under p95 is many times the width of either interval, so the asymmetry the violation rule defends is not a fleet-composition artefact.
+
+**Source:** `results/per_vm_results.csv (verified against results/baseline_summary.csv)`
+
+### Figure 5 — `fig5_t8_validation_ci.png` / `.svg`
+
+Figure 5 with the uncertainty on its headline. Zero mismatches between the like-with-like offline rule and the kernel's verdict in 50 replayed VMs bounds the true mismatch rate only to below 7.1% (Wilson 95%); excluding the 4 margin-band VMs the testbed cannot adjudicate, below 7.7% in 46. The 50 VMs are a stratified subset, not a resample of the fleet, so no bootstrap is drawn.
+
+**Source:** `results/wave{1..5}_outcomes.csv`
+
+### Figure 6 — `fig6_idle_contamination_ci.png` / `.svg`
+
+Figure 6 with 95% bootstrap intervals over VMs, on each bar and on each idle-minus-non-idle gap: CPU peak +40.5 pp [+32.7, +47.8], memory peak +45.3 pp [+28.6, +64.4], CPU p95 +38.4 pp [+31.2, +45.2], memory p95 +7.2 pp [-0.4, +15.4]. The idle class is resampled along with everything else, so its size varies between resamples.
+
+**Source:** `results/per_vm_results.csv + results/run_config.json`
+
+### Review 2 figures
+
+`frontier_snapped`, `frontier_unsnapped`, `frontier_theta_intervals`, `frontier_theta_intervals_unsnapped`, `ablation_cpu` and `ablation_mem` are redrawn in place with 95% bootstrap intervals on both axes of every point (`src/plot_frontier.py --intervals`, `src/plot_ablation.py --intervals`). Interval tables: `results/bootstrap/`.
+
+### Shown without intervals, deliberately
+
+- **Figure 4 (`fig4_exclusion_cascade`)** counts how many of the 1,250 trace files fail each deterministic data-quality gate. It is a census of this dataset, not an estimate from a sample, and no inference is drawn from it; resampling VMs would put an interval on a number that is exact by construction.
+- **`slide13.png`, `slide13_2.png`** are screenshots of `kubectl` output from the Review 1 cluster testbed (one pod's `describe`, and a three-pod status listing). They show recorded state, not a computed quantity, and there is nothing to put an interval on.
+
+<!-- end T16 intervals -->
+
 ---
 
 This trace was graciously provided by Bitbrains IT Services Inc.

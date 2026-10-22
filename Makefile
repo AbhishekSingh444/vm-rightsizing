@@ -18,7 +18,7 @@ WAVE      ?=
 
 EPS_OUT   ?= $(RESULTS)/theta_intervals
 
-.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures sweep theta theta-sensitivity ablation hypotheses diagnose clean
+.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures sweep theta theta-sensitivity ablation hypotheses bootstrap diagnose clean
 
 help:
 	@echo "install    install python dependencies"
@@ -38,6 +38,7 @@ help:
 	@echo "theta      T11 eps sweep + frontier at per-VM estimated theta"
 	@echo "ablation   T12 one-switch-per-arm ablation + figures"
 	@echo "hypotheses T15 H2 (ECE + binomial intervals) and H3 (zero-risk reclamation)"
+	@echo "bootstrap  T16 95% intervals over VMs + every figure redrawn with them (SEED=$(SEED) B=$(B))"
 	@echo "hooks      install the git hooks (run once per clone)"
 	@echo "check-attribution  scan history for AI attribution trailers"
 
@@ -62,6 +63,7 @@ test:
 	cd tests && $(PY) test_replay_agent.py
 	cd tests && $(PY) test_evt.py
 	cd tests && $(PY) test_hypotheses.py
+	cd tests && $(PY) test_bootstrap.py
 
 synthetic:
 	$(PY) src/make_synthetic_traces.py --vms 60 --days 30 --out data/synthetic
@@ -205,6 +207,42 @@ hypotheses:
 	    --frontier $(RESULTS)/theta_runs/frontier.csv:theta_runs \
 	    --frontier $(RESULTS)/frontier.csv:theta_1 \
 	    | tee $(EVIDENCE)/15_hypotheses.txt
+
+# T16: bootstrap over VMs. Needs the frontiers from `sweep`, `theta`,
+# `theta-sensitivity` and `ablation` -- every rebuilt frontier is checked
+# against its published CSV before an interval is drawn. Then every figure is
+# redrawn with intervals: Review 2 figures in place, Review 1 figures as
+# fig<n>_<name>_ci (the originals are closed-review evidence and stay as they
+# are). SEED and B were fixed before the first run (16, 10,000).
+SEED ?= 16
+B    ?= 10000
+BOOT  = $(RESULTS)/bootstrap
+bootstrap:
+	@mkdir -p $(BOOT) $(EVIDENCE) $(FIGURES)
+	$(PY) src/bootstrap.py --traces $(TRACES) --results $(RESULTS) --out $(BOOT) \
+	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) \
+	    --seed $(SEED) --resamples $(B) | tee $(EVIDENCE)/16_bootstrap.txt
+	$(PY) src/plot_frontier.py --frontier $(RESULTS)/frontier.csv \
+	    --out $(FIGURES) --name frontier_snapped \
+	    --intervals $(BOOT)/frontier_theta_off_ci.csv
+	$(PY) src/plot_frontier.py --frontier $(RESULTS)/unsnapped/frontier.csv \
+	    --out $(FIGURES) --name frontier_unsnapped \
+	    --title "Risk-quantified right-sizing frontier (theta = 1, UNSNAPPED diagnostic)" \
+	    --intervals $(BOOT)/frontier_theta_1_unsnapped_ci.csv
+	$(PY) src/plot_frontier.py --frontier $(EPS_OUT)/frontier.csv \
+	    --out $(FIGURES) --name frontier_theta_intervals \
+	    --series-label "M(eps), per-VM theta ($(THETA_METHOD))" \
+	    --title "Risk-quantified right-sizing frontier (T11: per-VM theta, $(THETA_METHOD) estimator; capped at original allocation)" \
+	    --intervals $(BOOT)/frontier_reference_ci.csv
+	$(PY) src/plot_frontier.py --frontier $(EPS_OUT)_unsnapped/frontier.csv \
+	    --out $(FIGURES) --name frontier_theta_intervals_unsnapped \
+	    --series-label "M(eps), per-VM theta ($(THETA_METHOD))" \
+	    --title "Frontier, per-VM theta ($(THETA_METHOD)) -- UNSNAPPED diagnostic counterfactual" \
+	    --intervals $(BOOT)/frontier_snap_off_ci.csv
+	$(PY) src/plot_ablation.py --ablation $(RESULTS)/ablation --out $(FIGURES) \
+	    --intervals $(BOOT)
+	$(PY) src/make_figures.py --results $(RESULTS) --traces $(TRACES) \
+	    --out $(FIGURES) --ci --ci-seed $(SEED) --resamples $(B)
 
 clean:
 	rm -rf $(RESULTS)/* testbed/manifests __pycache__ */__pycache__
