@@ -1420,6 +1420,53 @@ every valid file (30 days / 1000 = 43 min). Checked: both real fleets pass
 `make demo` still passes. Supplied-trace plots carry the Bitbrains
 acknowledgement. Pinned by `tests/test_demo_guard.py` (4 tests).
 
+### `make demo-vm` -- one real VM at a time (2026-10-26)
+
+`make demo-vm` reads every CSV in `data/demo_input/` (real traces only,
+gitignored like the other data folders). It runs `demo_guard` over all of
+them first and then prints, for each usable VM:
+
+- the original allocation and the observed mean, p95 and peak;
+- what peak, p95 and M(eps) at 0.001, 0.01 and 0.1 recommend;
+- the M(eps) tail fit (u, shape, scale, theta) and its predicted probability
+  of at least one exhaustion over the horizon;
+- the held-out outcome per policy (violated or not, which resource, how many
+  events);
+- reclaimed vCPU-hours and GB-hours.
+
+It writes only under `demo_out/vm/` (report, per-policy CSV,
+`run_config.json`). The research pipeline does not call it.
+
+**Nothing is re-implemented.** `src/demo_vm.py` goes through `load_vm`,
+`build_fleet`, `attach_theta` (intervals, the headline) and `evt_allocs`,
+`baseline_allocs` and `evaluate`, the same calls `make theta` uses. Checked by
+running it over all 1,250 fastStorage files:
+
+- 792 VMs are shown and 458 skipped, the same exclusions as the pipeline.
+- Its fleet totals equal `results/theta_intervals/frontier.csv` in all 20
+  rows (peak, p95 and M(0.001 / 0.01 / 0.1), CPU and memory, all and
+  non-idle). That covers reclaimed hours, VMs violating and events.
+- Its per-VM peak and p95 rows equal `results/per_vm_results.csv` (1,584
+  rows, 0 differences).
+- The slowest VM took 1.16 s, the median 0.46 s, and nothing tracebacked.
+
+peak and p95 are shown as Review 1 defines them, snapped and uncapped. When
+snapping puts one above the original allocation, the line says so, and its
+reclamation is negative. When M(eps) is capped at the original allocation,
+the predicted P is starred. It is the fitted tail's mass beyond the data's
+support (load_vm clips demand there), not a forecast. On VM 1 the
+CPU P at the cap is 0.99999 against eps 0.001, which is the CPU-shape problem
+(xi = 6.3) seen per VM.
+
+A file that cannot be used is named with the reason and the values behind
+it, and skipped. The rest still run, and the exit status is 1. Covered
+cases: milliseconds, empty, header only, wrong delimiter, binary, missing
+column, non-numeric values, too short (the span is reported), bad CPU
+capacity, below the catalog floor, and a capacity shift (both levels
+reported). Duplicate timestamps are kept, as the pipeline keeps them, and
+noted together with whether they reach the observation window. Pinned by
+`tests/test_demo_vm.py` (4 tests).
+
 ## Threats to validity
 
 What this setup cannot prove, kept here rather than only in the report so the

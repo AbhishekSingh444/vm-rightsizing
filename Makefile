@@ -18,7 +18,7 @@ WAVE      ?=
 
 EPS_OUT   ?= $(RESULTS)/theta_intervals
 
-.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures sweep theta theta-sensitivity ablation hypotheses bootstrap multisplit demo demo-kind diagnose clean
+.PHONY: help install hooks check-attribution test synthetic inspect baselines recommend cluster image stage waves apply evidence figures sweep theta theta-sensitivity ablation hypotheses bootstrap multisplit demo demo-vm demo-kind diagnose clean
 
 help:
 	@echo "install    install python dependencies"
@@ -41,6 +41,7 @@ help:
 	@echo "bootstrap  T16 95% intervals over VMs + every figure redrawn with them (SEED=$(SEED) B=$(B))"
 	@echo "multisplit T17 multi-split sensitivity analysis (headline 21/9 unchanged)"
 	@echo "demo       T19 synthetic end-to-end run, offline, under two minutes (DEMO_OUT=$(DEMO_OUT))"
+	@echo "demo-vm    per-VM walkthrough of real traces in $(DEMO_INPUT) (writes $(DEMO_OUT)/vm)"
 	@echo "demo-kind  T19 optional: one pod OOMKilled on the kind cluster (needs cluster + image)"
 	@echo "hooks      install the git hooks (run once per clone)"
 	@echo "check-attribution  scan history for AI attribution trailers"
@@ -69,6 +70,7 @@ test:
 	cd tests && $(PY) test_bootstrap.py
 	cd tests && $(PY) test_multisplit.py
 	cd tests && $(PY) test_demo_guard.py
+	cd tests && $(PY) test_demo_vm.py
 
 synthetic:
 	$(PY) src/make_synthetic_traces.py --vms 60 --days 30 --out data/synthetic
@@ -294,6 +296,18 @@ demo:
 	    --series-label "M(eps), per-VM theta ($(THETA_METHOD))" \
 	    --title "$$TITLE" --source "$$SRC" && \
 	echo "" && echo "demo wall clock: $$(( $$(date +%s) - start )) s (target: under 120 s)"
+
+# STEP 7: one real VM at a time, on screen. Reads every CSV in DEMO_INPUT
+# (real traces only), runs the timestamp guard over all of them first, then
+# walks each usable VM through peak, p95 and M(eps) at 0.001 / 0.01 / 0.1 and
+# its held-out outcome. A file that cannot be used is named with the reason
+# and skipped. Writes only under DEMO_OUT/vm.
+DEMO_INPUT ?= data/demo_input
+demo-vm:
+	@mkdir -p $(DEMO_INPUT)
+	rm -rf $(DEMO_OUT)/vm
+	$(PY) src/demo_vm.py --input $(DEMO_INPUT) --out $(DEMO_OUT)/vm \
+	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS)
 
 # T19, optional and separate: one pod OOMKilled by the kernel, on screen.
 # Needs `make cluster image` first. The trace ships in a ConfigMap, so nothing

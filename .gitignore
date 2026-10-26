@@ -3,6 +3,7 @@ data/fastStorage/
 data/rnd/
 data/traces/
 data/synthetic/
+data/demo_input/
 *.zip
 
 # Results: track small summary tables, data dictionaries and every
@@ -49,5 +50,5 @@ ENVIRONMENT_NOTES.md
 !evidence/
 cols.txt
 
-# make demo output -- synthetic, regenerable.
+# make demo / demo-vm output -- regenerable.
 demo_out/
