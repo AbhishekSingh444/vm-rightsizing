@@ -1,11 +1,36 @@
 # Datasets are large and licensed -- never commit them.
 data/fastStorage/
+data/rnd/
 data/traces/
 data/synthetic/
 *.zip
 
+# Results: track small summary tables, data dictionaries and every
+# run_config.json / *_config.json beside them, so each number in the report
+# traces to committed parameters. Anything else under results/ (logs, plots,
+# pickles) stays out.
+results/**
+!results/**/
+!results/**/*.csv
+!results/**/*.json
+!results/**/*.md
+!results/.gitkeep
+
+# Per-VM tables (one row per VM, fleet-wide) are large and regenerable.
+# The results/**/ prefix covers every subdirectory, including results/rnd/.
+results/**/per_vm_results.csv
+results/**/dataset_report.csv
+results/**/gpd_shapes.csv
+results/**/theta_per_vm.csv
+results/**/recommendations.csv
+results/**/evt_diagnostics.csv
+results/**/capacity_glitch_scan.csv
+results/**/below_catalog_floor_scan.csv
+results/**/idle_vs_nonidle_memory_reclamation.csv
+results/**/diag_cpu_shapes_idle.csv
+results/**/*per_vm*.csv
+
 # Regenerable outputs.
-results/
 testbed/manifests/
 __pycache__/
 *.pyc
