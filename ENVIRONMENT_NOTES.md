@@ -1335,6 +1335,91 @@ replicates. Rnd gives **one** more fleet (n = 2 fleets, both Bitbrains, same
 trace format and month length). It answers "does it transfer to a different
 fleet?" and adds no independent runs.
 
+### Duplicate timestamps -- `265.csv` and both fleets (2026-10-26)
+
+`load_vm` never sorts or deduplicates. The preflight flagged `265.csv` as
+having ~4,900 more rows than 30 days at 5 minutes allows. Checked without
+changing the loader.
+
+**What the extra rows are.** They are not out of order. No file in either
+fleet has a backwards timestamp. They are **zero-demand padding**. When a
+VM's CPU drops to 0, the monitor starts writing each 5-minute slot up to
+three times: exact duplicate rows, plus a second copy offset by about 1 s
+(sometimes mid-slot). In `265.csv` this starts at 2013-08-22 08:17 UTC,
+**after** the observation window ends. All 2,502 duplicate timestamps fall in
+the evaluation window, which holds 7,518 rows instead of ~2,590.
+
+**265's n_eval is correct.** The horizon comes from the observation
+window's median gap. That window is clean (300 s, 0 duplicates), so n_eval =
+2,592, the same as after sorting and deduplicating. 265 is idle, and it has
+zero violations under every baseline. Its reclamation is computed from time,
+not rows (216 vCPU-h = 1 core x 216 h).
+
+**Excluding 265 changes no Rnd headline at reported precision.** The whole
+Rnd pipeline (`baselines`, all `sweep_eps` arms, `ablation`, `hypotheses`,
+`bootstrap`, seed 16) was re-run on a copy of `2013-8` without it.
+Every non-idle number is identical. All-VM numbers move only through the
+315-vs-316 denominator. H3 memory nearest miss 26.608 -> 26.562; ECE moves in
+the fifth decimal; matched-risk gaps move by at most 0.09 pp (reference:
+-4.348 -> -4.355, -2.852 -> -2.859, non-idle -10.808 and -1.593 unchanged).
+Bootstrap interval ends move by at most ~0.15 pp. That includes non-idle
+cells whose point estimates are identical, so this is resampling with a
+different n, not 265. No H2 or H3 verdict changes, and no interval changes
+which side of zero it sits on. **Recorded as a known single-VM artefact.
+265 stays in.**
+
+**It is not only 265. fastStorage has the same artefact in 122 of 1,250
+files (9.8%), 103 of them usable (13.0% of 792).** Rnd 2013-8 has 3 of 500
+(0.6%), of which only 265 is usable. On fastStorage the padding also reaches
+the **observation** window in 67 usable VMs. In 65 it drags the median gap
+down (77-99 s, against ~255-300 s once duplicates are removed), and that
+**inflates n_eval**:
+
+| n_eval (pipeline) | n_eval after dedup | VMs |
+|---|---|---|
+| 10,099 | 3,049-3,337 | 17 |
+| 7,855 | 4,601 | 11 |
+| 2,691-2,709 | 2,592 | 37 |
+
+That is 65 of 792 usable VMs (8.2%), 26 of them idle. The "observed range
+up to 10,099" recorded in the M(eps) section above is this artefact, not
+real sampling variation. The underlying cadence is 300 s throughout, so the
+correct n_eval for all of them is probably 2,592. Even the deduplicated gap
+undercounts it, because the 1-s offset copies survive an exact-timestamp
+dedup. A larger n_eval gives a smaller per-sample target, which means a
+larger M(eps) allocation. So the bias makes EVT **more conservative and
+less reclaiming** on those VMs, and it works against the method rather than
+for it.
+
+What was checked: removing the duplicate eval rows changes **no baseline
+event count** on the 103 affected VMs (`peak`, `p95`, CPU and memory). The
+affected VMs carry no CPU events and no `peak` violations at all. Their only
+violations are `p95` memory on ids 183-218, which have padding in eval only.
+What was **not** checked: the effect on fastStorage's EVT frontier, the
+gaps and theta. The padding zeros also sit inside the observation-window
+quantiles and GPD threshold of those 67 VMs. Quantifying that needs a re-run
+with a deduplicating loader, which is a pipeline change and has not been
+made.
+
+### `make demo` -- millisecond-timestamp guard (2026-10-26)
+
+`make demo DEMO_TRACES=<dir>` now runs the demo on a supplied trace
+directory instead of synthetic traces. Every demo input, synthetic included,
+first goes through `src/demo_guard.py`. A file whose median timestamp gap is
+over one day (fewer than one sample per day) is rejected with "timestamps
+look like milliseconds, not seconds", and the demo stops before any output
+is written. The research pipeline does not call the guard.
+
+The rule is "median gap > 1 day", not "span < 1 day". A real ms file read
+as seconds, as the loader reads it, does not look short. Its gap reads as
+300,000 s, so its span comes out 1000x **too long**, and a span test never
+fires. Applying "span if the column were ms < 1 day" would instead reject
+every valid file (30 days / 1000 = 43 min). Checked: both real fleets pass
+(1,250 + 500 files). Rnd `1.csv` with timestamps x1000 is rejected and
+`make` exits 1. The same file unchanged runs end to end (12 s). Synthetic
+`make demo` still passes. Supplied-trace plots carry the Bitbrains
+acknowledgement. Pinned by `tests/test_demo_guard.py` (4 tests).
+
 ## Threats to validity
 
 What this setup cannot prove, kept here rather than only in the report so the

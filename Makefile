@@ -68,6 +68,7 @@ test:
 	cd tests && $(PY) test_hypotheses.py
 	cd tests && $(PY) test_bootstrap.py
 	cd tests && $(PY) test_multisplit.py
+	cd tests && $(PY) test_demo_guard.py
 
 synthetic:
 	$(PY) src/make_synthetic_traces.py --vms 60 --days 30 --out data/synthetic
@@ -261,23 +262,37 @@ multisplit:
 # T19: the whole offline pipeline on synthetic traces -- no Docker, no kind,
 # no dataset. Writes only under DEMO_OUT, never results/, so a synthetic number
 # can never land beside a real one. The frontier table is printed by the sweep.
-DEMO_OUT  ?= demo_out
-DEMO_SEED ?= 42
+#
+# DEMO_TRACES=<dir> runs the demo on a supplied trace directory instead of
+# synthetic traces. Every demo input goes through src/demo_guard.py first,
+# which stops the demo on a file whose timestamps are in milliseconds.
+DEMO_OUT    ?= demo_out
+DEMO_SEED   ?= 42
+DEMO_TRACES ?=
 demo:
 	@start=$$(date +%s); \
 	rm -rf $(DEMO_OUT) && mkdir -p $(DEMO_OUT) && \
-	$(PY) src/make_synthetic_traces.py --vms 60 --days 30 --seed $(DEMO_SEED) \
-	    --out $(DEMO_OUT)/traces && \
-	$(PY) src/baselines.py --traces $(DEMO_OUT)/traces --out $(DEMO_OUT)/baselines \
+	if [ -n "$(DEMO_TRACES)" ]; then \
+	    T="$(DEMO_TRACES)"; \
+	    TITLE="DEMO -- frontier on supplied traces ($(notdir $(patsubst %/,%,$(DEMO_TRACES))))"; \
+	    SRC="This trace was graciously provided by Bitbrains IT Services Inc. Supplied at demo time."; \
+	else \
+	    $(PY) src/make_synthetic_traces.py --vms 60 --days 30 --seed $(DEMO_SEED) \
+	        --out $(DEMO_OUT)/traces || exit 1; \
+	    T="$(DEMO_OUT)/traces"; \
+	    TITLE="SYNTHETIC DEMO -- frontier on 60 generated VMs (seed $(DEMO_SEED)), not a result"; \
+	    SRC="Traces: synthetic, src/make_synthetic_traces.py --seed $(DEMO_SEED). No real data."; \
+	fi && \
+	$(PY) src/demo_guard.py --traces "$$T" && \
+	$(PY) src/baselines.py --traces "$$T" --out $(DEMO_OUT)/baselines \
 	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) && \
-	$(PY) src/sweep_eps.py --traces $(DEMO_OUT)/traces --out $(DEMO_OUT)/frontier \
+	$(PY) src/sweep_eps.py --traces "$$T" --out $(DEMO_OUT)/frontier \
 	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS) \
 	    --theta-method $(THETA_METHOD) --run-length $(RUN_LENGTH) && \
 	$(PY) src/plot_frontier.py --frontier $(DEMO_OUT)/frontier/frontier.csv \
 	    --out $(DEMO_OUT) --name frontier_demo \
 	    --series-label "M(eps), per-VM theta ($(THETA_METHOD))" \
-	    --title "SYNTHETIC DEMO -- frontier on 60 generated VMs (seed $(DEMO_SEED)), not a result" \
-	    --source "Traces: synthetic, src/make_synthetic_traces.py --seed $(DEMO_SEED). No real data." && \
+	    --title "$$TITLE" --source "$$SRC" && \
 	echo "" && echo "demo wall clock: $$(( $$(date +%s) - start )) s (target: under 120 s)"
 
 # T19, optional and separate: one pod OOMKilled by the kernel, on screen.
