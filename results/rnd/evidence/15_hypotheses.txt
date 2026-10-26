@@ -1,0 +1,59 @@
+================================================================================================
+H2 -- CALIBRATION, pre-registered statistic
+  ECE = mean |observed - eps| over eps in [0.001, 0.005, 0.01, 0.05, 0.1]; bound 0.05
+  interval = central 95% region of Binomial(n, eps); null if >= 2 points outside
+================================================================================================
+   scope resource   eps  vms_with_violation  observed  interval_lo  interval_hi                      side
+ all_vms      cpu 0.001                   1   0.00316      0.00000      0.00633                    inside
+ all_vms      cpu 0.005                   2   0.00633      0.00000      0.01266                    inside
+ all_vms      cpu 0.010                   2   0.00633      0.00000      0.02215                    inside
+ all_vms      cpu 0.050                   3   0.00949      0.02848      0.07595      below (conservative)
+ all_vms      cpu 0.100                   4   0.01266      0.06962      0.13291      below (conservative)
+ all_vms      mem 0.001                   5   0.01582      0.00000      0.00633 above (anti-conservative)
+ all_vms      mem 0.005                   7   0.02215      0.00000      0.01266 above (anti-conservative)
+ all_vms      mem 0.010                   8   0.02532      0.00000      0.02215 above (anti-conservative)
+ all_vms      mem 0.050                  12   0.03797      0.02848      0.07595                    inside
+ all_vms      mem 0.100                  14   0.04430      0.06962      0.13291      below (conservative)
+non_idle      cpu 0.001                   1   0.00559      0.00000      0.00559                    inside
+non_idle      cpu 0.005                   2   0.01117      0.00000      0.01676                    inside
+non_idle      cpu 0.010                   2   0.01117      0.00000      0.02793                    inside
+non_idle      cpu 0.050                   2   0.01117      0.02235      0.08380      below (conservative)
+non_idle      cpu 0.100                   2   0.01117      0.05587      0.14525      below (conservative)
+non_idle      mem 0.001                   4   0.02235      0.00000      0.00559 above (anti-conservative)
+non_idle      mem 0.005                   6   0.03352      0.00000      0.01676 above (anti-conservative)
+non_idle      mem 0.010                   7   0.03911      0.00000      0.02793 above (anti-conservative)
+non_idle      mem 0.050                  11   0.06145      0.02235      0.08380                    inside
+non_idle      mem 0.100                  13   0.07263      0.05587      0.14525                    inside
+
+       frontier    scope resource     ece  ece_bound  points_outside  points       verdict                                             why
+theta_intervals  all_vms      cpu 0.02700       0.05               2       5 NOT SUPPORTED 2 of 5 points outside the 95% binomial interval
+theta_intervals  all_vms      mem 0.02300       0.05               4       5 NOT SUPPORTED 4 of 5 points outside the 95% binomial interval
+theta_intervals non_idle      cpu 0.02792       0.05               2       5 NOT SUPPORTED 2 of 5 points outside the 95% binomial interval
+theta_intervals non_idle      mem 0.02356       0.05               3       5 NOT SUPPORTED 3 of 5 points outside the 95% binomial interval
+     theta_runs  all_vms      cpu 0.02637       0.05               2       5 NOT SUPPORTED 2 of 5 points outside the 95% binomial interval
+     theta_runs  all_vms      mem 0.02237       0.05               3       5 NOT SUPPORTED 3 of 5 points outside the 95% binomial interval
+     theta_runs non_idle      cpu 0.02792       0.05               2       5 NOT SUPPORTED 2 of 5 points outside the 95% binomial interval
+     theta_runs non_idle      mem 0.02021       0.05               3       5 NOT SUPPORTED 3 of 5 points outside the 95% binomial interval
+        theta_1  all_vms      cpu 0.02900       0.05               2       5 NOT SUPPORTED 2 of 5 points outside the 95% binomial interval
+        theta_1  all_vms      mem 0.02490       0.05               4       5 NOT SUPPORTED 4 of 5 points outside the 95% binomial interval
+        theta_1 non_idle      cpu 0.02745       0.05               2       5 NOT SUPPORTED 2 of 5 points outside the 95% binomial interval
+        theta_1 non_idle      mem 0.02345       0.05               3       5 NOT SUPPORTED 3 of 5 points outside the 95% binomial interval
+
+================================================================================================
+H3 -- ZERO-RISK RECLAMATION, thresholds 25% vCPU-h / 20% GB-h relative to B0
+================================================================================================
+       frontier    scope resource  threshold_pct  zero_risk_recl_pct zero_risk_policy       verdict nearest_miss_policy  nearest_miss_recl_pct  nearest_miss_vms_violating
+theta_intervals  all_vms      cpu           25.0                 0.0   as_provisioned NOT SUPPORTED      evt(eps=0.001)                 15.130                           1
+theta_intervals  all_vms      mem           20.0                 0.0   as_provisioned NOT SUPPORTED      evt(eps=0.001)                 26.608                           5
+theta_intervals non_idle      cpu           25.0                 0.0   as_provisioned NOT SUPPORTED         peak_capped                 24.224                           1
+theta_intervals non_idle      mem           20.0                 0.0   as_provisioned NOT SUPPORTED      evt(eps=0.001)                 24.583                           4
+     theta_runs  all_vms      cpu           25.0                 0.0   as_provisioned NOT SUPPORTED      evt(eps=0.001)                 15.565                           1
+     theta_runs  all_vms      mem           20.0                 0.0   as_provisioned NOT SUPPORTED      evt(eps=0.001)                 26.847                           5
+     theta_runs non_idle      cpu           25.0                 0.0   as_provisioned NOT SUPPORTED         peak_capped                 24.224                           1
+     theta_runs non_idle      mem           20.0                 0.0   as_provisioned NOT SUPPORTED      evt(eps=0.001)                 24.649                           4
+        theta_1  all_vms      cpu           25.0                 0.0   as_provisioned NOT SUPPORTED       evt(eps=0.01)                 16.783                           1
+        theta_1  all_vms      mem           20.0                 0.0   as_provisioned NOT SUPPORTED      evt(eps=0.001)                 26.311                           3
+        theta_1 non_idle      cpu           25.0                 0.0   as_provisioned NOT SUPPORTED         peak_capped                 24.224                           1
+        theta_1 non_idle      mem           20.0                 0.0   as_provisioned NOT SUPPORTED      evt(eps=0.001)                 24.510                           3
+
+wrote results/rnd/hypotheses/h2_calibration.csv, h2_summary.csv, h3_zero_risk.csv, run_config.json

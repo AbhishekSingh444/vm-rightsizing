@@ -1,0 +1,6 @@
+gate_order,gate,fs_excluded,fs_excluded_pct_of_scanned,fs_remaining,rnd_excluded,rnd_excluded_pct_of_scanned,rnd_remaining
+0,scanned,0,0.0,1250,0,0.0,500
+1,bad CPU capacity (first sample cores or MHz <= 0),103,8.24,1147,7,1.40,493
+2,below flavour catalog floor (all memory < 2 GB; 0 on vCPU),347,27.76,800,173,34.60,320
+3,mid-trace capacity shift,2,0.16,798,2,0.40,318
+4,short span (< 21+9 days),6,0.48,792,2,0.40,316

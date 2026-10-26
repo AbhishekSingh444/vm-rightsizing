@@ -1121,6 +1121,220 @@ cluster even when trace CPU demand is far below its limit. It may explain some
 CPU disagreements in the T8 offline-versus-kernel table. That was not checked
 here.
 
+## Rnd replication workload -- scope and preflight (2026-10-26)
+
+**What Rnd is.** GWA-T-12 Rnd is ~92 days of trace split across three monthly
+folders, `data/rnd/2013-7/`, `2013-8/`, `2013-9/`, each holding `1.csv` ...
+`500.csv` in the same `;`+TAB format as fastStorage (and the same
+seconds-in-`Timestamp [ms]` quirk). The months are back to back: Jul runs
+2013-06-30 to 2013-07-30, Aug 2013-07-31 to 2013-08-30, Sep 2013-08-31 to
+2013-09-29 (UTC), with about a day missing between each.
+
+**The three folders share VM ids, which means they are the same VMs.**
+Checked, not assumed: comparing the modal (cores, provisioned MHz, provisioned
+memory) of file *i* across adjacent months, cores match for 485/500 (Jul->Aug)
+and 486/500 (Aug->Sep), and the full triple matches for 305/500 and 296/500,
+against a chance match rate of 0.6% between unrelated files. The ~40% whose
+triple differs are overwhelmingly capacity changes between months on a VM
+whose core count stayed put, not different machines.
+
+**Decision: one month only, `data/rnd/2013-8/`.** Using one ~30-day month keeps
+the pre-registered 21/9 observation/evaluation split unchanged; a three-month
+join would have forced a different split and therefore a different
+hypothesis test from the one pre-registered. The other two months were **not**
+used as replicates: running the pipeline on Jul, Aug and Sep and reporting
+three results would present three largely overlapping looks at the same 500
+VMs as if they were independent runs. The "3 runs" requirement is met
+honestly by the T17 multi-split analysis on fastStorage. Rnd's job is
+narrower: do the conclusions hold on a *different fleet*, and one month
+answers that.
+
+**No code change was needed for sub-folder discovery.** Every trace consumer
+(`baselines.py`, `inspect_traces.py`, `sweep_eps.py` -> `load_vms` /
+`load_fleet`, `make_figures.py`) lists `*.csv` directly inside `--traces`, so
+`--traces data/rnd/2013-8` works as-is. It is deliberately **not** recursive:
+pointing `--traces` at `data/rnd/` fails with "no CSVs found" instead of
+silently merging the three months, which is the join ruled out above.
+
+**Licence/storage.** `data/rnd/` (1.4 GB) was added to `.gitignore` before any
+other Rnd work, so it is never stageable.
+
+### Preflight of `data/rnd/2013-8/` (`results/rnd/preflight.txt`)
+
+Run with the same gates and defaults (21/9) as the fastStorage preflight;
+outputs under `results/rnd/`, nothing written to `evidence/`.
+
+| | fastStorage | Rnd 2013-8 |
+|---|---|---|
+| files / usable | 1250 / 792 (63.4%) | 500 / 316 (63.2%) |
+| excl. bad CPU capacity | 103 | 7 |
+| excl. below catalog floor | 347 | 173 |
+| excl. mid-trace capacity shift | 2 | 2 |
+| excl. short span | 6 | 2 |
+| median interval | 300 s | 300 s |
+| span (min / median / max) | 30.0 / 30.0 / 30.0 d | 30.0 / 30.0 / 30.0 d |
+| memory pinned at provisioned | 0 | 0 |
+| memory effectively zero | 5 | 4 |
+| CPU usage > provisioned | 164 (20.7% of usable) | 58 (18.4%) |
+| capacity-glitch flagged | 65 | 7 |
+| mean CPU util / mean CPU p95 | 9.0% / 24.9% | 10.4% / 24.6% |
+| mean mem util / mean mem p95 | 5.8% / 14.2% | 7.0% / 16.0% |
+| idle (p95 CPU < 5%) | 482 (60.9%) | 174 (55.1%) |
+
+Span is 30.0 days, so the 21/9 split applies unchanged. Things worth noting:
+Rnd is proportionally far cleaner on capacity glitches (1.4% vs 5.2% of files)
+and bad CPU capacity, but loses a larger share to the catalog floor (34.6% vs
+27.8%), so the usable fraction ends up nearly identical. One usable file
+(`265.csv`) has 13,562 samples over 30 days at a 300 s median, i.e. ~4,900
+extra samples -- denser or duplicated timestamps, not yet inspected.
+
+## Rnd replication -- results beside fastStorage (2026-10-26)
+
+Same pipeline and defaults as fastStorage: 21/9 split, the same eps sweep,
+catalog and upward snap, reference arm = intervals theta, snapped, capped,
+u = q0.95; bootstrap 10,000 resamples over VMs, seed 16. Traces
+`data/rnd/2013-8/`, outputs under `results/rnd/`. The side-by-side tables are
+`results/rnd/exclusion_cascade.csv`, `compare_frontier.csv`,
+`compare_gaps.csv`, `compare_h2.csv` and `compare_h3.csv`. No pre-registered
+threshold, gate or recommender setting was changed for Rnd, and nothing in
+`evidence/` was touched.
+
+### Exclusion cascade
+
+| gate | fastStorage | Rnd 2013-8 |
+|---|---|---|
+| scanned | 1250 | 500 |
+| 1. bad CPU capacity | 103 (8.2%) | 7 (1.4%) |
+| 2. below catalog floor (all memory < 2 GB) | 347 (27.8%) | 173 (34.6%) |
+| 3. mid-trace capacity shift | 2 (0.2%) | 2 (0.4%) |
+| 4. short span | 6 (0.5%) | 2 (0.4%) |
+| usable | 792 (63.4%) | 316 (63.2%) |
+
+**Gate 1 -- Rnd has almost no churn.** On fastStorage, 49 of the 103 are
+`docs/DATA_QUALITY.md` pattern 2 (sustained majority-zero: powered off,
+deallocated or migrated for most of the window) and 54 are pattern 1
+(first-row blips). Rnd has **none of either**. Its 7 are all a third shape,
+checked file by file: capacity reads zero in **one contiguous block at the
+start of the window** (6.4-7.6 days, ~25% of rows), then is valid until the
+end. Six of them are consecutive ids `122`-`127` with near-identical row
+counts and the same first timestamp; the seventh is `54.csv`. So this is one
+batch of VMs that came up about a week into the month, not VMs flapping on
+and off. Apart from that one arrival, the Rnd fleet is stable for the whole
+month. "No churn" is slightly too strong; "one batch arrival and no
+on/off churn" is accurate.
+
+**Gate 2 -- Rnd has a larger sub-2 GB tail.** 34.6% of Rnd files never
+allocate 2 GB at any sample, against 27.8% on fastStorage (35.1% vs 30.3% of
+the files that survive gate 1). Those VMs are already at or below the
+smallest flavour, and snapping is upward, so there is nothing to right-size
+them to. The usable fractions being nearly identical (63.2% vs 63.4%) is
+**two opposite differences cancelling**, not evidence that the two fleets
+have the same data quality.
+
+### H2 and H3 -- same verdicts, same pattern, on both fleets
+
+**H2 (calibration): NOT SUPPORTED in all 12 cells on both fleets** (3 theta
+arms x 2 scopes x 2 resources). ECE is below the 0.05 bound in every cell
+(fastStorage 0.024-0.029, Rnd 0.020-0.029). The null verdict comes from the
+binomial rule (>= 2 of 5 points outside the 95% interval), as it did on
+fastStorage. The shape matches. CPU is **conservative** at eps = 0.05 and
+0.1 (observed violation fraction below the interval), and memory is
+**anti-conservative** at eps <= 0.01 (above it). One difference: fastStorage
+CPU is also anti-conservative at eps = 0.001 (4/792 against an upper bound
+of 0.00379), while Rnd CPU sits inside at 0.001. Rnd CPU cells therefore
+have 2 points outside rather than 3, which is still null.
+
+**H3 (zero-risk reclamation): NOT SUPPORTED in all 12 cells on both
+fleets.** Zero-risk reclamation is 0.0% everywhere, because every policy
+except `as_provisioned` violates at least once. Memory's nearest miss is
+`evt(eps=0.001)` on both fleets, and on the reference arm it reclaims above
+the 20% threshold (fastStorage 28.9% all / 24.0% non-idle, Rnd 26.6% /
+24.6%). It does so with violating VMs (fastStorage 23 / 13, Rnd 5 / 4). On
+Rnd, non-idle CPU's nearest miss is `peak_capped` at 24.224% with one VM
+violating once. Even with that VM removed, it would fall 0.8 pp short of
+the 25% threshold, so the verdict does not hinge on it.
+
+### Matched-risk gaps (reference arm vs `peak_capped`, pp of B0)
+
+| scope / resource | fastStorage gap [95% CI] | Rnd gap [95% CI] |
+|---|---|---|
+| all / CPU | -5.6 [-11.07, -2.47] | -4.3 [-8.06, -2.13] (cond.; 0.34% undefined) |
+| all / memory | -6.3 [-9.18, -3.45] | **-2.9 [-7.02, +1.41]** |
+| non-idle / CPU | -2.2 [-4.02, +0.30] (cond.) | -10.8 [-14.44, -4.09] |
+| non-idle / memory | -3.6 [-5.71, -1.66] | **-1.6 [-6.06, +2.55]** |
+
+**The memory matched-risk deficit is not significant on Rnd.** Both memory
+intervals include zero. On fastStorage, both exclude zero. The sign is the
+same, but on Rnd the deficit cannot be told apart from zero, so the
+fastStorage memory finding **does not generalise** and must not be reported
+as replicated. Two arms on Rnd do show a memory deficit that excludes zero:
+`u_q90` non-idle (-5.6, [-10.44, -1.38]) and `cap_off`. Both are ablation
+arms, not the method. They are recorded here so neither gets quoted as the
+Rnd memory result.
+
+**The CPU deficit holds on both fleets** for all VMs. For non-idle the size
+flips: on fastStorage it is the weakest cell (its conditional interval
+reaches +0.30), and on Rnd it is the largest. The caution below explains why
+that -10.8 is not an effect size.
+
+### Caution -- Rnd's results are sensitive to a single VM, 494
+
+**One VM, `494.csv`, is the only non-idle CPU violator under `peak_capped` on
+Rnd, and it produces 55% of that policy's non-idle memory events (40 of 73,
+across 14 violating VMs).** Rnd's low-risk end is therefore set largely by
+whether this one machine is in the fleet. No Rnd claim at that end, CPU or
+memory, should go in the report without being checked for sensitivity to
+VM 494. Checked against `results/rnd/per_vm_results.csv` (method `peak`,
+non-idle, n = 179). For scale, on fastStorage `peak_capped` has 26 non-idle
+memory violators with 88 events, and the top VM has 14 (16%). Every gap and
+every M(eps) target counts **VMs with a violation**, so 494 counts once while
+carrying 40 memory events. That is consistent with Rnd's memory intervals
+being ~8-9 pp wide. The same concentration shows at the H3 nearest miss
+(`evt(eps=0.001)`, reference arm, all VMs): 5 VMs and 49 events on Rnd
+(9.8 per VM), against 23 VMs and 63 events (2.7 per VM) on fastStorage. On
+the `theta_1` arm that point has 3 VMs and 8 events.
+
+**How the -10.8 pp non-idle CPU gap was computed.** It is a **direct
+subtraction at a matched risk of 1/179 (0.00559), not an interpolated point**
+on the frontier. `peak_capped` has one violating non-idle VM (494: one CPU
+event, 15 exhausted minutes). `evt(eps=0.001)` on the reference arm also has
+exactly one violating non-idle VM, so both policies sit at exactly 1/179 and
+the gap is 24.224 - 13.416 = 10.808 pp. **Whether the same VM sits on both
+sides could not be confirmed**, because the sweep writes no per-VM violation
+rows (see the reproducibility gap below). If it is 494 on both sides, the
+cell compares two policies that fail on the same machine. If it is not, the
+cell is set by two different single machines. The bootstrap interval
+excludes zero, but resampling VMs says little about a risk level that
+depends on whether one VM is in the resample. Read the cell as "at
+near-zero risk, the baseline keeps more headroom than EVT on this fleet",
+not as a 10.8 pp effect.
+
+**Reproducibility gap -- missing per-VM violation rows for the sweep.**
+`sweep_eps.py` builds a per-VM table for every (method, eps) in memory
+(`run_per_vm`), but writes only fleet summaries (`frontier.csv`,
+`dominance.csv`, `eps_calibration.csv`, `exploratory_matched_risk.csv`) plus
+`theta_per_vm.csv` and `gpd_shapes.csv`, neither of which records
+violations. Only the baselines (`per_vm_results.csv`: `as_provisioned`,
+`peak`, `p95`) have per-VM violation rows on disk. So no single-VM claim
+about an EVT policy, including which VM violates at `evt(eps=0.001)`, can be
+traced to a committed or regenerable file without re-running the sweep with
+new output code. Not fixed here. Fixing it is a code change to `src/`, and
+the output would be a per-VM table, which `.gitignore` excludes as
+regenerable anyway.
+
+### One month of three, and why that is not a weakness to fix
+
+Only `2013-8` was used (scope section above). The three monthly folders hold
+**the same 500 VMs, resized between months**, not three fleets. Core counts
+match for 485/500 files Jul->Aug and 486/500 Aug->Sep. The full (cores,
+provisioned MHz, provisioned memory) triple matches for only 305/500 and
+296/500, against a 0.6% chance match rate between unrelated files. The gap
+between 485 and 305 is capacity changes on VMs whose core count stayed put.
+Jul and Sep would therefore be overlapping looks at the same machines, not
+replicates. Rnd gives **one** more fleet (n = 2 fleets, both Bitbrains, same
+trace format and month length). It answers "does it transfer to a different
+fleet?" and adds no independent runs.
+
 ## Threats to validity
 
 What this setup cannot prove, kept here rather than only in the report so the

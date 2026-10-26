@@ -1,0 +1,7 @@
+scope,method,vms,recl_vcpu_hours,recl_vcpu_pct,recl_mem_gb_hours,recl_mem_pct,cpu_events,mem_events,exhausted_minutes,vms_with_violation,pct_vms_safe,cpu_exhausted_minutes,cpu_vms_with_violation,cpu_pct_safe,mem_exhausted_minutes,mem_vms_with_violation,mem_pct_safe
+all_vms,as_provisioned,316,0.0,0.0,0.0,0.0,0,0,0,0,100.0,0,0,100.0,0,0,100.0
+all_vms,peak,316,84456.0,34.0,238549.1,27.12,13,75,1075,28,91.14,430,13,95.89,645,16,94.94
+all_vms,p95,316,103032.0,41.48,600997.1,68.32,372,2356,46860,138,56.33,20740,46,85.44,26120,126,60.13
+non_idle,as_provisioned,179,0.0,0.0,0.0,0.0,0,0,0,0,100.0,0,0,100.0,0,0,100.0
+non_idle,peak,179,41688.0,23.98,120914.5,18.61,1,73,640,14,92.18,15,1,99.44,625,14,92.18
+non_idle,p95,179,58104.0,33.42,431522.5,66.42,357,2295,45895,114,36.31,20140,34,81.01,25755,107,40.22

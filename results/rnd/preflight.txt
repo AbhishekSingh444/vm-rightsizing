@@ -1,0 +1,77 @@
+==============================================================================
+GWA-T-12 DATASET PREFLIGHT
+==============================================================================
+directory : D:\sem7\cloud computing\project_review2\data\rnd\2013-8
+files     : 500
+
+header of 1.csv:
+  Timestamp [ms];	CPU cores;	CPU capacity provisioned [MHZ];	CPU usage [MHZ];	CPU usage [%];	Memory capacity provisioned [KB];	Memory usage [KB];	Disk r
+  tab after semicolon: True
+
+------------------------------------------------------------------------------
+COVERAGE
+------------------------------------------------------------------------------
+usable files      : 316
+excluded          : 184
+    bad CPU capacity          : 7
+    below flavour catalog floor: 173
+    mid-trace capacity shift  : 2
+    short span                : 2
+
+  examples:
+    101.csv: below flavour catalog floor (see docs/DATA_QUALITY.md pattern 4)
+    104.csv: mid-trace capacity shift (see docs/DATA_QUALITY.md pattern 3)
+    105.csv: mid-trace capacity shift (see docs/DATA_QUALITY.md pattern 3)
+    122.csv: bad CPU capacity (cores or provisioned MHz <= 0 on first sample)
+    123.csv: bad CPU capacity (cores or provisioned MHz <= 0 on first sample)
+    ... and 179 more
+
+median sampling interval : 300 s (5.0 min)
+samples per file         : min 8614, median 8623, max 13562
+span in days             : min 30.0, median 30.0, max 30.0
+
+=> samples per day at this interval: 288
+=> a 70/30 split of the median span is 21 obs days / 9 eval days
+   ADJUST YOUR --obs-days / --eval-days TO MATCH. Do not assume 21/9.
+
+------------------------------------------------------------------------------
+DATA QUALITY FLAGS
+------------------------------------------------------------------------------
+memory pinned at provisioned (suspect) : 0
+memory effectively zero (suspect)      : 4
+CPU usage exceeding provisioned        : 58
+
+These are the VMs whose cleaning rule you must state in the paper.
+
+------------------------------------------------------------------------------
+CAPACITY GLITCH FLAGS (flagged, not excluded -- see docs/DATA_QUALITY.md)
+------------------------------------------------------------------------------
+first-sample CPU capacity >10x off file median    : 7
+first-sample memory capacity >10x off file median : 7
+either flagged (of 500 files scanned)          : 7
+wrote flagged VMs to ../results/rnd/capacity_glitch_report.csv -- not dropped from anywhere; a human decides what to do with them.
+
+------------------------------------------------------------------------------
+MID-TRACE CAPACITY SHIFT CENSUS (decided: hard-excluded -- see docs/DATA_QUALITY.md pattern 3)
+------------------------------------------------------------------------------
+CPU capacity: two sustained levels >10x apart    : 0
+memory capacity: two sustained levels >10x apart : 2
+either flagged (of 500 files scanned)             : 2
+A VM whose provisioned capacity changes mid-trace is not one right-sizeable
+entity -- these are excluded above (some also caught earlier by the bad-CPU-
+capacity gate), not merely flagged. Detail (levels, ratios) written for the
+record, not as an open question.
+wrote flagged VMs to ../results/rnd/capacity_shift_report.csv
+
+------------------------------------------------------------------------------
+HEADROOM -- THE MOTIVATING NUMBER FOR OBJECTIVE O1
+------------------------------------------------------------------------------
+mean CPU utilisation across fleet : 10.4%
+mean CPU p95 across fleet         : 24.6%
+mean memory utilisation           : 7.0%
+mean memory p95                   : 16.0%
+
+VMs with p95 CPU below 5% (idle)  : 174 (55.1% of fleet)
+
+wrote per-VM report to ../results/rnd/dataset_report.csv
+generated 2026-10-26 18:54:20

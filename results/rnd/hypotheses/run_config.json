@@ -1,0 +1,23 @@
+{
+  "frontiers": [
+    "results/rnd/theta_intervals/frontier.csv:theta_intervals",
+    "results/rnd/theta_runs/frontier.csv:theta_runs",
+    "results/rnd/frontier.csv:theta_1"
+  ],
+  "h2_eps": [
+    0.001,
+    0.005,
+    0.01,
+    0.05,
+    0.1
+  ],
+  "h2_ece_bound": 0.05,
+  "h2_level": 0.95,
+  "h2_null_if_points_outside_at_least": 2,
+  "h2_ece_definition": "mean |observed - eps| over the sweep points (equal n per point, so equal to the count-weighted ECE)",
+  "h3_threshold_pct": {
+    "cpu": 25.0,
+    "mem": 20.0
+  },
+  "h3_candidates": "every recommender row in each frontier, B0 included"
+}

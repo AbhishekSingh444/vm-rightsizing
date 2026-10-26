@@ -15,6 +15,9 @@ results/**
 !results/**/*.json
 !results/**/*.md
 !results/.gitkeep
+# Captured console output per rubric step, and the Rnd preflight report.
+!results/**/evidence/*.txt
+!results/rnd/preflight.txt
 
 # Per-VM tables (one row per VM, fleet-wide) are large and regenerable.
 # The results/**/ prefix covers every subdirectory, including results/rnd/.

@@ -1,0 +1,27 @@
+{
+  "obs_days": 21.0,
+  "eval_days": 9.0,
+  "obs_samples": 6048,
+  "eval_samples": 2592,
+  "flavour_vcpu": [
+    1,
+    2,
+    4,
+    8,
+    16
+  ],
+  "flavour_mem_gb": [
+    2,
+    4,
+    8,
+    16,
+    32,
+    64
+  ],
+  "cpu_violation_min_run": 2,
+  "idle_p99_threshold": 0.05,
+  "vms_used": 316,
+  "vms_skipped_short": 2,
+  "snapped_to_catalog": true,
+  "evt_enabled": false
+}

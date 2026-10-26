@@ -1,0 +1,92 @@
+loading fleet at threshold u = q0.9 ...
+  usable VMs: 316 (skipped short: 2)
+loading fleet at threshold u = q0.95 ...
+  usable VMs: 316 (skipped short: 2)
+loading fleet at threshold u = q0.98 ...
+  usable VMs: 316 (skipped short: 2)
+  arm reference: done  (full method: intervals theta, snapped, capped, u = q0.95)
+  arm theta_off: done  (dependence correction OFF (theta = 1, the T10 arm))
+  arm theta_runs: done  (theta from runs declustering, r = 12)
+  arm snap_off: done  (catalog snapping OFF (continuous allocations))
+  arm cap_off: done  (cap at the original allocation OFF)
+  arm u_q90: done  (GPD threshold u at q0.90)
+  arm u_q98: done  (GPD threshold u at q0.98)
+
+==============================================================================================================
+T12 ABLATION -- PRIMARY TABLE
+Shift in reclamation at MATCHED MEASURED RISK against peak_capped, one switch flipped per arm.
+gap_pp  = M(eps) reclamation minus peak_capped's, at peak_capped's own measured risk (negative = worse).
+shift   = this arm's gap minus the reference arm's. Positive = flipping this switch helped.
+==============================================================================================================
+
+--- CPU, all_vms ---
+       arm  peak_capped_viol_frac  peak_capped_recl_pct  evt_recl_pct_at_matched_risk  gap_pp  shift_vs_reference_pp  baseline_moved  like_for_like_gap_pp
+ reference                0.04114                34.174                        29.826  -4.348                  0.000           False                -4.348
+ theta_off                0.04114                34.174                           NaN     NaN                    NaN           False                   NaN
+theta_runs                0.04114                34.174                        29.000  -5.174                 -0.826           False                -5.174
+  snap_off                0.11076                48.621                        36.085 -12.536                 -8.188            True               -12.536
+   cap_off                0.04114                34.174                        -7.826 -42.000                -37.652           False               -41.826
+     u_q90                0.04114                34.174                        27.176  -6.998                 -2.650           False                -6.998
+     u_q98                0.04114                34.174                        33.472  -0.702                  3.646           False                -0.702
+
+--- CPU, non_idle ---
+       arm  peak_capped_viol_frac  peak_capped_recl_pct  evt_recl_pct_at_matched_risk  gap_pp  shift_vs_reference_pp  baseline_moved  like_for_like_gap_pp
+ reference                0.00559                24.224                        13.416 -10.808                  0.000           False               -10.808
+ theta_off                0.00559                24.224                        13.789 -10.435                  0.373           False               -10.435
+theta_runs                0.00559                24.224                        13.665 -10.559                  0.249           False               -10.559
+  snap_off                0.09497                33.397                        19.842 -13.555                 -2.747            True               -13.555
+   cap_off                0.00559                24.224                       -73.913 -98.137                -87.329           False               -97.888
+     u_q90                0.00559                24.224                        14.410  -9.814                  0.994           False                -9.814
+     u_q98                0.00559                24.224                        21.491  -2.733                  8.075           False                -2.733
+
+--- MEM, all_vms ---
+       arm  peak_capped_viol_frac  peak_capped_recl_pct  evt_recl_pct_at_matched_risk  gap_pp  shift_vs_reference_pp  baseline_moved  like_for_like_gap_pp
+ reference                0.05063                37.540                        34.688  -2.852                  0.000           False                -2.852
+ theta_off                0.05063                37.540                        34.931  -2.609                  0.243           False                -2.609
+theta_runs                0.05063                37.540                        34.974  -2.566                  0.286           False                -2.566
+  snap_off                0.26266                49.569                        51.423   1.854                  4.706            True                 1.854
+   cap_off                0.05063                37.540                        -6.113 -43.653                -40.801           False               -33.232
+     u_q90                0.05063                37.540                        33.699  -3.841                 -0.989           False                -3.841
+     u_q98                0.05063                37.540                        36.717  -0.823                  2.029           False                -0.823
+
+--- MEM, non_idle ---
+       arm  peak_capped_viol_frac  peak_capped_recl_pct  evt_recl_pct_at_matched_risk  gap_pp  shift_vs_reference_pp  baseline_moved  like_for_like_gap_pp
+ reference                0.07821                32.536                        30.943  -1.593                  0.000           False                -1.593
+ theta_off                0.07821                32.536                        30.252  -2.284                 -0.691           False                -2.284
+theta_runs                0.07821                32.536                        30.867  -1.669                 -0.076           False                -1.669
+  snap_off                0.28492                42.547                        45.127   2.580                  4.173            True                 2.580
+   cap_off                0.07821                32.536                         4.046 -28.490                -26.897           False               -14.565
+     u_q90                0.07821                32.536                        26.911  -5.625                 -4.032           False                -5.625
+     u_q98                0.07821                32.536                        33.522   0.986                  2.579           False                 0.986
+
+==============================================================================================================
+SWITCH LEGEND
+==============================================================================================================
+  reference   full method: intervals theta, snapped, capped, u = q0.95
+  theta_off   dependence correction OFF (theta = 1, the T10 arm)
+  theta_runs  theta from runs declustering, r = 12
+  snap_off    catalog snapping OFF (continuous allocations)   [baseline moves too -- shift not directly comparable]
+  cap_off     cap at the original allocation OFF   [peak_capped not like-for-like here; see like_for_like_gap_pp]
+  u_q90       GPD threshold u at q0.90
+  u_q98       GPD threshold u at q0.98
+
+==============================================================================================================
+THETA BY ARM (estimated arms only)
+==============================================================================================================
+       arm resource   n  theta_median  theta_q25  theta_q75
+ reference      cpu 269        0.2849     0.1634     0.4552
+ reference      mem 316        0.4169     0.1665     0.7754
+theta_runs      cpu 269        0.2246     0.1438     0.3344
+theta_runs      mem 316        0.3412     0.1987     0.4706
+  snap_off      cpu 269        0.2849     0.1634     0.4552
+  snap_off      mem 316        0.4169     0.1665     0.7754
+   cap_off      cpu 269        0.2849     0.1634     0.4552
+   cap_off      mem 316        0.4169     0.1665     0.7754
+     u_q90      cpu 275        0.2014     0.0966     0.4142
+     u_q90      mem 316        0.4749     0.1199     0.8064
+     u_q98      cpu 266        0.4388     0.1888     0.6772
+     u_q98      mem 316        0.5315     0.1758     0.8040
+wrote results/rnd/figures\ablation_cpu.png
+wrote results/rnd/figures\ablation_mem.png
+
+wrote results/rnd/ablation/ablation_matched_risk.csv, ablation_theta.csv, frontier_<arm>.csv, ablation_config.json

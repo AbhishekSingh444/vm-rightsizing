@@ -1,0 +1,13 @@
+frontier,scope,resource,ece_fs,ece_bound_fs,points_outside_fs,points_fs,verdict_fs,why_fs,ece_rnd,ece_bound_rnd,points_outside_rnd,points_rnd,verdict_rnd,why_rnd
+theta_1,all_vms,cpu,0.02802,0.05,3,5,NOT SUPPORTED,3 of 5 points outside the 95% binomial interval,0.029,0.05,2,5,NOT SUPPORTED,2 of 5 points outside the 95% binomial interval
+theta_1,all_vms,mem,0.0268,0.05,4,5,NOT SUPPORTED,4 of 5 points outside the 95% binomial interval,0.0249,0.05,4,5,NOT SUPPORTED,4 of 5 points outside the 95% binomial interval
+theta_1,non_idle,cpu,0.02843,0.05,3,5,NOT SUPPORTED,3 of 5 points outside the 95% binomial interval,0.02745,0.05,2,5,NOT SUPPORTED,2 of 5 points outside the 95% binomial interval
+theta_1,non_idle,mem,0.02626,0.05,4,5,NOT SUPPORTED,4 of 5 points outside the 95% binomial interval,0.02345,0.05,3,5,NOT SUPPORTED,3 of 5 points outside the 95% binomial interval
+theta_intervals,all_vms,cpu,0.02604,0.05,3,5,NOT SUPPORTED,3 of 5 points outside the 95% binomial interval,0.027,0.05,2,5,NOT SUPPORTED,2 of 5 points outside the 95% binomial interval
+theta_intervals,all_vms,mem,0.02473,0.05,4,5,NOT SUPPORTED,4 of 5 points outside the 95% binomial interval,0.023,0.05,4,5,NOT SUPPORTED,4 of 5 points outside the 95% binomial interval
+theta_intervals,non_idle,cpu,0.02626,0.05,3,5,NOT SUPPORTED,3 of 5 points outside the 95% binomial interval,0.02792,0.05,2,5,NOT SUPPORTED,2 of 5 points outside the 95% binomial interval
+theta_intervals,non_idle,mem,0.02893,0.05,4,5,NOT SUPPORTED,4 of 5 points outside the 95% binomial interval,0.02356,0.05,3,5,NOT SUPPORTED,3 of 5 points outside the 95% binomial interval
+theta_runs,all_vms,cpu,0.02651,0.05,3,5,NOT SUPPORTED,3 of 5 points outside the 95% binomial interval,0.02637,0.05,2,5,NOT SUPPORTED,2 of 5 points outside the 95% binomial interval
+theta_runs,all_vms,mem,0.02422,0.05,4,5,NOT SUPPORTED,4 of 5 points outside the 95% binomial interval,0.02237,0.05,3,5,NOT SUPPORTED,3 of 5 points outside the 95% binomial interval
+theta_runs,non_idle,cpu,0.02626,0.05,3,5,NOT SUPPORTED,3 of 5 points outside the 95% binomial interval,0.02792,0.05,2,5,NOT SUPPORTED,2 of 5 points outside the 95% binomial interval
+theta_runs,non_idle,mem,0.02838,0.05,4,5,NOT SUPPORTED,4 of 5 points outside the 95% binomial interval,0.02021,0.05,3,5,NOT SUPPORTED,3 of 5 points outside the 95% binomial interval

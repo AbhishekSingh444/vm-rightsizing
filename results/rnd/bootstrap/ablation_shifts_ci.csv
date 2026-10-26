@@ -1,0 +1,25 @@
+arm,switch,scope,resource,shift_vs_reference_pp,undefined_share,shift_lo,shift_hi,excludes_zero,cond_lo,cond_hi,cond_excludes_zero,baseline_moved
+theta_off,"dependence correction OFF (theta = 1, the T10 arm)",all_vms,cpu,,0.9808,,,,-0.09,1.66,False,False
+theta_off,"dependence correction OFF (theta = 1, the T10 arm)",all_vms,mem,0.243,0.0231,,,,-1.99,2.9,False,False
+theta_off,"dependence correction OFF (theta = 1, the T10 arm)",non_idle,cpu,0.373,0.0,-0.54,0.98,False,,,,False
+theta_off,"dependence correction OFF (theta = 1, the T10 arm)",non_idle,mem,-0.691,0.0,-2.32,1.33,False,,,,False
+theta_runs,"theta from runs declustering, r = 12",all_vms,cpu,-0.826,0.0034,,,,-2.39,0.92,False,False
+theta_runs,"theta from runs declustering, r = 12",all_vms,mem,0.286,0.0,-1.43,1.77,False,,,,False
+theta_runs,"theta from runs declustering, r = 12",non_idle,cpu,0.249,0.0,0.0,1.25,False,,,,False
+theta_runs,"theta from runs declustering, r = 12",non_idle,mem,-0.076,0.0,-1.32,1.27,False,,,,False
+snap_off,catalog snapping OFF (continuous allocations),all_vms,cpu,-8.188,0.0034,,,,-13.74,-3.55,True,True
+snap_off,catalog snapping OFF (continuous allocations),all_vms,mem,4.706,0.0,0.82,8.54,True,,,,True
+snap_off,catalog snapping OFF (continuous allocations),non_idle,cpu,-2.747,0.0074,,,,-10.23,1.43,False,True
+snap_off,catalog snapping OFF (continuous allocations),non_idle,mem,4.173,0.0,0.94,7.75,True,,,,True
+cap_off,cap at the original allocation OFF,all_vms,cpu,-37.652,0.0034,,,,-56.54,-23.96,True,False
+cap_off,cap at the original allocation OFF,all_vms,mem,-40.801,0.0,-96.14,-21.07,True,,,,False
+cap_off,cap at the original allocation OFF,non_idle,cpu,-87.329,0.0,-111.83,-31.27,True,,,,False
+cap_off,cap at the original allocation OFF,non_idle,mem,-26.897,0.0,-65.96,-11.59,True,,,,False
+u_q90,GPD threshold u at q0.90,all_vms,cpu,-2.65,0.0034,,,,-5.08,0.31,False,False
+u_q90,GPD threshold u at q0.90,all_vms,mem,-0.989,0.0,-4.18,2.08,False,,,,False
+u_q90,GPD threshold u at q0.90,non_idle,cpu,0.994,0.0,-2.7,2.81,False,,,,False
+u_q90,GPD threshold u at q0.90,non_idle,mem,-4.032,0.0,-7.5,-1.02,True,,,,False
+u_q98,GPD threshold u at q0.98,all_vms,cpu,3.646,0.0034,,,,1.45,7.21,True,False
+u_q98,GPD threshold u at q0.98,all_vms,mem,2.029,0.0,-1.81,5.29,False,,,,False
+u_q98,GPD threshold u at q0.98,non_idle,cpu,8.075,0.0,3.97,11.89,True,,,,False
+u_q98,GPD threshold u at q0.98,non_idle,mem,2.579,0.0,-0.95,6.4,False,,,,False

@@ -1,0 +1,13 @@
+frontier,scope,resource,threshold_pct,zero_risk_recl_pct,zero_risk_policy,zero_risk_candidates,verdict,nearest_miss_policy,nearest_miss_recl_pct,nearest_miss_vms_violating,nearest_miss_events,vms
+theta_intervals,all_vms,cpu,25.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,evt(eps=0.001),15.13,1,1,316
+theta_intervals,all_vms,mem,20.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,evt(eps=0.001),26.608,5,49,316
+theta_intervals,non_idle,cpu,25.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,peak_capped,24.224,1,1,179
+theta_intervals,non_idle,mem,20.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,evt(eps=0.001),24.583,4,48,179
+theta_runs,all_vms,cpu,25.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,evt(eps=0.001),15.565,1,1,316
+theta_runs,all_vms,mem,20.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,evt(eps=0.001),26.847,5,50,316
+theta_runs,non_idle,cpu,25.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,peak_capped,24.224,1,1,179
+theta_runs,non_idle,mem,20.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,evt(eps=0.001),24.649,4,49,179
+theta_1,all_vms,cpu,25.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,evt(eps=0.01),16.783,1,1,316
+theta_1,all_vms,mem,20.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,evt(eps=0.001),26.311,3,8,316
+theta_1,non_idle,cpu,25.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,peak_capped,24.224,1,1,179
+theta_1,non_idle,mem,20.0,0.0,as_provisioned,as_provisioned,NOT SUPPORTED,evt(eps=0.001),24.51,3,8,179

@@ -1,0 +1,37 @@
+config,scope,resource,comparator,gap_pp_fs,undefined_share_fs,gap_lo_fs,gap_hi_fs,excludes_zero_fs,cond_lo_fs,cond_hi_fs,cond_excludes_zero_fs,point_note_fs,gap_pp_rnd,undefined_share_rnd,gap_lo_rnd,gap_hi_rnd,excludes_zero_rnd,cond_lo_rnd,cond_hi_rnd,cond_excludes_zero_rnd,point_note_rnd
+cap_off,all_vms,cpu,peak,-52.526,0.0,-89.81,-33.37,True,,,,linear interpolation between bracketing eps points,-41.826,0.0034,,,,-63.27,-26.9,True,linear interpolation between bracketing eps points
+cap_off,all_vms,cpu,peak_capped,-52.589,0.0,-89.81,-33.43,True,,,,linear interpolation between bracketing eps points,-42.0,0.0034,,,,-63.56,-27.03,True,linear interpolation between bracketing eps points
+cap_off,all_vms,mem,peak,-65.361,0.0,-97.22,-31.74,True,,,,linear interpolation between bracketing eps points,-33.232,0.0,-90.3,-11.21,True,,,,linear interpolation between bracketing eps points
+cap_off,all_vms,mem,peak_capped,-74.141,0.0,-107.2,-39.47,True,,,,linear interpolation between bracketing eps points,-43.653,0.0,-101.12,-21.56,True,,,,linear interpolation between bracketing eps points
+cap_off,non_idle,cpu,peak,-29.53,0.0001,,,,-39.58,-12.31,True,linear interpolation between bracketing eps points,-97.888,0.0,-123.98,-36.37,True,,,,linear interpolation between bracketing eps points
+cap_off,non_idle,cpu,peak_capped,-29.639,0.0001,,,,-39.7,-12.44,True,linear interpolation between bracketing eps points,-98.137,0.0,-124.22,-36.57,True,,,,linear interpolation between bracketing eps points
+cap_off,non_idle,mem,peak,-44.349,0.0,-64.0,-27.07,True,,,,linear interpolation between bracketing eps points,-14.565,0.0,-52.28,2.5,False,,,,linear interpolation between bracketing eps points
+cap_off,non_idle,mem,peak_capped,-57.05,0.0,-79.16,-37.27,True,,,,linear interpolation between bracketing eps points,-28.49,0.0,-68.45,-12.17,True,,,,linear interpolation between bracketing eps points
+reference,all_vms,cpu,peak_capped,-5.555,0.0,-11.07,-2.47,True,,,,linear interpolation between bracketing eps points,-4.348,0.0034,,,,-8.06,-2.13,True,linear interpolation between bracketing eps points
+reference,all_vms,mem,peak_capped,-6.297,0.0,-9.18,-3.45,True,,,,linear interpolation between bracketing eps points,-2.852,0.0,-7.02,1.41,False,,,,linear interpolation between bracketing eps points
+reference,non_idle,cpu,peak_capped,-2.153,0.0001,,,,-4.02,0.3,False,linear interpolation between bracketing eps points,-10.808,0.0,-14.44,-4.09,True,,,,linear interpolation between bracketing eps points
+reference,non_idle,mem,peak_capped,-3.609,0.0,-5.71,-1.66,True,,,,linear interpolation between bracketing eps points,-1.593,0.0,-6.06,2.55,False,,,,linear interpolation between bracketing eps points
+snap_off,all_vms,cpu,peak_capped,-14.059,0.0,-18.57,-10.26,True,,,,linear interpolation between bracketing eps points,-12.536,0.0,-19.34,-7.42,True,,,,linear interpolation between bracketing eps points
+snap_off,all_vms,mem,peak_capped,-0.831,0.0,-4.52,2.87,False,,,,linear interpolation between bracketing eps points,1.854,0.0,-2.21,5.35,False,,,,linear interpolation between bracketing eps points
+snap_off,non_idle,cpu,peak_capped,-6.073,0.0003,,,,-9.43,-3.68,True,linear interpolation between bracketing eps points,-13.555,0.0074,,,,-21.58,-6.81,True,linear interpolation between bracketing eps points
+snap_off,non_idle,mem,peak_capped,-1.066,0.0,-6.58,3.8,False,,,,linear interpolation between bracketing eps points,2.58,0.0,-2.31,7.3,False,,,,linear interpolation between bracketing eps points
+theta_1_unsnapped,all_vms,cpu,peak_capped,-11.294,0.0,-14.41,-8.84,True,,,,linear interpolation between bracketing eps points,,0.6092,,,,-18.09,-6.76,True,"matched risk outside the swept M(eps) range [0.03165, 0.10443]"
+theta_1_unsnapped,all_vms,mem,peak_capped,-5.116,0.0017,,,,-12.33,0.48,False,linear interpolation between bracketing eps points,-1.942,0.0028,,,,-5.68,1.05,False,linear interpolation between bracketing eps points
+theta_1_unsnapped,non_idle,cpu,peak_capped,-5.738,0.0072,,,,-8.66,-3.37,True,linear interpolation between bracketing eps points,-12.164,0.0427,,,,-20.35,-5.67,True,linear interpolation between bracketing eps points
+theta_1_unsnapped,non_idle,mem,peak_capped,-4.269,0.0616,,,,-13.22,1.79,False,linear interpolation between bracketing eps points,-0.215,0.0911,,,,-4.7,2.85,False,linear interpolation between bracketing eps points
+theta_off,all_vms,cpu,peak_capped,-4.858,0.4034,,,,-8.95,-3.48,True,linear interpolation between bracketing eps points,,0.9808,,,,-10.16,-4.13,True,"matched risk outside the swept M(eps) range [0.00316, 0.01899]"
+theta_off,all_vms,mem,peak_capped,-5.366,0.0117,,,,-8.32,-0.9,True,linear interpolation between bracketing eps points,-2.609,0.0231,,,,-6.05,1.81,False,linear interpolation between bracketing eps points
+theta_off,non_idle,cpu,peak_capped,,0.8691,,,,-4.65,-0.56,True,"matched risk outside the swept M(eps) range [0.01090, 0.02180]",-10.435,0.0,-14.0,-4.34,True,,,,linear interpolation between bracketing eps points
+theta_off,non_idle,mem,peak_capped,-3.453,0.0,-5.64,-1.58,True,,,,linear interpolation between bracketing eps points,-2.284,0.0,-6.2,1.57,False,,,,linear interpolation between bracketing eps points
+theta_runs,all_vms,cpu,peak_capped,-5.21,0.0,-7.96,-0.92,True,,,,linear interpolation between bracketing eps points,-5.174,0.0,-8.7,-2.19,True,,,,linear interpolation between bracketing eps points
+theta_runs,all_vms,mem,peak_capped,-5.917,0.0,-8.61,-2.64,True,,,,linear interpolation between bracketing eps points,-2.566,0.0,-6.29,0.98,False,,,,linear interpolation between bracketing eps points
+theta_runs,non_idle,cpu,peak_capped,-2.377,0.0,-4.39,1.11,False,,,,linear interpolation between bracketing eps points,-10.559,0.0,-14.11,-3.75,True,,,,linear interpolation between bracketing eps points
+theta_runs,non_idle,mem,peak_capped,-3.327,0.0,-5.42,-1.52,True,,,,linear interpolation between bracketing eps points,-1.669,0.0,-5.8,2.05,False,,,,linear interpolation between bracketing eps points
+u_q90,all_vms,cpu,peak_capped,-4.356,0.0,-9.14,-1.43,True,,,,linear interpolation between bracketing eps points,-6.998,0.0,-10.83,-3.47,True,,,,linear interpolation between bracketing eps points
+u_q90,all_vms,mem,peak_capped,-6.854,0.0,-10.14,-3.25,True,,,,linear interpolation between bracketing eps points,-3.841,0.0,-8.33,0.1,False,,,,linear interpolation between bracketing eps points
+u_q90,non_idle,cpu,peak_capped,-2.869,0.001,,,,-5.21,0.21,False,linear interpolation between bracketing eps points,-9.814,0.0,-13.42,-4.96,True,,,,linear interpolation between bracketing eps points
+u_q90,non_idle,mem,peak_capped,-5.017,0.0,-7.97,-2.58,True,,,,linear interpolation between bracketing eps points,-5.625,0.0,-10.44,-1.38,True,,,,linear interpolation between bracketing eps points
+u_q98,all_vms,cpu,peak_capped,-6.648,0.0,-11.64,-2.85,True,,,,linear interpolation between bracketing eps points,-0.702,0.0,-2.08,0.5,False,,,,linear interpolation between bracketing eps points
+u_q98,all_vms,mem,peak_capped,-1.036,0.0,-3.39,2.03,False,,,,linear interpolation between bracketing eps points,-0.823,0.0,-3.45,1.13,False,,,,linear interpolation between bracketing eps points
+u_q98,non_idle,cpu,peak_capped,-0.327,0.0,-2.42,1.34,False,,,,linear interpolation between bracketing eps points,-2.733,0.0,-4.4,1.06,False,,,,linear interpolation between bracketing eps points
+u_q98,non_idle,mem,peak_capped,-1.346,0.0,-3.17,0.49,False,,,,linear interpolation between bracketing eps points,0.986,0.0,-1.18,2.69,False,,,,linear interpolation between bracketing eps points
