@@ -1399,7 +1399,77 @@ What was **not** checked: the effect on fastStorage's EVT frontier, the
 gaps and theta. The padding zeros also sit inside the observation-window
 quantiles and GPD threshold of those 67 VMs. Quantifying that needs a re-run
 with a deduplicating loader, which is a pipeline change and has not been
-made.
+made. *Since quantified by a scratch re-run, without changing the loader:
+see the next section.*
+
+### fastStorage dedup check -- a measured bound, published numbers unchanged (2026-10-26)
+
+**The artefact.** 122 of 1,250 fastStorage files (9.8%) carry zero-demand
+padding rows that `load_vm` never deduplicates. On 65 usable VMs the padding
+reaches the observation window and inflates n_eval, some of them nearly 4x
+(10,099 against a true 2,592; table above).
+
+**Bias direction.** A larger n_eval gives a smaller per-sample target, so
+M(eps) gets more conservative and reclaims less on those VMs. The artefact
+works **against** the method, not for it.
+
+**What was run.** The full fastStorage pipeline ran twice in a scratch
+directory, from `baselines` through `bootstrap` (seed 16, B = 10,000).
+Duplicates were removed in memory, `load_vm` was not touched, and nothing
+was written under `results/`. Afterwards git showed no tracked file in
+`results/`, `figures/`, `paper/` or `evidence/` changed. Two variants:
+
+- **Exact.** Rows with a repeated timestamp are dropped. This only partly
+  corrects n_eval, because the copies offset by ~1 s survive: 10,099 goes
+  to about 3,049, not 2,592.
+- **Grid.** Exact, plus the mid-slot padding copies in affected files. This
+  brings every affected VM to n_eval = 2,592, so the grid variant
+  **brackets** the effect from the other side.
+
+**The bound.** Across both variants, against the published numbers:
+
+| Quantity | Largest move | Verdict or sign change |
+|---|---|---|
+| Matched-risk gaps (4) | at most 0.1 pp (all-VM CPU -5.56 -> -5.46 exact, -5.59 grid; memory -6.30 -> -6.37 grid; non-idle unchanged) | none |
+| H2: ECE and points outside | none, identical in every cell | none |
+| H3 nearest misses | at most 0.3 pp (all-VM memory 28.9 -> 28.6 grid; zero-risk reclamation stays 0%) | none |
+| Bootstrap intervals, 36 gap rows and 24 ablation-shift rows | ends move up to 1.37 pp | none changes side of zero |
+
+**The largest single move is a baseline, not a headline.** p95 memory
+reclamation goes from 71.67% to 70.81% on all VMs and from 69.32% to 68.05%
+on non-idle VMs under the grid variant (71.38% and 68.90% under exact). The
+cause is the padding zeros in VMs 625-649: they pull p95 memory down across a
+catalog step. No violation count changes, and `peak_capped` does not move.
+
+**Decision.** The published numbers are left as run. This section is the
+bound on the artefact: correcting it moves no headline by more than 0.1 pp
+(gaps) or 0.3 pp (H3), and it changes no verdict and no interval's side of
+zero. The loader still does not deduplicate. Fixing it would mean
+re-publishing every number for a change this small.
+
+### Where synthetic data is used -- verified (2026-10-26)
+
+For the record: synthetic traces are used only for pipeline smoke tests.
+These are `make demo` with no input, which writes only to `demo_out/`, and
+unit-test fixtures. No synthetic number appears in `results/`, `figures/` or
+the paper. The paper cites the demo only for its runtime.
+
+How this was verified, not assumed:
+
+- With a timestamp marker set, `make demo` without input modified nothing
+  outside `demo_out/`.
+- `results/` holds 156 CSVs with 32,656 VM ids, all of them numeric Bitbrains
+  ids. The run configs record 792 VMs, the real fleet.
+- No figure in `figures/` comes from the demo. Neither the paper source nor
+  the PDF text cites a synthetic number.
+
+Three qualifications, so the statement is not over-claimed:
+
+1. `make synthetic` is a second producer. It writes to `data/synthetic/`.
+   That folder does not exist now, and nothing reads it.
+2. `evidence/19_demo.txt` is committed and holds synthetic numbers, clearly
+   labelled as such. The paper cites it only for the 31 s runtime.
+3. The unit tests generate small synthetic fixture traces in temp folders.
 
 ### `make demo` -- millisecond-timestamp guard (2026-10-26)
 
@@ -1556,3 +1626,28 @@ if an arm's settings stopped reaching the computation.
 A residual exposure remains and is not closed: a test proves a flag reaches
 the computation, not that it reaches it *correctly*. A parameter wired to the
 wrong stage of the pipeline would still pass these tests.
+
+### demo-vm from plain cmd.exe, and run.bat (2026-10-26)
+
+**What broke.** `mingw32-make PY=python demo-vm` failed from a plain Windows
+command prompt with "The syntax of the command is incorrect" at the
+`mkdir -p` line. With no `sh.exe` on PATH, mingw32-make runs recipes through
+cmd.exe, whose `mkdir` rejects `-p` and the forward slash; the next line's
+`rm -rf` does not exist there at all. From Git Bash, Git's `sh.exe` is on PATH
+and hides the bug. demo-kind was unaffected because it only calls kubectl.
+
+**Fix.** Both lines are now one `$(PY) -c` call (`os.makedirs` +
+`shutil.rmtree`), which behaves the same under sh and cmd. No change to
+what demo-vm computes or prints.
+
+**run.bat.** Runs demo-vm, demo-kind, demo [TRACE_DIR] and test with the same
+commands and defaults as the Makefile, without make. It checks Python >= 3.11
+and pandas/numpy/scipy/matplotlib first, and prints a message rather than a
+traceback for: an empty or missing input folder, Docker not running, the kind
+cluster missing or unreachable, and the replay image not loaded. The synthetic
+`run.bat demo` frontier.csv is byte-identical to `make demo`'s at seed 42.
+`.gitattributes` gains `*.bat text eol=crlf`, because the global `eol=lf`
+would otherwise check run.bat out with LF endings.
+
+Not covered: `make demo` and the other pipeline targets still need sh
+(`$$(date)`, `if [ ]`, `tee`). From cmd, use run.bat for the demo.

@@ -74,7 +74,7 @@ violation rate its own sizing decisions induce, as a function of a risk level
 the operator chose.
 
 **Characterisation.** Fleet studies quantify the gap between allocation and
-use in private and public clouds [1, 2]. Coach exploits temporal patterns to
+use in private and public clouds [1], [2]. Coach exploits temporal patterns to
 oversubscribe CPU and memory on Azure hosts [3]. The first two are
 descriptive and propose no sizing policy. Coach pools risk at the host, where
 the platform absorbs it, instead of exposing it to the operator of each VM.
@@ -116,7 +116,7 @@ matched measured risk along a frontier (§5.2). We also validate the offline
 violation count against what a kernel enforces (§5.4).
 
 Our tail model is standard peaks-over-threshold extreme-value theory: a
-Generalized Pareto fit above a high threshold [17, 18], with an
+Generalized Pareto fit above a high threshold [17], [18], with an
 extremal-index correction for clustered exceedances [19]. Our uncertainty
 quantification uses the nonparametric bootstrap [20] and Wilson score
 intervals [21]. Our calibration error follows the ECE of [22]. The trace is
@@ -461,51 +461,57 @@ This trace was graciously provided by Bitbrains IT Services Inc.
 
 ## References
 
-1. Qin et al. How different are the cloud workloads? Characterizing
-   large-scale private and public cloud workloads. IEEE/IFIP DSN 2023.
-2. Towards workload-aware cloud efficiency: a large-scale empirical study of
-   cloud workload characteristics. ACM, 2025.
-3. Coach: exploiting temporal patterns for all-resource oversubscription in
-   cloud platforms. arXiv:2501.11179, 2025. Preprint.
-4. Majd, Cheng, Pahlevan and Meinel. Right-sizing recommendations (RSR):
-   cloud workload conformal prediction for VMs in data center operations.
-   IEEE/WIC WI-IAT 2025.
-5. CLOUDADV: decision-aligned instance sizing with zero-shot foundation
-   models under drift. arXiv:2606.31470, 2026. Preprint.
-6. Kollu et al. Comparative analysis of cloud resources forecasting using
-   deep learning techniques based on VM workload traces. Transactions on
-   Emerging Telecommunications Technologies 35(1):e4933, 2024.
-7. Z. Pan et al. MagicScaler: uncertainty-aware, predictive autoscaling.
-   PVLDB 16(12):3808-3821, 2023. doi:10.14778/3611540.3611566.
-8. Zou et al. OptScaler: a collaborative framework for robust autoscaling in
-   the cloud. PVLDB 17(12), 2024.
-9. Zhou, Zhang and Delimitrou. AQUATOPE: QoS-and-uncertainty-aware resource
-   management for multi-stage serverless workflows. ASPLOS 2023.
-10. Qiu et al. AWARE: automate workload autoscaling with reinforcement
-    learning in production cloud systems. USENIX ATC 2023, pp. 315-330.
-11. Zhang et al. AAPA: an archetype-aware predictive autoscaler with
-    uncertainty quantification for serverless workloads on Kubernetes.
+1. Qin *et al.*, "How different are the cloud workloads? Characterizing
+   large-scale private and public cloud workloads," in *Proc. IEEE/IFIP
+   DSN*, 2023.
+2. "Towards workload-aware cloud efficiency: a large-scale empirical study of
+   cloud workload characteristics," ACM, 2025.
+3. "Coach: exploiting temporal patterns for all-resource oversubscription in
+   cloud platforms," arXiv:2501.11179, 2025. Preprint.
+4. Majd, Cheng, Pahlevan and Meinel, "Right-sizing recommendations (RSR):
+   cloud workload conformal prediction for VMs in data center operations,"
+   in *Proc. IEEE/WIC WI-IAT*, 2025.
+5. "CLOUDADV: decision-aligned instance sizing with zero-shot foundation
+   models under drift," arXiv:2606.31470, 2026. Preprint.
+6. Kollu *et al.*, "Comparative analysis of cloud resources forecasting using
+   deep learning techniques based on VM workload traces," *Trans. Emerging
+   Telecommunications Technologies*, vol. 35, no. 1, e4933, 2024.
+7. Z. Pan *et al.*, "MagicScaler: uncertainty-aware, predictive autoscaling,"
+   *PVLDB*, vol. 16, no. 12, pp. 3808-3821, 2023,
+   doi:10.14778/3611540.3611566.
+8. Zou *et al.*, "OptScaler: a collaborative framework for robust autoscaling
+   in the cloud," *PVLDB*, vol. 17, no. 12, 2024.
+9. Zhou, Zhang and Delimitrou, "AQUATOPE: QoS-and-uncertainty-aware resource
+   management for multi-stage serverless workflows," in *Proc. ASPLOS*, 2023.
+10. Qiu *et al.*, "AWARE: automate workload autoscaling with reinforcement
+    learning in production cloud systems," in *Proc. USENIX ATC*, 2023,
+    pp. 315-330.
+11. Zhang *et al.*, "AAPA: an archetype-aware predictive autoscaler with
+    uncertainty quantification for serverless workloads on Kubernetes,"
     arXiv:2507.05653, 2025. Preprint.
-12. BACC: budget-aware calibration and control for horizontal autoscaling.
+12. "BACC: budget-aware calibration and control for horizontal autoscaling,"
     arXiv:2606.20575, 2026. Preprint.
-13. Pozdniakova, Mazeika and Cholomskis. SLA-adaptive threshold adjustment
-    for a Kubernetes horizontal pod autoscaler. Electronics 13(7):1242, 2024.
-14. Luo et al. Erms: efficient resource management for shared microservices
-    with SLA guarantees. ASPLOS 2023, pp. 62-77.
-15. K. Rzadca et al. Autopilot: workload autoscaling at Google. EuroSys 2020,
-    pp. 1-16. Pre-2021 anchor.
-16. Ambati et al. Providing SLOs for resource-harvesting VMs in cloud
-    platforms. USENIX OSDI 2020, pp. 735-751. Pre-2021 anchor.
-17. J. Pickands. Statistical inference using extreme order statistics. Annals
-    of Statistics 3(1), 1975.
-18. S. Coles. An Introduction to Statistical Modeling of Extreme Values.
+13. Pozdniakova, Mazeika and Cholomskis, "SLA-adaptive threshold adjustment
+    for a Kubernetes horizontal pod autoscaler," *Electronics*, vol. 13,
+    no. 7, 1242, 2024.
+14. Luo *et al.*, "Erms: efficient resource management for shared
+    microservices with SLA guarantees," in *Proc. ASPLOS*, 2023, pp. 62-77.
+15. K. Rzadca *et al.*, "Autopilot: workload autoscaling at Google," in
+    *Proc. EuroSys*, 2020, pp. 1-16. Pre-2021 anchor.
+16. Ambati *et al.*, "Providing SLOs for resource-harvesting VMs in cloud
+    platforms," in *Proc. USENIX OSDI*, 2020, pp. 735-751. Pre-2021 anchor.
+17. J. Pickands, "Statistical inference using extreme order statistics,"
+    *Annals of Statistics*, vol. 3, no. 1, 1975.
+18. S. Coles, *An Introduction to Statistical Modeling of Extreme Values*.
     Springer, 2001.
-19. C. A. T. Ferro and J. Segers. Inference for clusters of extreme values.
-    JRSS B 65(2), 2003.
-20. B. Efron and R. J. Tibshirani. An Introduction to the Bootstrap. Chapman &
-    Hall, 1993.
-21. E. B. Wilson. Probable inference, the law of succession, and statistical
-    inference. JASA 22(158), 1927.
-22. C. Guo et al. On calibration of modern neural networks. ICML 2017.
-23. S. Shen, V. van Beek and A. Iosup. Statistical characterization of
-    business-critical workloads hosted in cloud datacenters. CCGrid 2015.
+19. C. A. T. Ferro and J. Segers, "Inference for clusters of extreme values,"
+    *JRSS B*, vol. 65, no. 2, 2003.
+20. B. Efron and R. J. Tibshirani, *An Introduction to the Bootstrap*.
+    Chapman & Hall, 1993.
+21. E. B. Wilson, "Probable inference, the law of succession, and statistical
+    inference," *JASA*, vol. 22, no. 158, 1927.
+22. C. Guo *et al.*, "On calibration of modern neural networks," in
+    *Proc. ICML*, 2017.
+23. S. Shen, V. van Beek and A. Iosup, "Statistical characterization of
+    business-critical workloads hosted in cloud datacenters," in
+    *Proc. CCGrid*, 2015.

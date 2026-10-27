@@ -303,9 +303,10 @@ demo:
 # its held-out outcome. A file that cannot be used is named with the reason
 # and skipped. Writes only under DEMO_OUT/vm.
 DEMO_INPUT ?= data/demo_input
+# No mkdir -p / rm -rf here: from a plain cmd.exe, mingw32-make has no sh and
+# runs recipes through cmd, where both are syntax errors. Python is portable.
 demo-vm:
-	@mkdir -p $(DEMO_INPUT)
-	rm -rf $(DEMO_OUT)/vm
+	@$(PY) -c "import os, shutil; os.makedirs('$(DEMO_INPUT)', exist_ok=True); shutil.rmtree('$(DEMO_OUT)/vm', ignore_errors=True)"
 	$(PY) src/demo_vm.py --input $(DEMO_INPUT) --out $(DEMO_OUT)/vm \
 	    --obs-days $(OBS_DAYS) --eval-days $(EVAL_DAYS)
 
