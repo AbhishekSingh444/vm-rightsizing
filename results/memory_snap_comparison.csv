@@ -1,0 +1,5 @@
+scope,method,snapped_recl_mem_pct,unsnapped_recl_mem_pct,peak_to_p95_gap_snapped_pp,peak_to_p95_gap_unsnapped_pp,gap_narrowing_pct,population_vms
+all_vms,peak,33.03,52.67,38.64,32.08,17.0,792
+all_vms,p95,71.67,84.75,,,,792
+non_idle,peak,18.27,41.07,51.05,38.11,25.3,367
+non_idle,p95,69.32,79.18,,,,367

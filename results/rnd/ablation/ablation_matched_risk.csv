@@ -1,0 +1,29 @@
+arm,switch,scope,resource,peak_capped_viol_frac,peak_capped_recl_pct,evt_recl_pct_at_matched_risk,gap_pp,baseline_moved,note,like_for_like_baseline,like_for_like_gap_pp,reference_gap_pp,shift_vs_reference_pp
+reference,"full method: intervals theta, snapped, capped, u = q0.95",all_vms,cpu,0.04114,34.174,29.826,-4.348,False,linear interpolation between bracketing eps points,peak_capped,-4.348,-4.348,0.0
+reference,"full method: intervals theta, snapped, capped, u = q0.95",all_vms,mem,0.05063,37.54,34.688,-2.852,False,linear interpolation between bracketing eps points,peak_capped,-2.852,-2.852,0.0
+reference,"full method: intervals theta, snapped, capped, u = q0.95",non_idle,cpu,0.00559,24.224,13.416,-10.808,False,linear interpolation between bracketing eps points,peak_capped,-10.808,-10.808,0.0
+reference,"full method: intervals theta, snapped, capped, u = q0.95",non_idle,mem,0.07821,32.536,30.943,-1.593,False,linear interpolation between bracketing eps points,peak_capped,-1.593,-1.593,0.0
+theta_off,"dependence correction OFF (theta = 1, the T10 arm)",all_vms,cpu,0.04114,34.174,,,False,"matched risk outside the swept M(eps) range [0.00316, 0.01899]",peak_capped,,-4.348,
+theta_off,"dependence correction OFF (theta = 1, the T10 arm)",all_vms,mem,0.05063,37.54,34.931,-2.609,False,linear interpolation between bracketing eps points,peak_capped,-2.609,-2.852,0.243
+theta_off,"dependence correction OFF (theta = 1, the T10 arm)",non_idle,cpu,0.00559,24.224,13.789,-10.435,False,linear interpolation between bracketing eps points,peak_capped,-10.435,-10.808,0.373
+theta_off,"dependence correction OFF (theta = 1, the T10 arm)",non_idle,mem,0.07821,32.536,30.252,-2.284,False,linear interpolation between bracketing eps points,peak_capped,-2.284,-1.593,-0.691
+theta_runs,"theta from runs declustering, r = 12",all_vms,cpu,0.04114,34.174,29.0,-5.174,False,linear interpolation between bracketing eps points,peak_capped,-5.174,-4.348,-0.826
+theta_runs,"theta from runs declustering, r = 12",all_vms,mem,0.05063,37.54,34.974,-2.566,False,linear interpolation between bracketing eps points,peak_capped,-2.566,-2.852,0.286
+theta_runs,"theta from runs declustering, r = 12",non_idle,cpu,0.00559,24.224,13.665,-10.559,False,linear interpolation between bracketing eps points,peak_capped,-10.559,-10.808,0.249
+theta_runs,"theta from runs declustering, r = 12",non_idle,mem,0.07821,32.536,30.867,-1.669,False,linear interpolation between bracketing eps points,peak_capped,-1.669,-1.593,-0.076
+snap_off,catalog snapping OFF (continuous allocations),all_vms,cpu,0.11076,48.621,36.085,-12.536,True,linear interpolation between bracketing eps points,peak_capped,-12.536,-4.348,-8.188
+snap_off,catalog snapping OFF (continuous allocations),all_vms,mem,0.26266,49.569,51.423,1.854,True,linear interpolation between bracketing eps points,peak_capped,1.854,-2.852,4.706
+snap_off,catalog snapping OFF (continuous allocations),non_idle,cpu,0.09497,33.397,19.842,-13.555,True,linear interpolation between bracketing eps points,peak_capped,-13.555,-10.808,-2.747
+snap_off,catalog snapping OFF (continuous allocations),non_idle,mem,0.28492,42.547,45.127,2.58,True,linear interpolation between bracketing eps points,peak_capped,2.58,-1.593,4.173
+cap_off,cap at the original allocation OFF,all_vms,cpu,0.04114,34.174,-7.826,-42.0,False,linear interpolation between bracketing eps points,peak,-41.826,-4.348,-37.652
+cap_off,cap at the original allocation OFF,all_vms,mem,0.05063,37.54,-6.113,-43.653,False,linear interpolation between bracketing eps points,peak,-33.232,-2.852,-40.801
+cap_off,cap at the original allocation OFF,non_idle,cpu,0.00559,24.224,-73.913,-98.137,False,linear interpolation between bracketing eps points,peak,-97.888,-10.808,-87.329
+cap_off,cap at the original allocation OFF,non_idle,mem,0.07821,32.536,4.046,-28.49,False,linear interpolation between bracketing eps points,peak,-14.565,-1.593,-26.897
+u_q90,GPD threshold u at q0.90,all_vms,cpu,0.04114,34.174,27.176,-6.998,False,linear interpolation between bracketing eps points,peak_capped,-6.998,-4.348,-2.65
+u_q90,GPD threshold u at q0.90,all_vms,mem,0.05063,37.54,33.699,-3.841,False,linear interpolation between bracketing eps points,peak_capped,-3.841,-2.852,-0.989
+u_q90,GPD threshold u at q0.90,non_idle,cpu,0.00559,24.224,14.41,-9.814,False,linear interpolation between bracketing eps points,peak_capped,-9.814,-10.808,0.994
+u_q90,GPD threshold u at q0.90,non_idle,mem,0.07821,32.536,26.911,-5.625,False,linear interpolation between bracketing eps points,peak_capped,-5.625,-1.593,-4.032
+u_q98,GPD threshold u at q0.98,all_vms,cpu,0.04114,34.174,33.472,-0.702,False,linear interpolation between bracketing eps points,peak_capped,-0.702,-4.348,3.646
+u_q98,GPD threshold u at q0.98,all_vms,mem,0.05063,37.54,36.717,-0.823,False,linear interpolation between bracketing eps points,peak_capped,-0.823,-2.852,2.029
+u_q98,GPD threshold u at q0.98,non_idle,cpu,0.00559,24.224,21.491,-2.733,False,linear interpolation between bracketing eps points,peak_capped,-2.733,-10.808,8.075
+u_q98,GPD threshold u at q0.98,non_idle,mem,0.07821,32.536,33.522,0.986,False,linear interpolation between bracketing eps points,peak_capped,0.986,-1.593,2.579

@@ -50,5 +50,12 @@ ENVIRONMENT_NOTES.md
 !evidence/
 cols.txt
 
+# Presentation notes, paper template and similarity report -- not part of
+# the project.
+script.md
+file_guide.md
+paper/IEEE_Conference_Template*.pdf
+paper/*_similarity.pdf
+
 # make demo / demo-vm output -- regenerable.
 demo_out/

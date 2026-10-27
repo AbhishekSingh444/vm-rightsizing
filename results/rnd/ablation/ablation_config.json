@@ -1,0 +1,78 @@
+{
+  "obs_days": 21.0,
+  "eval_days": 9.0,
+  "eps_sweep": [
+    0.001,
+    0.005,
+    0.01,
+    0.05,
+    0.1,
+    0.2,
+    0.4,
+    0.6
+  ],
+  "reference_arm": "reference",
+  "arms": {
+    "reference": {
+      "switch": "full method: intervals theta, snapped, capped, u = q0.95",
+      "theta_method": "intervals",
+      "snap": true,
+      "no_cap": false,
+      "threshold_q": 0.95
+    },
+    "theta_off": {
+      "switch": "dependence correction OFF (theta = 1, the T10 arm)",
+      "theta_method": "fixed",
+      "snap": true,
+      "no_cap": false,
+      "threshold_q": 0.95
+    },
+    "theta_runs": {
+      "switch": "theta from runs declustering, r = 12",
+      "theta_method": "runs",
+      "snap": true,
+      "no_cap": false,
+      "threshold_q": 0.95
+    },
+    "snap_off": {
+      "switch": "catalog snapping OFF (continuous allocations)",
+      "theta_method": "intervals",
+      "snap": false,
+      "no_cap": false,
+      "threshold_q": 0.95
+    },
+    "cap_off": {
+      "switch": "cap at the original allocation OFF",
+      "theta_method": "intervals",
+      "snap": true,
+      "no_cap": true,
+      "threshold_q": 0.95
+    },
+    "u_q90": {
+      "switch": "GPD threshold u at q0.90",
+      "theta_method": "intervals",
+      "snap": true,
+      "no_cap": false,
+      "threshold_q": 0.9
+    },
+    "u_q98": {
+      "switch": "GPD threshold u at q0.98",
+      "theta_method": "intervals",
+      "snap": true,
+      "no_cap": false,
+      "threshold_q": 0.98
+    }
+  },
+  "baseline_moved": [
+    "snap_off"
+  ],
+  "not_like_for_like": {
+    "cap_off": "peak"
+  },
+  "run_length": 12,
+  "run_length_fixed_before_any_t11_result": true,
+  "min_exceedances": 20,
+  "vms_used": 316,
+  "vms_idle": 137,
+  "matched_risk_is_interpolated": true
+}

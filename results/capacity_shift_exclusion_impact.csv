@@ -1,0 +1,7 @@
+scope,method,vms_before,recl_vcpu_hours_before,recl_mem_gb_hours_before,vms_with_violation_before,vms_after,recl_vcpu_hours_after,recl_mem_gb_hours_after,vms_with_violation_after,recl_vcpu_hours_delta,recl_vcpu_hours_pct_change,recl_mem_gb_hours_delta,recl_mem_gb_hours_pct_change
+all_vms,as_provisioned,1104,0.0,0.0,0,1102,0.0,0.0,0,0.0,,0.0,
+all_vms,peak,1104,269784.0,738155.3,57,1102,264600.0,696599.8,57,-5184.0,-1.92,-41555.5,-5.63
+all_vms,p95,1104,339984.0,1687691.3,293,1102,333936.0,1627559.8,291,-6048.0,-1.78,-60131.5,-3.56
+non_idle,as_provisioned,406,0.0,0.0,0,404,0.0,0.0,0,0.0,,0.0,
+non_idle,peak,406,86400.0,329359.2,32,404,81216.0,287803.7,32,-5184.0,-6.0,-41555.5,-12.62
+non_idle,p95,406,126792.0,1176943.2,233,404,120744.0,1116811.7,231,-6048.0,-4.77,-60131.5,-5.11

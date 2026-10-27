@@ -1,0 +1,5 @@
+scope,resource,peak_capped_viol_frac,peak_capped_recl_pct,evt_recl_pct_at_matched_risk,gap_pp,note,like_for_like_baseline,like_for_like_gap_pp
+all_vms,cpu,0.04114,34.174,29.0,-5.174,linear interpolation between bracketing eps points,peak_capped,-5.174
+all_vms,mem,0.05063,37.54,34.974,-2.566,linear interpolation between bracketing eps points,peak_capped,-2.566
+non_idle,cpu,0.00559,24.224,13.665,-10.559,linear interpolation between bracketing eps points,peak_capped,-10.559
+non_idle,mem,0.07821,32.536,30.867,-1.669,linear interpolation between bracketing eps points,peak_capped,-1.669

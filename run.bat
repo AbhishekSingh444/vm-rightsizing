@@ -15,6 +15,8 @@ rem Override the interpreter with:  set PY=py -3
 setlocal EnableExtensions
 cd /d "%~dp0"
 
+rem Prefer the project environment that setup.bat creates (same as activating it).
+if exist "%~dp0.venv\Scripts\python.exe" set "PATH=%~dp0.venv\Scripts;%PATH%"
 if not defined PY set "PY=python"
 set "OBS_DAYS=21"
 set "EVAL_DAYS=9"
@@ -39,14 +41,13 @@ rem ---------------------------------------------------------------- checks
 %PY% -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)" >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Python 3.11 or newer was not found as "%PY%".
-    echo        Install it from python.org and tick "Add python.exe to PATH",
-    echo        or point run.bat at another interpreter:  set PY=py -3
+    echo        Run setup.bat first. It explains how to install Python if needed.
     exit /b 1
 )
 %PY% -c "import pandas, numpy, scipy, matplotlib" >nul 2>&1
 if errorlevel 1 (
     echo ERROR: missing Python packages. This needs pandas, numpy, scipy and matplotlib.
-    echo        Install them with:  %PY% -m pip install -r requirements.txt
+    echo        Run setup.bat to install them.
     exit /b 1
 )
 exit /b 0

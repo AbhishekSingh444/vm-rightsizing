@@ -1,0 +1,14 @@
+scope,population,axis,comparison,n,tp,fn,fp,tn,accuracy_pct,status,disagreeing_vm_ids,notes
+pooled,all_pods,memory,pred_mem_violation vs obs_oomkilled,50,26,4,0,20,92.0,reported,297 332 971 1229,every pod in the run
+pooled,excl_margin_band,memory,pred_mem_violation vs obs_oomkilled,46,26,0,0,20,100.0,reported,,excludes the VMs this testbed cannot adjudicate -- RECOMMENDED
+pooled,excl_artifact_affected,memory,pred_mem_violation vs obs_oomkilled,47,26,1,0,20,97.9,reported,297,"superseded criterion, kept for continuity; catches 3 of the 4"
+pooled,margin_band_only,memory,pred_mem_violation vs obs_oomkilled,4,0,4,0,0,0.0,reported,297 332 971 1229,the undecidable VMs alone
+pooled,artifact_affected_only,memory,pred_mem_violation vs obs_oomkilled,3,0,3,0,0,0.0,reported,332 971 1229,"superseded criterion, the flagged VMs alone"
+pooled,all_pods,memory,peak_demand_mib > limit_mib vs obs_oomkilled,50,26,0,0,24,100.0,reported,,"compares demand against the limit the kernel ACTUALLY enforced (recommendation + margin M), not against the recommendation. This is the headline result: zero mismatches across the run."
+wave1,excl_margin_band,memory,pred_mem_violation vs obs_oomkilled,11,4,0,0,7,100.0,reported,,per-wave breakdown
+wave2,excl_margin_band,memory,pred_mem_violation vs obs_oomkilled,8,5,0,0,3,100.0,reported,,per-wave breakdown
+wave3,excl_margin_band,memory,pred_mem_violation vs obs_oomkilled,9,4,0,0,5,100.0,reported,,per-wave breakdown
+wave4,excl_margin_band,memory,pred_mem_violation vs obs_oomkilled,9,7,0,0,2,100.0,reported,,per-wave breakdown
+wave5,excl_margin_band,memory,pred_mem_violation vs obs_oomkilled,9,6,0,0,3,100.0,reported,,per-wave breakdown
+pooled,all_pods,cpu,pred_cpu_violation vs obs_cpu_violation,50,23,2,18,7,60.0,CENSORED -- not a result,46 143 185 189 194 199 215 248 258 269 273 289 292 297 321 332 340 593 697 987,"26/50 pods OOMKilled and therefore truncated on the CPU axis; 2 logged fewer than the 2 consecutive samples the CPU rule needs. At S = 1/16 both available CPU signals are harness artifacts. Reported as a limitation, not as a result."
+pooled,excl_margin_band,cpu,pred_cpu_violation vs obs_cpu_violation,46,21,2,16,7,60.9,CENSORED -- not a result,46 143 185 189 194 199 215 248 258 269 273 289 292 321 340 593 697 987,"26/50 pods OOMKilled and therefore truncated on the CPU axis; 2 logged fewer than the 2 consecutive samples the CPU rule needs. At S = 1/16 both available CPU signals are harness artifacts. Reported as a limitation, not as a result."

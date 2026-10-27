@@ -1,0 +1,5 @@
+scope,resource,peak_capped_viol_frac,peak_capped_recl_pct,evt_recl_pct_at_matched_risk,gap_pp,note,like_for_like_baseline,like_for_like_gap_pp
+all_vms,cpu,0.11076,48.621,,,"matched risk outside the swept M(eps) range [0.03165, 0.10443]",peak_capped,
+all_vms,mem,0.26266,49.569,47.627,-1.942,linear interpolation between bracketing eps points,peak_capped,-1.942
+non_idle,cpu,0.09497,33.397,21.233,-12.164,linear interpolation between bracketing eps points,peak_capped,-12.164
+non_idle,mem,0.28492,42.547,42.332,-0.215,linear interpolation between bracketing eps points,peak_capped,-0.215
