@@ -1,9 +1,8 @@
-# Datasets are large and licensed -- never commit them.
-data/fastStorage/
-data/rnd/
-data/traces/
-data/synthetic/
-data/demo_input/
+# Datasets are large and licensed -- never commit them. Everything under
+# data/ stays local (downloads, unzipped traces, staged copies) except the
+# one small example file the tests and README use.
+data/*
+!data/sample_vm.csv
 *.zip
 
 # Results: track small summary tables, data dictionaries and every
@@ -57,5 +56,21 @@ file_guide.md
 paper/IEEE_Conference_Template*.pdf
 paper/*_similarity.pdf
 
+# Slide decks: only the final Review 3 deck is part of the deliverable.
+# Earlier review decks and other teams' reference decks stay local.
+paper/*.pptx
+!paper/Abhishek_Singh_P10_Review3.pptx
+~$*.pptx
+
 # make demo / demo-vm output -- regenerable.
 demo_out/
+# README tells users to regenerate tables here, so committed results stay intact.
+my_results/
+
+# Editor and OS clutter.
+.vscode/
+.idea/
+node_modules/
+.DS_Store
+Thumbs.db
+desktop.ini

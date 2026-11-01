@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Risk-Quantified VM Right-Sizing</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+<nav class="side" id="side">
+  <div class="brand">Risk-Quantified VM Right-Sizing</div>
+  <div class="sub">GWA-T-12 Bitbrains · 792 VMs</div>
+
+  <h4>Project</h4>
+  <a href="#overview">Overview</a>
+  <a href="#journey">How we did it</a>
+
+  <h4>Review 1</h4>
+  <a href="#literature">Literature gap table</a>
+  <a href="#hypothesis">Problem &amp; hypothesis</a>
+  <a href="#testbed">Testbed evidence</a>
+  <a href="#baseline">Baseline reproduced <span class="otag">O2</span></a>
+
+  <h4>Data</h4>
+  <a href="#raw">Raw input <span class="otag">O1</span></a>
+  <a href="#processed">Processed input <span class="otag">O1</span></a>
+  <a href="#features">Features <span class="otag">O3</span></a>
+  <a href="#outputs">Per-VM outputs <span class="otag">O2</span></a>
+
+  <h4>Review 2</h4>
+  <a href="#objectives">O1 &amp; O2 evidence <span class="otag">O1 O2</span></a>
+  <a href="#comparative">Comparative results <span class="otag">O4</span></a>
+  <a href="#ablation">Ablation <span class="otag">O4</span></a>
+  <a href="#threats">Threats to validity</a>
+
+  <h4>Review 3</h4>
+  <a href="#stats">Statistics &amp; replication</a>
+  <a href="#kernel">Kernel validation</a>
+  <a href="#demo">Live demo &amp; paper</a>
+  <a href="#figures">All figures</a>
+</nav>
+
+<main>
+<button class="menu-btn" id="menuBtn">☰ Sections</button>
+
+<!-- ============================== OVERVIEW ============================== -->
+<section class="page" id="overview">
+  <h1>Risk-Quantified Virtual Machine Right-Sizing for Private Cloud Capacity Reclamation</h1>
+  <p class="lede">Abhishek Singh (23BCE5044) · Purusharth Kumar (23BCE1908)</p>
+  <p class="what">Right-sizing tools report how much capacity they save but not how many VMs break as a result. We report both numbers together.</p>
+
+  <div class="grid g4" id="heroTiles"></div>
+
+  <h2>Objectives</h2>
+  <div class="grid g2" id="objCards"></div>
+
+  <h2>Rubric map</h2>
+  <div class="tbl-wrap"><table id="rubricTable"></table></div>
+</section>
+
+<section class="page" id="journey">
+  <h1>How we did it</h1>
+  <p class="what">Each step of the project in order, with the objective it served.</p>
+  <ol class="steps" id="steps"></ol>
+</section>
+
+<!-- ============================== REVIEW 1 ============================== -->
+<section class="page" id="literature">
+  <div class="crumb">Review 1</div>
+  <h1>Literature gap table</h1>
+  <p class="what">Recent work on cloud sizing. Every paper reports savings or accuracy; none counts the violations its reclamation causes.</p>
+  <div class="controls"><input type="search" id="gapSearch" placeholder="Filter papers…"><span class="small" id="gapCount"></span></div>
+  <div class="tbl-wrap"><table id="gapTable"></table></div>
+</section>
+
+<section class="page" id="hypothesis">
+  <div class="crumb">Review 1</div>
+  <h1>Problem statement and hypotheses</h1>
+  <p class="what">The problem in our words, and three claims fixed before running the experiment.</p>
+  <div class="callout"><b>Problem:</b> right-sizing tools report capacity saved but never the risk of running out. An operator cannot judge whether a recommendation is safe.</div>
+  <div class="grid g3">
+    <div class="card"><b>H1</b><p class="small">At equal risk, M(ε) reclaims ≥ 15% more vCPU-hours and ≥ 10% more GB-hours than P95.</p></div>
+    <div class="card"><b>H2</b><p class="small">The predicted risk ε matches the measured violation rate (binomial test, ECE &lt; 0.05).</p></div>
+    <div class="card"><b>H3</b><p class="small">≥ 25% of vCPU-hours and ≥ 20% of GB-hours can be reclaimed with zero violations.</p></div>
+  </div>
+  <div class="card small"><b>Condition:</b> Bitbrains fastStorage, 21-day observation / 9-day evaluation, flavour catalog vCPU {1,2,4,8,16}, memory {2,…,64} GB.<br>
+    <b>Violation:</b> memory: over allocation at any sample (the process is killed) · CPU: over allocation for ≥ 2 consecutive samples (slowdown).</div>
+</section>
+
+<section class="page" id="testbed">
+  <div class="crumb">Review 1</div>
+  <h1>Testbed evidence</h1>
+  <p class="what">A running kind Kubernetes cluster where the Linux kernel enforces each VM's recommended memory limit.</p>
+  <div class="grid g4" id="testbedTiles"></div>
+  <h3>kubectl get nodes</h3><pre class="term" data-ev="review1_screens/01_get_nodes.txt"></pre>
+  <h3>kubectl get pods -A</h3><pre class="term" data-ev="review1_screens/02_get_pods_all.txt"></pre>
+  <h3>Enforced limits</h3><pre class="term" data-ev="review1_screens/04_limits_custom_columns.txt"></pre>
+  <h3>OOMKilled pod (kubectl describe)</h3><pre class="term" data-ev="review1_screens/03_describe_rs-p95-143.txt"></pre>
+  <div class="figsw" data-figs='[["slide13","describe output"],["slide13_2","pod status"]]'></div>
+</section>
+
+<section class="page" id="baseline">
+  <div class="crumb">Review 1 <span class="otag">O2</span></div>
+  <h1>Baseline reproduced</h1>
+  <p class="what">Peak and P95 recommendations on 792 VMs: capacity saved, and the share of VMs that stayed safe over the next 9 days.</p>
+  <div class="controls"><div class="seg" id="baseScope"></div></div>
+  <div class="card"><b>Capacity reclaimed, %</b><div class="chart" id="baseReclChart"></div></div>
+  <div class="card"><b>VMs with zero violations, %</b><div class="chart" id="baseSafeChart"></div></div>
+  <div class="tbl-wrap"><table id="baseTable"></table></div>
+  <div class="figsw" data-figs='[["fig2_reclamation_vs_safety_ci","Reclamation vs safety"],["fig3_safety_split_ci","Safety by resource"]]'></div>
+</section>
+
+<!-- ============================== DATA ============================== -->
+<section class="page" id="raw">
+  <div class="crumb">Data <span class="otag">O1</span></div>
+  <h1>Raw input</h1>
+  <p class="what">Three trace files as downloaded, one row every 5 minutes for 30 days, and each VM's demand over time.</p>
+  <div class="controls"><span class="small">VM:</span><div class="seg" id="rawVmSeg"></div><span class="small">Resource:</span><div class="seg" id="rawResSeg"></div></div>
+  <div class="grid g4" id="rawTiles"></div>
+  <div class="card"><b id="rawChartTitle"></b><div class="legend" id="rawLegend"></div><div class="chart" id="rawChart"></div>
+    <div class="small">Shaded = last 9 days, kept hidden from every recommender.</div></div>
+  <h3>Recommendations for this VM</h3>
+  <div class="tbl-wrap"><table id="rawPolicyTable"></table></div>
+  <h3>Raw file, first 20 rows</h3>
+  <div class="tbl-wrap"><table id="rawHead"></table></div>
+</section>
+
+<section class="page" id="processed">
+  <div class="crumb">Data <span class="otag">O1</span></div>
+  <h1>Processed input</h1>
+  <p class="what">Data-quality filtering (1,250 files to 792 usable VMs) and per-VM utilisation statistics.</p>
+  <div class="grid g4" id="cascadeTiles"></div>
+  <div class="card"><b>Exclusion cascade</b><div class="chart" id="cascadeChart"></div></div>
+  <div class="figsw" data-figs='[["fig1_headroom_ci","Utilisation headroom"],["fig4_exclusion_cascade","Exclusion cascade"]]'></div>
+  <h3>Per-file statistics</h3>
+  <div class="controls"><input type="search" id="dsSearch" placeholder="Filter by file, e.g. 332.csv"><span class="small" id="dsCount"></span></div>
+  <div class="tbl-wrap tall"><table id="dsTable"></table></div>
+</section>
+
+<section class="page" id="features">
+  <div class="crumb">Data <span class="otag">O3</span></div>
+  <h1>Features</h1>
+  <p class="what">Values fitted per VM from the 21-day history and used to predict exhaustion risk: tail threshold u, tail shape ξ and burst index θ.</p>
+  <div class="grid g4" id="featTiles"></div>
+  <div class="controls"><div class="seg" id="featResSeg"></div></div>
+  <div class="card"><b>Burst index θ</b><div class="chart" id="thetaHist"></div></div>
+  <div class="card"><b>Tail shape ξ</b><div class="chart" id="xiHist"></div></div>
+  <h3>Per-VM features</h3>
+  <div class="controls"><input type="search" id="featSearch" placeholder="Filter by VM id"><span class="small" id="featCount"></span></div>
+  <div class="tbl-wrap tall"><table id="featTable"></table></div>
+</section>
+
+<section class="page" id="outputs">
+  <div class="crumb">Data <span class="otag">O2</span></div>
+  <h1>Per-VM outputs</h1>
+  <p class="what">For each VM: the recommended size, the capacity saved and any violations in the held-out 9 days.</p>
+  <div class="controls"><div class="seg" id="outMethod"></div><input type="search" id="outSearch" placeholder="Filter by VM id"><label class="small"><input type="checkbox" id="outViol"> violations only</label><span class="small" id="outCount"></span></div>
+  <div class="tbl-wrap tall"><table id="outTable"></table></div>
+</section>
+
+<!-- ============================== REVIEW 2 ============================== -->
+<section class="page" id="objectives">
+  <div class="crumb">Review 2 <span class="otag">O1</span> <span class="otag">O2</span></div>
+  <h1>Objectives O1 and O2</h1>
+  <p class="what">O1: how much allocated capacity goes unused. O2: the recommender's output and the working, version-controlled code.</p>
+
+  <h2><span class="otag">O1</span> Allocated vs used capacity</h2>
+  <div class="grid g4" id="o1Tiles"></div>
+  <div class="figsw" data-figs='[["fig6_idle_contamination_ci","Idle vs non-idle"],["fig1_headroom_ci","Utilisation headroom"]]'></div>
+
+  <h2><span class="otag">O2</span> Flavour recommendations</h2>
+  <div class="controls"><div class="seg" id="flavMethod"></div><div class="seg" id="flavRes"></div></div>
+  <div class="card"><b id="flavTitle"></b><div class="chart" id="flavChart"></div></div>
+
+  <h2>Code and tests</h2>
+  <div class="grid g3" id="codeTiles"></div>
+  <div class="tbl-wrap"><table id="testTable"></table></div>
+  <h3>Commit history</h3>
+  <div class="tbl-wrap tall"><table id="gitTable"></table></div>
+  <h3>Source files</h3>
+  <div class="tbl-wrap tall"><table id="srcTable"></table></div>
+</section>
+
+<section class="page" id="comparative">
+  <div class="crumb">Review 2 <span class="otag">O4</span></div>
+  <h1>Comparative results</h1>
+  <p class="what">Proposed method M(ε) and the baselines on the same axes: capacity saved against the share of VMs that broke. Up and to the left is better.</p>
+  <div class="controls"><span class="small">Resource:</span><div class="seg" id="frRes"></div><span class="small">Scope:</span><div class="seg" id="frScope"></div></div>
+  <div class="card"><div class="legend" id="frLegend"></div><div class="chart" id="frChart"></div></div>
+  <div class="callout"><b>Result:</b> at the same risk, M(ε) reclaims 2.2–6.3 pp less than peak_capped.</div>
+  <h3>Gap at matched risk (M(ε) − peak_capped)</h3>
+  <div class="tbl-wrap"><table id="gapCiTable"></table></div>
+  <div class="figsw" data-figs='[["frontier_theta_intervals","Snapped to catalog"],["frontier_theta_intervals_unsnapped","Without catalog"]]'></div>
+</section>
+
+<section class="page" id="ablation">
+  <div class="crumb">Review 2 <span class="otag">O4</span></div>
+  <h1>Ablation</h1>
+  <p class="what">Each component switched off one at a time, to see which one causes the result.</p>
+  <div class="grid g3">
+    <div class="callout"><b>Cap at original size</b>: removing it costs 27–68 pp. All of the gain comes from the cap.</div>
+    <div class="callout"><b>θ (burst correction)</b>: no measurable effect.</div>
+    <div class="callout"><b>Threshold u</b>: helps memory only (+5.3 pp at q0.98).</div>
+  </div>
+  <div class="controls"><span class="small">Cell:</span><div class="seg" id="abCell"></div></div>
+  <div class="card"><b>Change vs full method, pp (95% CI)</b><div class="chart" id="abChart"></div></div>
+  <div class="figsw" data-figs='[["ablation_cpu","CPU"],["ablation_mem","Memory"]]'></div>
+</section>
+
+<section class="page" id="threats">
+  <div class="crumb">Review 2</div>
+  <h1>Threats to validity</h1>
+  <p class="what">What our setup cannot prove.</p>
+  <div class="tbl-wrap"><table>
+    <tr><th>Type</th><th>Threat</th></tr>
+    <tr><td><b>Construct</b></td><td>The CPU violation rule is not validated on the cluster, and trace demand is clipped at the original allocation.</td></tr>
+    <tr><td><b>Internal</b></td><td>Duplicate zero rows inflate the sample count on 65 VMs.</td></tr>
+    <tr><td><b>External</b></td><td>One provider, one month per fleet, 5-minute sampling hides short bursts, and the Azure trace has no memory data.</td></tr>
+    <tr><td><b>Conclusion</b></td><td>The bootstrap covers VM sampling only, the splits overlap by 74%, and the ECE test is too weak to reject.</td></tr>
+    <tr><td><b>Testbed</b></td><td>The cluster runs at 1/16 scale: it validates memory kills, not CPU or absolute savings.</td></tr>
+  </table></div>
+</section>
+
+<!-- ============================== REVIEW 3 ============================== -->
+<section class="page" id="stats">
+  <div class="crumb">Review 3</div>
+  <h1>Statistics and replication</h1>
+  <p class="what">The same result checked across six time splits and a second fleet, with 95% bootstrap intervals.</p>
+  <h2>Gap across splits (pp)</h2>
+  <div class="card"><div class="legend" id="splitLegend"></div><div class="chart" id="splitChart"></div></div>
+  <div class="tbl-wrap"><table id="splitTable"></table></div>
+  <h3>Split plan</h3>
+  <div class="tbl-wrap"><table id="splitPlan"></table></div>
+  <h2>Second fleet: Bitbrains Rnd (316 VMs)</h2>
+  <div class="controls"><div class="seg" id="rndRes"></div></div>
+  <div class="card"><div class="legend" id="rndLegend"></div><div class="chart" id="rndChart"></div></div>
+  <div class="tbl-wrap"><table id="rndH"></table></div>
+</section>
+
+<section class="page" id="kernel">
+  <div class="crumb">Review 3</div>
+  <h1>Kernel validation</h1>
+  <p class="what">Does our offline memory-violation rule agree with the Linux kernel's OOM killer? Checked on 50 replayed VMs.</p>
+  <div class="grid g4" id="kTiles"></div>
+  <div class="card"><b>Peak demand vs enforced limit</b><div class="legend" id="kLegend"></div><div class="chart" id="kChart"></div>
+    <div class="small">Above the dashed line = demand exceeded the limit. Zero-demand VMs are drawn at 10 MiB.</div></div>
+  <div class="tbl-wrap"><table id="confTable"></table></div>
+  <div class="figsw" data-figs='[["fig5_t8_validation_ci","Offline vs kernel"]]'></div>
+  <h3>Per-VM outcomes</h3>
+  <div class="tbl-wrap tall"><table id="waveTable"></table></div>
+</section>
+
+<section class="page" id="demo">
+  <div class="crumb">Review 3</div>
+  <h1>Live demo and paper</h1>
+  <p class="what">Commands to run live during the review, and the final paper.</p>
+<pre class="term">setup.bat                        :: once
+run.bat test                     :: 125 tests
+run.bat demo                     :: full pipeline on synthetic VMs
+run.bat demo-vm                  :: 3 real VMs step by step
+run.bat demo data\fastStorage    :: full real fleet</pre>
+  <figure><img src="../demo_out/frontier_demo.png" alt="Demo frontier" loading="lazy" onerror="this.parentNode.style.display='none'"><figcaption>Latest demo output</figcaption></figure>
+  <p><a href="../paper/Risk_Quantified_Virtual_Machine_Right_Sizing_for_Private_Cloud_Capacity_Reclamation.pdf" target="_blank">Open the paper (PDF)</a></p>
+</section>
+
+<section class="page" id="figures">
+  <h1>All figures</h1>
+  <p class="what">Every figure in the repository, full width.</p>
+  <div class="gallery" id="gallery"></div>
+</section>
+
+<div class="ack">This trace was graciously provided by Bitbrains IT Services Inc. (GWA-T-12, Grid Workloads Archive, TU Delft).</div>
+</main>
+</div>
+<div class="tip" id="tip"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
