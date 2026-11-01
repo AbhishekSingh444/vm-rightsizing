@@ -1,1 +1,0 @@
-rightsizing-control-plane	MemoryPressure=False DiskPressure=False PIDPressure=False Ready=True 

@@ -4,9 +4,7 @@
 
 **Faculty:** Indra Priyadharshini S
 
-**Paper:** [paper/Risk_Quantified_Virtual_Machine_Right_Sizing_for_Private_Cloud_Capacity_Reclamation.pdf](paper/Risk_Quantified_Virtual_Machine_Right_Sizing_for_Private_Cloud_Capacity_Reclamation.pdf)
-· **Slides:** [paper/Abhishek_Singh_P10_Review3.pptx](paper/Abhishek_Singh_P10_Review3.pptx)
-· **Website:** open [website/index.html](website/index.html) in a browser
+**Website:** open [website/index.html](website/index.html) in a browser
 
 Contents: [Background](#background) · [Problem statement](#problem-statement) ·
 [Objectives](#objectives) · [Scope of work](#scope-of-work) ·
@@ -115,7 +113,7 @@ Two changes from the original plan, both deliberate:
 ## Results
 
 The hypotheses were written down before any result existed
-([docs/HYPOTHESES.txt](docs/HYPOTHESES.txt)) and were not changed afterwards.
+(pre-registered in the hypothesis document) and were not changed afterwards.
 Unless noted, numbers are for fastStorage, 792 VMs, 21/9-day split, with 95%
 bootstrap intervals over VMs (10,000 resamples, seed 16).
 
@@ -135,7 +133,7 @@ P95 reclaims the most because it breaks the most: more than a third of VMs
 run out of memory in 9 days. M(ε) gives the operator a dial into the low-risk
 region, but it never beats a baseline where their curves overlap. The full
 frontier, CPU included, is in
-[figures/frontier_theta_intervals.png](figures/frontier_theta_intervals.png).
+[website/figures/frontier_theta_intervals.png](website/figures/frontier_theta_intervals.png).
 
 ### Hypothesis verdicts
 
