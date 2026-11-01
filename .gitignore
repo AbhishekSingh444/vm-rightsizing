@@ -74,3 +74,6 @@ node_modules/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Slide decks stay local -- not part of the published repo.
+*.pptx
