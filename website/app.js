@@ -310,7 +310,7 @@
     R("3", "All objectives evidenced", 3, "Ready", "good", "#overview", "O1–O4; 2 fleets; 6 splits; mean and SD across splits"),
     R("3", "Statistical soundness", 2, "Ready", "good", "#stats", "95% bootstrap CIs (B = 10,000), Wilson intervals, paired comparisons"),
     R("3", "Live demonstration", 2, "Ready", "good", "#demo", "run.bat demo / demo-vm / test run live"),
-    R("3", "Documentation of findings", 3, "Paper ready", "good", "#demo", "Paper PDF; demo video still to record"),
+    R("3", "Documentation of findings", 3, "Paper ready", "good", "#demo", "Paper submitted separately; demo video still to record"),
   ];
   renderTable("#rubricTable", rubric, [
     { k: "rev", label: "Review" }, { k: "comp", label: "Component", fmt: (v, r) => `<a href="${r.link}">${esc(v)}</a>` },
